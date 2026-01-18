@@ -43,6 +43,7 @@ struct GFSM {
 	using sbus = devs::sbus;
 	using modcom = devs::modcom;
 	using crsf = devs::crsf;
+    using sumdv1 = devs::sumdv1;
     using sumdv3 = devs::sumdv3;
 
     enum class State : uint8_t {Undefined, Init, Run, CheckSerial, Calibration1, Calibration2, BootPress, BootPressRelease};
@@ -272,6 +273,16 @@ struct GFSM {
 					crsf::baud(RC::Protokoll::Crsf::V4::baudrateHandset);
 					crsf::activateSource(true);
 				}
+                if constexpr(!std::is_same_v<sumdv3, void>) {
+                    static_assert(std::is_same_v<sbus, void>);
+                    static_assert(std::is_same_v<hwext, void>);
+                    sumdv3::init();
+                }
+                if constexpr(!std::is_same_v<sumdv1, void>) {
+                    static_assert(std::is_same_v<sbus, void>);
+                    static_assert(std::is_same_v<hwext, void>);
+                    sumdv1::init();
+                }
                 break;
             case State::Calibration1:
                 IO::outl<debug>("# Calib1");
@@ -378,6 +389,10 @@ struct GFSM {
                 if constexpr(!std::is_same_v<sumdv3, void>) {
                     const uint16_t scaled = adcToSbus(i, v);
                     sumdv3::set(i++, scaled);
+                }
+                if constexpr(!std::is_same_v<sumdv1, void>) {
+                    const uint16_t scaled = adcToSbus(i, v);
+                    sumdv1::set(i++, scaled);
                 }
             }
 			uint8_t i = 0;

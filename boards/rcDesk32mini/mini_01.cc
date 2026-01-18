@@ -36,6 +36,7 @@
 // #define USE_HWEXT // otherwise SBUS-output is used
 #define USE_SBUS // according SBUS inversion see below
 // #define USE_CRSF
+// #define USE_SUMDV1
 // #define USE_SUMDV3
 
 #define USE_SFROG // make A3, A8 outputs for Stick-LEDs
@@ -56,7 +57,7 @@
 
 #define NDEBUG // do not change: dev option
  
-#define SW_VERSION 5
+#define SW_VERSION 6
 
 #include <cstdint>
 #include <array>
@@ -118,6 +119,9 @@ void USART1_IRQHandler(){
 #elif defined(USE_SUMDV3)
     using sumdv3 = devs::sumdv3;
     static_assert(sumdv3::uart::number == 1);
+#elif defined(USE_SUMDV1)
+    using sumdv1 = devs::sumdv1;
+    static_assert(sumdv1::uart::number == 1);
 #else
 # warning "wrong protocol selection"
 #endif

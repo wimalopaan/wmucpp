@@ -783,6 +783,7 @@ include_stm32/rc/sbus_2.h
 include_stm32/rc/spacemouse.h
 include_stm32/rc/sport.h
 include_stm32/rc/sport_2.h
+include_stm32/rc/sumdv1_2.h
 include_stm32/rc/sumdv3_2.h
 include_stm32/rc/vesc.h
 include_stm32/rc/vesc_2.h

@@ -43,6 +43,7 @@
 #include "rc/rc_2.h"
 #include "rc/sbus2_2.h"
 #include "rc/sbus_2.h"
+#include "rc/sumdv1_2.h"
 #include "rc/sumdv3_2.h"
 #include "rc/crsf_2.h"
 #include "rc/hwext.h"
@@ -88,6 +89,7 @@ struct Devices<WeAct_SFrog, Config, MCU> {
     using modcom = void;
     using crsf = void;
     using sumdv3 = void;
+    using sumdv1 = void;
 #elif defined(USE_SBUS)
     using hwext = void;
     struct SBusConfig;
@@ -97,6 +99,7 @@ struct Devices<WeAct_SFrog, Config, MCU> {
     using modcom = External::EdgeTx::ModuleCom<1, ModComConfig, MCU>;
     using crsf = void;
     using sumdv3 = void;
+    using sumdv1 = void;
 #elif defined(USE_CRSF)
     using hwext = void;
     using sbus = void;
@@ -104,13 +107,23 @@ struct Devices<WeAct_SFrog, Config, MCU> {
     struct CrsfConfig;
     using crsf = RC::Protokoll::Crsf::V4::PacketRelayRewrite<1, CrsfConfig, MCU>;
     using sumdv3 = void;
+    using sumdv1 = void;
 #elif defined(USE_SUMDV3)
     using hwext = void;
     using sbus = void;
     using modcom = void;
     using crsf = void;
-    struct SumDV3Config;
-    using sumdv3 = RC::Protokoll::SumDV3::V2::Output<1, SumDV3Config, MCU>;
+    struct SumDConfig;
+    using sumdv3 = RC::Protokoll::SumDV3::V2::Output<1, SumDConfig, MCU>;
+    using sumdv1 = void;
+#elif defined(USE_SUMDV1)
+    using hwext = void;
+    using sbus = void;
+    using modcom = void;
+    using crsf = void;
+    using sumdv3 = void;
+    struct SumDConfig;
+    using sumdv1 = RC::Protokoll::SumDV1::V2::Output<1, SumDConfig, MCU>;
 #else
 # warning "wrong protocol selection"
 #endif
@@ -207,7 +220,7 @@ struct Devices<WeAct_SFrog, Config, MCU> {
         using pin = tx;
         using tp = void;
     };
-    struct SumDV3Config{
+    struct SumDConfig{
         using clock = Devices::clock;
         using debug = Devices::debug;
         using dmaChComponent = auxDmaChannel1;
@@ -356,6 +369,8 @@ struct Devices<WeAct, Config, MCU> {
 	using sbus = void;
 	using modcom = void;
 	using crsf = void;
+    using sumdv3 = void;
+    using sumdv1 = void;
 #elif defined(USE_SBUS)
 	using hwext = void;
 	struct SBusConfig;
@@ -364,19 +379,32 @@ struct Devices<WeAct, Config, MCU> {
 	struct ModComConfig;
 	using modcom = External::EdgeTx::ModuleCom<1, ModComConfig, MCU>;
 	using crsf = void;
+    using sumdv3 = void;
+    using sumdv1 = void;
 #elif defined(USE_CRSF)
 	using hwext = void;
 	using sbus = void;
 	using modcom = void;
 	struct CrsfConfig;
     using crsf = RC::Protokoll::Crsf::V4::PacketRelayRewrite<1, CrsfConfig, MCU>;
+    using sumdv3 = void;
+    using sumdv1 = void;
 #elif defined(USE_SUMDV3)
     using hwext = void;
     using sbus = void;
     using modcom = void;
     using crsf = void;
-    struct SumDV3Config;
-    using sumdv3 = RC::Protokoll::SumDV3::V2::Output<1, SumDV3Config, MCU>;
+    struct SumDConfig;
+    using sumdv3 = RC::Protokoll::SumDV3::V2::Output<1, SumDConfig, MCU>;
+    using sumdv1 = void;
+#elif defined(USE_SUMDV1)
+    using hwext = void;
+    using sbus = void;
+    using modcom = void;
+    using crsf = void;
+    struct SumDV1Config;
+    using sumdv1 = RC::Protokoll::SumDV1::V2::Output<1, SumDV1Config, MCU>;
+    using sumdv3 = void;
 #else
 # warning "wrong protocol selection"
 #endif
@@ -462,7 +490,7 @@ struct Devices<WeAct, Config, MCU> {
         using pin = tx;
         using tp = void;
     };
-    struct SumDV3Config{
+    struct SumDConfig{
         using clock = Devices::clock;
         using debug = Devices::debug;
         using dmaChComponent = auxDmaChannel1;
