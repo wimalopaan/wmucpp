@@ -4,11 +4,11 @@ Bugs:
 ToDo:
 =====
 * watchdog (show watchdog counter in menu)
-* correct docu (RX and TX interchanged, A11 for half-duplex TX module)
 * adc input: voltage, temperature
 
 Done:
 =====
+* correct docu (RX and TX interchanged, A11 for half-duplex TX module)
 * allow more baudrates (e.g. 115200Bd for IR-Connection)
 * option to select IrDa-SIR mode
 * adapt to own stm32g0b1 board
