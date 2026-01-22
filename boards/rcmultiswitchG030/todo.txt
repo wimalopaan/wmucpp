@@ -8,6 +8,7 @@ hardware:
 
 todo:
 -----
+* global pwm modulation via rc-channel / prop_set command for virtual
 * compile-time option to swap rx/tx for input
 * add restart command (NVIC_SystemReset)
 * add NDEBUG=false mode with assertions using reset vector NVIC_SystemReset()

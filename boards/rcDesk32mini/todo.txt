@@ -1,10 +1,11 @@
 ToDo:
 =====
-* SumDV1/V3 Output
+* cppm output
 * watchdog
 
 Done:
 =====
+* SumDV1/V3 Output (untested)
 * Option to control 2x LED (for S.Frog sticks)
 ** use as status LED (e.g. calibration)
 * preprocessor structure (USE_...)

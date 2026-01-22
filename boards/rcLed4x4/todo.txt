@@ -6,6 +6,7 @@
 
 * ToDo
 ------
+* global pwm modulation via rc-channel / prop_set command for virtual
 * failsafe mode as multiswitch
 * add slave-switch protocol (like Set):
 * add watchdog
