@@ -19,6 +19,13 @@ boards/WmG0B1/link_g0b1.ld
 boards/WmG0B1/off.cc
 boards/WmG0B1/startup_g0b1.s
 boards/WmG0B1/system_g0.cc
+boards/dds/dds.h
+boards/dds/mpm.h
+boards/dds/rfmodule00.cc
+boards/dds/rfmodule01.cc
+boards/dds/rfmodule02.cc
+boards/dds/rfmodule03.cc
+boards/dds/rxrf01.cc
 boards/dds2/fsk00.cc
 boards/dds2/test02.cc
 boards/dds2/test03.cc
