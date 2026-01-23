@@ -241,7 +241,7 @@ struct Devices<SW22, Config, MCU> {
 #ifdef USE_MORSE
     struct BConfig {
         using timer = systemTimer;
-        using debug = debug1;
+        using debug = Devices::debug;
         static inline constexpr auto& text = storage::eeprom.morse_text;
     };
     using bsw0 = External::Morse::BlinkerWithPwm<spa0, BConfig, adap0>;
@@ -333,10 +333,6 @@ struct Devices<SW22, Config, MCU> {
         gpioc::init();
 
         dma1::init();
-
-#ifdef SERIAL_DEBUG
-        debug::init();
-#endif
 
         led::template dir<Mcu::Output>();
         ledBlinker::event(ledBlinker::Event::Off);

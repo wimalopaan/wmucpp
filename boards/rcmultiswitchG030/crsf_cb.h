@@ -375,16 +375,27 @@ private:
 #endif
 #ifdef USE_VIRTUALS
         parent = addParent(p, Param_t{0, PType::Folder, "Virtuals"});
-        addNode(p, Param_t{parent, PType::Sel, "Enable Virtuals", "Off;On", &storage::eeprom.use_virtuals, 0, 1, [](const uint8_t){return true;}});
+        addNode(p, Param_t{parent, PType::Sel, "Enable Virtuals", "Off;On", &storage::eeprom.use_virtuals, 0, 1,
+                           [](const uint8_t) {
+                                // in either case enable full pwm range
+                                // global dimming via a virtual setting
+                                Meta::visit<bsws>([]<typename T>(Meta::Wrapper<T>){
+                                    T::dutyGlobal(100);
+                                });
+                                return true;
+                           }});
         addVirtual<0>(p, parent, "Virtual 0");
         addVirtual<1>(p, parent, "Virtual 1");
         addVirtual<2>(p, parent, "Virtual 2");
         addVirtual<3>(p, parent, "Virtual 3");
+# ifdef USE_PWM_GLOBAL_MODULATION
+        addNode(p, Param_t{parent, PType::Sel, "Virtual 4", "Off;Global Dimming", &storage::eeprom.enableGlobalDimming_virtual4, 0, 1, [](const uint8_t){return true;}});
+# endif
 #endif
 #ifdef USE_PATTERNS
 # ifdef HW_MSW12
 		parent = addParent(p, Param_t{0, PType::Folder, "Pattern"});
-#endif
+# endif
 		addPattern<0>(p, parent, "Pattern Virt. 5");
 # ifdef HW_MSW12
 		addPattern<1>(p, parent, "Pattern Virt. 6");

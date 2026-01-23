@@ -105,6 +105,9 @@ struct EEProm {
         std::array<uint8_t, 4> member{};
     };
     std::array<Virtual, 4> virtuals{};
+# ifdef USE_PWM_GLOBAL_MODULATION
+    uint8_t enableGlobalDimming_virtual4 = 0;
+# endif
 #endif
 #ifdef USE_PATTERNS
 	struct Pattern {

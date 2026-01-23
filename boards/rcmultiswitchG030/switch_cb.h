@@ -91,14 +91,27 @@ struct SwitchCallback {
 #endif
     static inline void prop(const uint8_t adrIndex, const uint8_t channel, const uint8_t duty) {
         if ((adrIndex == EEProm::AdrIndex::Switch) && (channel < 8)) {
-                IO::outl<debug>("# prop: ", channel, " duty: ", duty);
-                Meta::visitAt<bsws>(channel, [&]<typename SW>(Meta::Wrapper<SW>){
-                                        SW::duty(duty);
-                                    });
+            uint8_t dutyLimited = std::min(duty, uint8_t{100});
+            IO::outl<debug>("# prop: ", channel, " duty: ", dutyLimited);
+            Meta::visitAt<bsws>(channel, [&]<typename SW>(Meta::Wrapper<SW>){
+                                    SW::duty(dutyLimited);
+                                });
         }
 #ifdef USE_VIRTUALS
-        else if ((adrIndex == EEProm::AdrIndex::Virtual) && (channel < storage::eeprom.virtuals.size())) {
-
+        else if (adrIndex == EEProm::AdrIndex::Virtual) {
+            if (storage::eeprom.use_virtuals > 0) {
+#ifdef USE_PWM_GLOBAL_MODULATION
+                if (storage::eeprom.enableGlobalDimming_virtual4 > 0) {
+                    IO::outl<debug>("# virt prop: ", channel, " duty: ", duty);
+                    if (channel == 4) {
+                        uint8_t dutyLimited = std::min(duty, uint8_t{100});
+                        Meta::visit<bsws>([&]<typename SW>(Meta::Wrapper<SW>){
+                            SW::dutyGlobal(dutyLimited);
+                        });
+                    }
+                }
+#endif
+            }
         }
 #endif
     }

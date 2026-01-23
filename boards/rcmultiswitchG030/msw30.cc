@@ -26,16 +26,18 @@
 
 // feature selection
 // if you get an error (undefined symbol fp()), deselect features to free memory
-// #define USE_MORSE
-#define USE_OPERATE_MENU
-#define USE_VIRTUALS
-// #define USE_PATTERNS
-// #define USE_SLAVE_COMMAND
-#define USE_FAILSAFE
-#define USE_RESET_COMMAND
+
+// #define USE_MORSE // enable morse feature
+#define USE_OPERATE_MENU // enable operate menu
+// #define USE_VIRTUALS // enable virtual switch address
+// #define USE_PATTERNS // enable pattern generator
+// #define USE_SLAVE_COMMAND // enable slave command
+#define USE_FAILSAFE // enable failsafe: set channels to specific state if failsafe
+#define USE_RESET_COMMAND // enable factory reset command
 #define USE_TELEMETRY // switches telemetry default on (instead off)
 // #define USE_BUTTON // HW_MSW11: if button is unused, the button pin is used as input (status bit)
-// #define USE_IRDA
+// #define USE_IRDA // enable IRDA as physical protocol (115200Bd)
+// #define USE_PWM_GLOBAL_MODULATION // enable virtual prop to dim all channels
 // #define SERIAL_DEBUG // use with care (e.g. with USE_MORSE) because of RAM overflow (stm32g0b1: ok)
 // #define CRSF_TX_OPENDRAIN // only HW_NUCLEO / HW_WEACT / HW_MSW11 / HW_MSW12 : make tx pin open-drain to parallelize in two-wire mode
 // #define CRSF_HALFDUPLEX // only NW_NUCLEO / HW_WEACT / HW_MSW11 / HW_MSW12 : make crsf uart one-wire halfduplex (txpin), custom board is allways half-duplex
@@ -47,7 +49,7 @@
 
 // debugging settings (do not change)
 
-#define CRSF_LESS_BAUDRATES
+#define CRSF_LESS_BAUDRATES // only check a limited set of baudrates at startup
 //#define NO_DEFAULTS_MSW12
 // #define USE_WATCHDOG_TEST
 
@@ -114,6 +116,9 @@
 # if !defined(USE_FAILSAFE)
 #  define USE_FAILSAFE
 # endif
+# if !defined(USE_PWM_GLOBAL_MODULATION)
+#  define USE_PWM_GLOBAL_MODULATION
+# endif
 #endif
 #endif
 
@@ -146,7 +151,7 @@
 # undef USE_PATTERNS
 #endif
 
-#define SW_VERSION 39
+#define SW_VERSION 40
 
 #include <cstdint>
 #include <array>

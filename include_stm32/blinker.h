@@ -169,22 +169,31 @@ namespace External {
                 }
                 ratePeriodic();
             }
-            static inline void expo(const uint8_t) {}
+            static inline void expo(const uint8_t) {
+            }
+            static inline constexpr uint8_t maxDutyGlobal = 100;
+            static inline void dutyGlobal(const uint8_t d) {
+                const uint8_t dutyLimited = std::min(d, maxDutyGlobal);
+                mDutyGlobal = dutyLimited;
+                duty(mDuty);
+            }
             static inline void duty(const uint8_t d) {
+                mDuty = d;
                 if constexpr(!std::is_same_v<Pwm, void>) {
-                    IO::outl<Debug>("# Pin: ", Pin::number, " duty: ", d, " state: ", (uint8_t)mState);
+                    const uint8_t dutyLimited = std::min(d, maxDutyGlobal);
+                    const uint8_t duty = (dutyLimited * mDutyGlobal) / maxDutyGlobal;
+                    IO::outl<Debug>("# Pin: ", Pin::number, " duty: ", duty, " state: ", (uint8_t)mState);
                     if constexpr(!std::is_same_v<Pwm, void>) {
                         using pol_t = Pwm::polarity_t;
                         if constexpr(std::is_same_v<pol_t, Mcu::Stm::AlternateFunctions::Negativ>) {
-                            Pwm::duty(100 - d);
+                            Pwm::duty(maxDutyGlobal - duty);
                         }
                         else {
-                            Pwm::duty(d);
+                            Pwm::duty(duty);
                         }
                     }
                 }
             }
-
             static inline void set() {
                 if (mUsePwm && ((mState == State::On) || (mState == State::IntervallOn) || (mState == State::PwmMode))) {
                     Pin::set();
@@ -424,6 +433,8 @@ namespace External {
                     Pin::template dir<Mcu::Output>();
                 }
             }
+            static inline uint8_t mDuty = 0;
+            static inline uint8_t mDutyGlobal = maxDutyGlobal;
             static inline etl::Event<Event> mEvent;
             static inline State mState{State::Off};
             static inline bool mUsePwm{false};
@@ -646,16 +657,24 @@ namespace External {
         }
         static inline void expo(const uint8_t) {
         }
+        static inline constexpr uint8_t maxDutyGlobal = 100;
+        static inline void dutyGlobal(const uint8_t d) {
+            const uint8_t dutyLimited = std::min(d, maxDutyGlobal);
+            mDutyGlobal = dutyLimited;
+            duty(mDuty);
+        }
         static inline void duty(const uint8_t d) {
             if constexpr(!std::is_same_v<Pwm, void>) {
-                IO::outl<Debug>("Pin: ", Pin::number, " duty: ", d, " state: ", (uint8_t)mState);
+                const uint8_t dutyLimited = std::min(d, maxDutyGlobal);
+                const uint8_t duty = (dutyLimited * mDutyGlobal) / maxDutyGlobal;
+                IO::outl<Debug>("Pin: ", Pin::number, " duty: ", duty, " state: ", (uint8_t)mState);
                 if constexpr(!std::is_same_v<Pwm, void>) {
                     using pol_t = Pwm::polarity_t;
                     if constexpr(std::is_same_v<pol_t, Mcu::Stm::AlternateFunctions::Negativ>) {
-                        Pwm::duty(100 - d);
+                        Pwm::duty(maxDutyGlobal - duty);
                     }
                     else {
-                        Pwm::duty(d);
+                        Pwm::duty(duty);
                     }
                 }
             }
@@ -809,6 +828,8 @@ namespace External {
                 Pin::template dir<Mcu::Output>();
             }
         }
+        static inline uint8_t mDuty = 0;
+        static inline uint8_t mDutyGlobal = maxDutyGlobal;
         static inline Event mEvent{Event::None};
         static inline State mState{State::Off};
         static inline bool mUsePwm{false};
