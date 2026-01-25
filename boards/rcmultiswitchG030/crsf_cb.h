@@ -91,9 +91,15 @@ struct CrsfCallback {
         updateName(mName);
     }
     static inline void setParameterValue(const uint8_t index, const auto data, const uint8_t paylength) {
+#ifdef USE_MORSE
+        if (RC::Protokoll::Crsf::V4::Util::setParameter<decltype(params), storage::eeprom.morse_text.size()>(params, index, data, paylength)) {
+            storage::save();
+        }
+#else
         if (RC::Protokoll::Crsf::V4::Util::setParameter(params, index, data, paylength)) {
             storage::save();
         }
+#endif
         update();
     }
     static inline Param_t parameter(const uint8_t index) {

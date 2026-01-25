@@ -93,7 +93,7 @@ struct EEProm {
 #endif
     std::array<Output, 8> outputs{};
 #ifdef USE_MORSE
-    std::array<char, 64> morse_text{};
+    std::array<char, 128> morse_text{};
     uint8_t morse_dit = 3;
     uint8_t morse_dah = 6;
     uint8_t morse_gap = 3;

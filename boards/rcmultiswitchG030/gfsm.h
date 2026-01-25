@@ -275,6 +275,7 @@ struct GFSM {
 #ifdef USE_IRDA
         case BaudState::IRDA:
             crsf::setIrDA(false);
+            crsf::setHalfDuplex(false);
             messageBuffer::freeRun(true);
             IO::outl<debug>("# FreeRun true");
             baudState = BaudState::FullDuplex;
