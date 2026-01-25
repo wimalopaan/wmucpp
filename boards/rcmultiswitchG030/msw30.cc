@@ -22,12 +22,12 @@
 #define HW_MSW12 // MultiSwitch_12 (64k) (EasyEda OSHWLAB) mit G0B1: Makefile.G0B1 (enables all features)
 //#define HW_MSW12_G051 // if above board is populated with G051 instead of G0B1
 //#define HW_NUCLEO // STM Nucleo G031K8 (64K) (incl. ST-Link), ATTENTION: use Makefile.G031
-//#define HW_WEACT // WeAct G031F8 (64K), ATTENTION: use Makefile.G031
+// #define HW_WEACT // WeAct G031F8 (64K), ATTENTION: use Makefile.G031
 
 // feature selection
 // if you get an error (undefined symbol fp()), deselect features to free memory
 
-// #define USE_MORSE // enable morse feature
+#define USE_MORSE // enable morse feature
 #define USE_OPERATE_MENU // enable operate menu
 // #define USE_VIRTUALS // enable virtual switch address
 // #define USE_PATTERNS // enable pattern generator
@@ -111,7 +111,7 @@
 #  define USE_TELEMETRY
 # endif
 # if !defined(USE_IRDA)
-#  define USE_IRDA
+// #  define USE_IRDA
 # endif
 # if !defined(USE_FAILSAFE)
 #  define USE_FAILSAFE
@@ -129,7 +129,7 @@
 #elif defined(HW_MSW12)
 # define HW_VERSION 3 // version 3 of own pcb (not nucleo nor weact)
 #elif defined(HW_NUCLEO)
-# define HW_VERSION 10
+# define HW_VERSION 10i
 #elif defined(HW_WEACT)
 # define HW_VERSION 11
 # ifdef USE_BUTTON

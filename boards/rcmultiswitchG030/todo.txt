@@ -1,5 +1,6 @@
 bugs:
 -----
+* with USE_IRDA auot-baud does not work
 
 hardware:
 ---------
@@ -8,7 +9,7 @@ hardware:
 
 todo:
 -----
-* global pwm modulation via rc-channel / prop_set command for virtual
+* add command to transfer morse-text (e.g. from widget)
 * compile-time option to swap rx/tx for input
 * add restart command (NVIC_SystemReset)
 * add NDEBUG=false mode with assertions using reset vector NVIC_SystemReset()
@@ -27,6 +28,7 @@ details:
 
 done:
 -----
+* global pwm modulation via rc-channel / prop_set command for virtual
 * add watchdog
 * display reset cause and count (.noinit section variables)
 * failsafe mode: hold;off;set
