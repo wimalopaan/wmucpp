@@ -9,6 +9,7 @@ hardware:
 
 todo:
 -----
+* PWM-Mode: Off;On;Remote;Dimming
 * add command to transfer morse-text (e.g. from widget)
 * compile-time option to swap rx/tx for input
 * add restart command (NVIC_SystemReset)
