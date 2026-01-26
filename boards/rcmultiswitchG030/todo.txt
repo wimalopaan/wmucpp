@@ -1,6 +1,6 @@
 bugs:
 -----
-* with USE_IRDA auot-baud does not work
+* with USE_IRDA auto-baud does not work
 
 hardware:
 ---------
