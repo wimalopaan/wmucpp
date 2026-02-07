@@ -3,6 +3,7 @@ bugs:
 
 todo:
 =====
+* Sensor-ID transformation if identical ID on different interfaces
 * watchdog
 * compile-time option to swap rx/tx for RX
 * escape32 support menu
