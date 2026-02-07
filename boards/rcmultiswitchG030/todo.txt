@@ -9,7 +9,6 @@ hardware:
 
 todo:
 -----
-* PWM-Mode: Off;On;Remote;Dimming
 * add command to transfer morse-text (e.g. from widget)
 * compile-time option to swap rx/tx for input
 * add restart command (NVIC_SystemReset)
@@ -29,6 +28,8 @@ details:
 
 done:
 -----
+* PWM-Mode: Off;On;Remote;Dimming
+* check for command messages too (just because RM Sensors do not forward link-stat and rc-channels :-( ) optional: slow-failsafe?
 * global pwm modulation via rc-channel / prop_set command for virtual
 * add watchdog
 * display reset cause and count (.noinit section variables)

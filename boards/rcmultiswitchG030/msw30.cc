@@ -17,11 +17,11 @@
  */
 
 // select one(!) of the following hardware definitions
-//#define HW_MSW10 // MultiSwitch_10 (32K), ATTENTION: use Makefile
-//#define HW_MSW11 // MultiSwitch_11 (64k), ATTENTION: use Makefile.G031
+// #define HW_MSW10 // MultiSwitch_10 (32K), ATTENTION: use Makefile
+// #define HW_MSW11 // MultiSwitch_11 (64k), ATTENTION: use Makefile.G031
 #define HW_MSW12 // MultiSwitch_12 (64k) (EasyEda OSHWLAB) mit G0B1: Makefile.G0B1 (enables all features)
-//#define HW_MSW12_G051 // if above board is populated with G051 instead of G0B1
-//#define HW_NUCLEO // STM Nucleo G031K8 (64K) (incl. ST-Link), ATTENTION: use Makefile.G031
+// #define HW_MSW12_G051 // if above board is populated with G051 instead of G0B1
+// #define HW_NUCLEO // STM Nucleo G031K8 (64K) (incl. ST-Link), ATTENTION: use Makefile.G031
 // #define HW_WEACT // WeAct G031F8 (64K), ATTENTION: use Makefile.G031
 
 // feature selection
@@ -33,6 +33,7 @@
 // #define USE_PATTERNS // enable pattern generator
 // #define USE_SLAVE_COMMAND // enable slave command
 #define USE_FAILSAFE // enable failsafe: set channels to specific state if failsafe
+// #define USE_COMMAND_DETECTION // connection detection also via command-frames (important, if multiswitch is used after a Radiomaster-Sensor)
 #define USE_RESET_COMMAND // enable factory reset command
 #define USE_TELEMETRY // switches telemetry default on (instead off)
 // #define USE_BUTTON // HW_MSW11: if button is unused, the button pin is used as input (status bit)
@@ -119,6 +120,9 @@
 # if !defined(USE_PWM_GLOBAL_MODULATION)
 #  define USE_PWM_GLOBAL_MODULATION
 # endif
+# if !defined(USE_COMMAND_DETECTION)
+#  define USE_COMMAND_DETECTION
+# endif
 #endif
 #endif
 
@@ -129,7 +133,7 @@
 #elif defined(HW_MSW12)
 # define HW_VERSION 3 // version 3 of own pcb (not nucleo nor weact)
 #elif defined(HW_NUCLEO)
-# define HW_VERSION 10i
+# define HW_VERSION 10
 #elif defined(HW_WEACT)
 # define HW_VERSION 11
 # ifdef USE_BUTTON
@@ -151,7 +155,7 @@
 # undef USE_PATTERNS
 #endif
 
-#define SW_VERSION 40
+#define SW_VERSION 41
 
 #include <cstdint>
 #include <array>

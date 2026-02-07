@@ -90,12 +90,12 @@ struct SwitchCallback {
 	}
 #endif
     static inline void prop(const uint8_t adrIndex, const uint8_t channel, const uint8_t duty) {
+        uint8_t dutyLimited = std::min(duty, uint8_t{100});
         if ((adrIndex == EEProm::AdrIndex::Switch) && (channel < 8)) {
-            uint8_t dutyLimited = std::min(duty, uint8_t{100});
             IO::outl<debug>("# prop: ", channel, " duty: ", dutyLimited);
             Meta::visitAt<bsws>(channel, [&]<typename SW>(Meta::Wrapper<SW>){
-                                    SW::duty(dutyLimited);
-                                });
+                SW::duty(dutyLimited);
+            });
         }
 #ifdef USE_VIRTUALS
         else if (adrIndex == EEProm::AdrIndex::Virtual) {
@@ -104,7 +104,6 @@ struct SwitchCallback {
                 if (storage::eeprom.enableGlobalDimming_virtual4 > 0) {
                     IO::outl<debug>("# virt prop: ", channel, " duty: ", duty);
                     if (channel == 4) {
-                        uint8_t dutyLimited = std::min(duty, uint8_t{100});
                         Meta::visit<bsws>([&]<typename SW>(Meta::Wrapper<SW>){
                             SW::dutyGlobal(dutyLimited);
                         });

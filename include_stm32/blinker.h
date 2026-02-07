@@ -155,11 +155,12 @@ namespace External {
             static inline void pwm(const uint8_t p) {
                 IO::outl<Debug>("# Pin: ", Pin::number, " pwm: ", p);
                 mEvent = Event::None;
-                mUsePwm = p;
+                mUsePwm = (p > 0);
+                mUseGlobalPwm = (p == 3);
                 if (p == 0) {
                     event(Event::PwmModeOff);
                 }
-                else if (p == 1) {
+                else if ((p == 1) || (p == 3)) {
                     if ((mState == State::On) || (mState == State::IntervallOn)) {
                         on();
                     }
@@ -181,12 +182,17 @@ namespace External {
                 mDuty = d;
                 if constexpr(!std::is_same_v<Pwm, void>) {
                     const uint8_t dutyLimited = std::min(d, maxDutyGlobal);
-                    const uint8_t duty = (dutyLimited * mDutyGlobal) / maxDutyGlobal;
+                    const uint8_t duty = mUseGlobalPwm ? (dutyLimited * mDutyGlobal) / maxDutyGlobal : dutyLimited;
                     IO::outl<Debug>("# Pin: ", Pin::number, " duty: ", duty, " state: ", (uint8_t)mState);
                     if constexpr(!std::is_same_v<Pwm, void>) {
                         using pol_t = Pwm::polarity_t;
                         if constexpr(std::is_same_v<pol_t, Mcu::Stm::AlternateFunctions::Negativ>) {
-                            Pwm::duty(maxDutyGlobal - duty);
+                            if (mUseGlobalPwm) {
+                                Pwm::duty(maxDutyGlobal - duty);
+                            }
+                            else {
+                                Pwm::duty(100 - duty);
+                            }
                         }
                         else {
                             Pwm::duty(duty);
@@ -435,6 +441,7 @@ namespace External {
             }
             static inline uint8_t mDuty = 0;
             static inline uint8_t mDutyGlobal = maxDutyGlobal;
+            static inline bool mUseGlobalPwm = false;
             static inline etl::Event<Event> mEvent;
             static inline State mState{State::Off};
             static inline bool mUsePwm{false};

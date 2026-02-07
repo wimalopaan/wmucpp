@@ -57,7 +57,11 @@ struct GFSM {
                                 ButtonPress
                                };
 
+#ifdef USE_COMMAND_DETECTION
+    static inline constexpr External::Tick<systemTimer> packagesCheckTicks{3000ms};
+#else
     static inline constexpr External::Tick<systemTimer> packagesCheckTicks{300ms};
+#endif
     static inline constexpr External::Tick<systemTimer> initTicks{100ms};
     static inline constexpr External::Tick<systemTimer> debugTicks{500ms};
     static inline constexpr External::Tick<systemTimer> baudCheckTicks{1000ms};
@@ -116,6 +120,7 @@ struct GFSM {
             else {
                 mStateTick.on(baudCheckTicks, []{
                     nextBaudrate();
+                    resetCounter();
                 });
             }
             break;
@@ -209,8 +214,13 @@ struct GFSM {
                 }
                 crsf_out::enableReply(true);
                 if (storage::eeprom.telemetry) {
-                    if (crsf::isHalfDuplex()) {
-                        led::count(3);
+                    if constexpr(requires{crsf::isHalfDuplex();}) {
+                        if (crsf::isHalfDuplex()) {
+                            led::count(3);
+                        }
+                        else {
+                            led::count(2);
+                        }
                     }
                     else {
                         led::count(2);
@@ -244,30 +254,33 @@ struct GFSM {
         switch(baudState) {
         case BaudState::FullDuplex:
             if (crsf::nextBaudrate()) {
-                crsf::setHalfDuplex(true);
-                baudState = BaudState::HalfDuplex;
+                if constexpr(requires{crsf::setHalfDuplex(true);}) {
+                    crsf::setHalfDuplex(true);
+                    baudState = BaudState::HalfDuplex;
+                }
             }
             break;
         case BaudState::HalfDuplex:
             if (crsf::nextBaudrate()) {
-                crsf::setHalfDuplex(false);
 #ifdef USE_IRDA
+                crsf::setHalfDuplex(false);
                 messageBuffer::freeRun(false);
                 IO::outl<debug>("# FreeRun false");
                 baudState = BaudState::IRDA;
-#ifdef USE_IRDA_TX_INVERT
+# ifdef USE_IRDA_TX_INVERT
                 const bool txinvert = true;
-#else
+# else
                 const bool txinvert = false;
-#endif
-#ifdef USE_IRDA_RX_INVERT
+# endif
+# ifdef USE_IRDA_RX_INVERT
                 const bool rxinvert = true;
-#else
+# else
                 const bool rxinvert = false;
-#endif
+# endif
                 crsf::setIrDA(true, txinvert, rxinvert);
                 // crsf_out::telemetrySlot(1);
 #else
+                crsf::setHalfDuplex(false);
                 baudState = BaudState::FullDuplex;
 #endif
             }
@@ -283,13 +296,26 @@ struct GFSM {
 #endif
         }
     }
+    static inline void resetCounter() {
+        crsf_pa::template channelPackages<true>();
+        crsf_pa::template linkPackages<true>();
+        crsf_pa::template pingPackages<true>();
+        crsf::template commandPackages<true>();
+    }
     static inline void checkPackages() {
         (++mPackagesCheckTick).on(packagesCheckTicks, []{
             const uint16_t ch_p = crsf_pa::template channelPackages<true>();
             const uint16_t l_p = crsf_pa::template linkPackages<true>();
             const uint16_t p_p = crsf_pa::template pingPackages<true>();
-            // IO::outl<debug>("ch_p: ", ch_p);
-            if ((ch_p > 10) || (p_p > 0) || (l_p > 3)) {
+#ifdef USE_COMMAND_DETECTION
+            const uint16_t com_p = crsf::template commandPackages<true>();
+#endif
+            IO::outl<debug>("com_p: ", com_p);
+            if ((ch_p > 10) || (p_p > 0) || (l_p > 3)
+#ifdef USE_COMMAND_DETECTION
+                || (com_p > 0)
+#endif
+                ) {
                 if  (l_p == 0) {
                     event(Event::DirectConnected);
                 }

@@ -81,7 +81,7 @@ namespace RC {
                 static inline constexpr uint32_t baudrate{420'000};
 				static inline constexpr uint32_t baudrateHandset{400'000};
 #ifdef CRSF_LESS_BAUDRATES
-                static inline constexpr std::array<uint32_t, 3> baudrates{420'000, 921'000};
+                static inline constexpr std::array<uint32_t, 2> baudrates{420'000, 921'000};
 #else
                 static inline constexpr std::array<uint32_t, 3> baudrates{400'000, 420'000, 921'000};
 #endif
@@ -189,6 +189,7 @@ namespace RC {
                     inline static constexpr std::byte Set64{0x08}; // 4-state switches (3-bytes payload: [group, switches(16bit)], group: 0...3)
                     inline static constexpr std::byte Set4M{0x09}; // 4-state switches multiple
                     inline static constexpr std::byte SetRGB{0x0a}; // set 8 rgb leds (3x8bit each : 24 bytes payload)
+                    inline static constexpr std::byte SetText{0x0b}; // set morse text
                     inline static constexpr std::byte InterModule{0x10}; // a module sends trigger to another module (address)
                     inline static constexpr std::byte InterModulePatternStart{0x11};
                     inline static constexpr std::byte InterModulePatternStopAll{0x12};

@@ -522,6 +522,17 @@ namespace RC {
                         messageBuffer::ratePeriodic();
                         output::ratePeriodic();
                     }
+                    template<bool Reset = false>
+                    static inline uint16_t commandPackages() {
+                        if constexpr(Reset) {
+                            const auto v = mCommandPackagesCounter;
+                            mCommandPackagesCounter = 0;
+                            return v;
+                        }
+                        else {
+                            return mCommandPackagesCounter;
+                        }
+                    }
                     private:
                     static inline bool validityCheck(const volatile uint8_t* const data, const uint16_t) {
                         if (const uint8_t s = data[0]; ((s != (uint8_t)RC::Protokoll::Crsf::V4::Address::StartByte) &&
@@ -631,6 +642,7 @@ namespace RC {
                             }
                             break;
                         case RC::Protokoll::Crsf::V4::Type::Command:
+                            ++mCommandPackagesCounter;
                             if constexpr(requires(){callback::forwardPacket(data, 0);}) {
                                 callback::forwardPacket(data, paylength + 2);
                             }
@@ -656,6 +668,7 @@ namespace RC {
                             } while(data.size() > offset);
                         });
                     }
+                    static inline uint16_t mCommandPackagesCounter = 0;
                     inline static bool mCommandNoAddressCheck{true};
                     static inline uint8_t mAddress = 0xc8;
                     static inline volatile bool mActive = false;

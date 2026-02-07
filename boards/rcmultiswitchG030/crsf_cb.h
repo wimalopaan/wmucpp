@@ -256,7 +256,7 @@ private:
     static inline constexpr void addOutput(auto& p, const uint8_t parent, const char* const name) {
         const uint8_t parent2 = addParent(p, Param_t{parent, PType::Folder, name});
         addNode(p, Param_t{parent2, PType::Info, name, &mName[0]});
-        addNode(p, Param_t{parent2, PType::Sel, "PWM Mode", "Off;On;Remote", &storage::eeprom.outputs[index].pwm, 0, 2, [](const uint8_t v){Meta::nth_element<index, bsws>::pwm(v); return true;}});
+        addNode(p, Param_t{parent2, PType::Sel, "PWM Mode", "Off;On;Remote;Global/Indiv", &storage::eeprom.outputs[index].pwm, 0, 3, [](const uint8_t v){Meta::nth_element<index, bsws>::pwm(v); return true;}});
         addNode(p, Param_t{.parent = parent2, .type = PType::U8, .name = "PWM Duty", .value_ptr = &storage::eeprom.outputs[index].pwmDuty, .min = 1, .max = 99, .cb = [](const uint8_t v){Meta::nth_element<index, bsws>::duty((storage::eeprom.outputs[index].pwm == 2)?0:v); return true;}, .unitString = "%"});
         addNode(p, Param_t{parent2, PType::U8, "PWM Expo", nullptr, &storage::eeprom.outputs[index].pwmScale, 0, 100, [](const uint8_t v){Meta::nth_element<index, bsws>::expo(v); return true;}});
         addNode(p, Param_t{parent2, PType::Sel, "Intervall Mode", "Off;On;Morse;Pattern", &storage::eeprom.outputs[index].blink, 0, 2, [](const uint8_t v){Meta::nth_element<index, bsws>::blink(v); return true;}});
