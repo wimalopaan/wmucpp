@@ -24,6 +24,7 @@ template<typename Devices>
 struct GFSM {
     using devs = Devices;
     using systemTimer = devs::systemTimer;
+    using watchDog = devs::watchDog;
     using storage = devs::storage;
     using crsf = devs::crsf;
     using crsf_out = crsf::output;
@@ -95,6 +96,7 @@ struct GFSM {
         }
     }
     static inline void ratePeriodic() {
+        watchDog::ratePeriodic();
         crsf::ratePeriodic();
         led::ratePeriodic();
         pca::ratePeriodic();

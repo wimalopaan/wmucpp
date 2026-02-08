@@ -38,6 +38,7 @@
 #include "output.h"
 #include "concepts.h"
 #include "clock.h"
+#include "watchdog.h"
 #include "gpio.h"
 #include "spi.h"
 #include "tick.h"
@@ -65,6 +66,11 @@ template<typename Config, typename MCU>
 struct Devices<Led10, Config, MCU> {
     using clock = Mcu::Stm::Clock<Mcu::Stm::ClockConfig<64_MHz, 2'000_Hz, Mcu::Stm::HSI>>;
     using systemTimer = Mcu::Stm::SystemTimer<clock, Mcu::UseInterrupts<false>, MCU>;
+
+    struct WdgConfig {
+        static inline constexpr uint32_t reload = 500;
+    };
+    using watchDog = WatchDog<WdgConfig>;
 
     using gpioa = Mcu::Stm::GPIO<Mcu::Stm::A, MCU>;
     using gpiob = Mcu::Stm::GPIO<Mcu::Stm::B, MCU>;
@@ -162,6 +168,7 @@ struct Devices<Led10, Config, MCU> {
 		using storage = Devices::storage;
 	};
     struct CrsfCallbackConfig {
+        using watchdog = Devices::watchDog;
         using timer = systemTimer;
         using crsf = Devices::crsf;
         using storage = Devices::storage;
@@ -203,7 +210,9 @@ struct Devices<Led10, Config, MCU> {
         adc::oversample(7);
 		
 		adc::start();
-	}
+
+        watchDog::init();
+    }
 };
 
 template<typename Config, typename MCU>

@@ -9,13 +9,11 @@
 * PWM-Mode: Dimming
 * add morse-text
 * global pwm modulation via rc-channel / prop_set command for virtual
-* failsafe mode as multiswitch
+* failsafe mode like multiswitch
 * add slave-switch protocol (like Set):
-* add watchdog
 * add reset parameters command
 * add restart command (NVIC_SystemReset)
 * add NDEBUG=false mode with assertions using reset vector NVIC_SystemReset()
-* display reset cause and count (.noinit section variables)
 * flicker mode (us police mode)
 * group: on/off single ramps
 * implement 4-state switches (SET4 / SET4M proto) -> LED states (off, full, individual, group)
@@ -25,6 +23,8 @@
 
 * Done
 ------
+* add watchdog
+* display reset cause and count (.noinit section variables)
 * abbreviate texts (for b&w)
 * virtual switches (8)
 ** each: up to 4 real outputs

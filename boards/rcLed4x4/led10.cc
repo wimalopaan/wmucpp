@@ -18,6 +18,9 @@
 
 // #define USE_MORSE
 // #define USE_EEPROM_TEST // switches telemetry default on (instead off)
+
+// #define USE_WATCHDOG_TEST
+
 #define SERIAL_DEBUG
 
 #define HW_LED2
@@ -25,7 +28,7 @@
 #define NDEBUG // do not change: dev option
 
 #define HW_VERSION 2
-#define SW_VERSION 5
+#define SW_VERSION 6
 
 #include <cstdint>
 #include <array>
