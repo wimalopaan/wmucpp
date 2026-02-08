@@ -81,9 +81,9 @@ namespace RC {
                 static inline constexpr uint32_t baudrate{420'000};
 				static inline constexpr uint32_t baudrateHandset{400'000};
 #ifdef CRSF_LESS_BAUDRATES
-                static inline constexpr std::array<uint32_t, 2> baudrates{420'000, 921'000};
+                static inline constexpr std::array baudrates{420'000u, 921'000u};
 #else
-                static inline constexpr std::array<uint32_t, 3> baudrates{400'000, 420'000, 921'000};
+                static inline constexpr std::array baudrates{400'000u, 420'000u, 921'000u};
 #endif
                 namespace Address {
                     inline static constexpr std::byte StartByte{0xc8};
