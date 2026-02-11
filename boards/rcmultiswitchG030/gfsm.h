@@ -309,8 +309,8 @@ struct GFSM {
             const uint16_t p_p = crsf_pa::template pingPackages<true>();
 #ifdef USE_COMMAND_DETECTION
             const uint16_t com_p = crsf::template commandPackages<true>();
-#endif
             IO::outl<debug>("com_p: ", com_p);
+#endif
             if ((ch_p > 10) || (p_p > 0) || (l_p > 3)
 #ifdef USE_COMMAND_DETECTION
                 || (com_p > 0)
