@@ -59,7 +59,7 @@ struct EEProm {
     uint8_t pwm3 = 10;
     uint8_t pwm4 = 10;
 
-#ifdef USE_VIRTUALS
+#if defined(USE_VIRTUALS) || defined(USE_PATTERNS)
     struct AdrIndex {
         static inline constexpr uint8_t Switch  = 0;
         static inline constexpr uint8_t Virtual = 1;
