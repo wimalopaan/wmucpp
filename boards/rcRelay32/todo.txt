@@ -3,6 +3,7 @@ Bugs:
 
 ToDo:
 =====
+* menu: option for baudrate selection (400/420/460/921/1,8)
 * watchdog (show watchdog counter in menu)
 * adc input: voltage, temperature
 

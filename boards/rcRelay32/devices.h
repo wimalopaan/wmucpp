@@ -130,6 +130,8 @@ struct Devices<Nucleo, Config, MCU> {
         using storage = Devices::storage;
         using debug = Devices::debug;
         using tp = void;
+        using tp1 = void;
+        using tp2 = void;
         static inline constexpr uint8_t fifoSize = 16;
     };
     struct CrsfCallbackConfig;
