@@ -53,5 +53,8 @@ ARG USER_GID=$USER_UID
 RUN groupadd --gid $USER_GID $USERNAME \
     && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME 
 
+# Create /workspaces directory and set ownership for csp user
+RUN mkdir -p /workspaces && chown -R $USERNAME:$USERNAME /workspaces
+
 USER $USERNAME
 
