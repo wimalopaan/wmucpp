@@ -246,7 +246,7 @@ private:
         auto parent = addParent(p, Param_t{0, PType::Folder, "Bus"});
         addNode(p, Param_t{parent, PType::U8,  "TX Rewrite Address", nullptr, &eeprom.tx_rewrite_address, 192, 207, [](const uint8_t a){forwarder::txAddress(a); return true;}});
         addNode(p, Param_t{parent, PType::U8,  "RX Rewrite Address", nullptr, &eeprom.rx_rewrite_address, 192, 207, [](const uint8_t a){forwarder::rxAddress(a); return true;}});
-        addNode(p, Param_t{parent, PType::Str, "TX Rewrite Name", nullptr, nullptr, 0, 0, nullptr, 0, 0, 0, &eeprom.txname[0]});
+        addNode(p, Param_t{parent, PType::Str, "TX Rewrite Name", nullptr, nullptr, 0, 0, nullptr, 0, eeprom.txname.size(), 0, &eeprom.txname[0]});
 
         parent = addParent(p, Param_t{0, PType::Folder, "Analog1"});
         addNode(p, Param_t{parent, PType::Sel, "Stream", "SBus;Hw/Ext;Off", (uint8_t*)&eeprom.analogMaps[0].stream, 0, 2, [](const uint8_t){return true;}});
