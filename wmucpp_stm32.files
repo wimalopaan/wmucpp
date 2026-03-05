@@ -252,6 +252,7 @@ boards/rcDesk32/gfsm.h
 boards/rcDesk32/gfsm_test.h
 boards/rcDesk32/link_g0b1.ld
 boards/rcDesk32/package_relay_rewrite.h
+boards/rcDesk32/pcal6408.h
 boards/rcDesk32/port_aux1.h
 boards/rcDesk32/port_aux2.h
 boards/rcDesk32/port_bus.h
@@ -758,6 +759,7 @@ include_stm32/mpu6050.h
 include_stm32/opamp.h
 include_stm32/output.h
 include_stm32/pcal6408.h
+include_stm32/peripheral/pcal6408.h
 include_stm32/pwm.h
 include_stm32/pwm_dma.h
 include_stm32/qmc5883l.h
