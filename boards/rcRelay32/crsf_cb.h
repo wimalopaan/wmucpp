@@ -40,7 +40,10 @@ struct CrsfCallback {
     static inline constexpr const char* const title = "RC-Relay32@";
 
     using name_t = std::array<char, 32>;
-
+    
+    static inline constexpr void disableTelemetry() {
+        relay::disableTelemetryWithAutoOn();
+    }
     static inline constexpr void updateName(name_t& n) {
         strncpy(&n[0], title, n.size());
         auto r = std::to_chars(std::begin(n) + strlen(title), std::end(n), eeprom.address);
@@ -163,7 +166,7 @@ private:
     static inline void addForward(auto& p, const uint8_t parent, const char* const name) {
         addNode(p, Param_t{parent, PType::Sel, name, "Off;Forward;Tunnel", &eeprom.telemetryMode[type], 0, 2, [](const uint8_t v){relay::forwardTelemetryMode(type, v); return true;}});
     }
-    using params_t = etl::FixedVector<Param_t, 32>;
+    using params_t = etl::FixedVector<Param_t, 48>;
     static inline params_t params = [] {
         params_t p;
         addNode(p, Param_t{0, PType::Folder, "root"});
@@ -174,12 +177,14 @@ private:
 
         addNode(p, Param_t{0, PType::U8,  "TX Rewrite Address", nullptr, &eeprom.tx_rewrite_address, 192, 207, [](const uint8_t a){relay::txAddress(a); return true;}});
         addNode(p, Param_t{0, PType::U8,  "RX Rewrite Address", nullptr, &eeprom.rx_rewrite_address, 192, 207, [](const uint8_t a){relay::rxAddress(a); return true;}});
-        addNode(p, Param_t{0, PType::Str, "TX Rewrite Name", nullptr, nullptr, 0, 0, nullptr, 0, 0, 0, &eeprom.txname[0]});
+        addNode(p, Param_t{0, PType::Str, "TX Rewrite Name", nullptr, nullptr, 0, 0, nullptr, 0, eeprom.txname.size(), 0, &eeprom.txname[0]});
 		addNode(p, Param_t{0, PType::Sel, "Rewrite Name", "Off;On", &eeprom.rewrite_name, 0, 1, [](const uint8_t v){relay::rewriteName(v == 1); return true;}});
 
         addNode(p, Param_t{0, PType::Sel, "LinkStat", "Off;Forward;Transform;Tunnel", &eeprom.link_stat_mode, 0, 3, [](const uint8_t v){relay::linkStatMode(v); return true;}});
         addNode(p, Param_t{0, PType::Sel, "Failsafe", "Forward;Hold", &eeprom.failsafe_mode, 0, 1, [](const uint8_t){return true;}});
-
+        
+        addNode(p, Param_t{.parent = 0, .type = PType::U8, .name = "Telem. Off Dur.", .value_ptr = &eeprom.tempOffTelemetry, .min = 1, .max = 60, .cb = [](const uint8_t a){relay::telemetryTempOffDuration(a); return true;}, .unitString = "sec"});
+        
         const uint8_t parent = addParent(p, Param_t{0, PType::Folder, "Telemetry forwarding"});
         addNode(p, Param_t{parent, PType::U8,  "Forward Rate", nullptr, &eeprom.telemetry_rate, 1, 10, [](const uint8_t a){relay::telemetryRate(a); return true;}});
         addForward<0x02>(p, parent, "GPS");
@@ -202,6 +207,10 @@ private:
         addForward<0x22>(p, parent, "ESP Now");
 
         addNode(p, Param_t{0, PType::Sel, "Half-Duplex", "Off;On", &eeprom.half_duplex, 0, 1, [](const uint8_t v){relay::setHalfDuplex(v == 1); return true;}});
+        addNode(p, Param_t{0, PType::Sel, "Baudrate", "400k;420k;460K;921K;1,8M", &eeprom.baudrate, 0, 4, [](const uint8_t v){
+                               relay::baud(RC::Protokoll::Crsf::V4::baudratesHandset[v]);
+                               return true;
+                           }});
 #ifdef USE_IRDA
         addNode(p, Param_t{0, PType::Sel, "IrDA", "Off;On", &eeprom.irda, 0, 1, [](const uint8_t v){
                                 if (v == 0) {

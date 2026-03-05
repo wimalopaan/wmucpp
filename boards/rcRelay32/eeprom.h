@@ -49,8 +49,11 @@ struct EEProm {
 
     uint8_t half_duplex = 0;
     uint8_t irda = 0;
-
+    
+    uint8_t baudrate       = 3;
     uint8_t telemetry_rate = 2;
+    
+    uint8_t tempOffTelemetry = 30; // seconds for temporary telemetry off after parameter request
 
     std::array<uint8_t, (uint8_t)RC::Protokoll::Crsf::V4::Type::Ping> telemetryMode{};
 };

@@ -3,12 +3,13 @@ Bugs:
 
 ToDo:
 =====
-* menu: option for baudrate selection (400/420/460/921/1,8)
+* check 1,8MBaud with TBS tracer
 * watchdog (show watchdog counter in menu)
 * adc input: voltage, temperature
 
 Done:
 =====
+* menu: option for baudrate selection (400/420/460/921/1,8)
 * correct docu (RX and TX interchanged, A11 for half-duplex TX module)
 * allow more baudrates (e.g. 115200Bd for IR-Connection)
 * option to select IrDa-SIR mode

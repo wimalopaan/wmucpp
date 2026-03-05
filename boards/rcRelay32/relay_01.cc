@@ -17,12 +17,12 @@
  */
 
 #define USE_WEACT // STM32G031
-//#define USE_WMG0B1 // STM32G0B1
+// #define USE_WMG0B1 // STM32G0B1
 // #define USE_NUCLEO_431 // STM32G431 (dev board)
 
 #define SERIAL_DEBUG // only for WMG0B1
 
-// #define ALTERNATE_PINS // WmG0B1 only
+#define ALTERNATE_PINS // WmG0B1 only
 #define USE_IRDA
 
 // #define USE_IRDA_TX_INVERT // for testing only (or direct connection)
@@ -39,7 +39,7 @@
 #else
 # warning "wrong board definition"
 #endif
-#define SW_VERSION 13
+#define SW_VERSION 14
 
 #ifdef ALTERNATE_PINS
 # warning "IrDA disabled"

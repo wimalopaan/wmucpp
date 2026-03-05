@@ -432,7 +432,7 @@ struct Devices<Wmg0b1, Config, MCU> {
         using tp1 = void;
         using tp2 = void;
 #endif
-        static inline constexpr uint8_t fifoSize = 16;
+        static inline constexpr uint8_t fifoSize = 64;
     };
     struct CrsfCallbackConfig;
     using crsf_cb = CrsfCallback<CrsfCallbackConfig, debug>;
@@ -446,7 +446,7 @@ struct Devices<Wmg0b1, Config, MCU> {
         using debug = Devices::debug;
         using tp = void;
         using callback = crsf_cb;
-        static inline constexpr uint8_t fifoSize = 16;
+        static inline constexpr uint8_t fifoSize = 64;
     };
     struct CrsfCallbackConfig {
         using src = Devices::crsf;
