@@ -30,16 +30,14 @@ namespace etl {
     constexpr inline uint8_t asDigit(const char c) {
         return (static_cast<uint8_t>(c) - '0');
     }
-
     constexpr inline int32_t littleEndianI32(const uint8_t* const data) {
         return data[0] + (data[1] << 8) + (data[2] << 16) + (data[3] << 24);
     }
     constexpr inline uint32_t littleEndianU32(const uint8_t* const data) {
         return data[0] + (data[1] << 8) + (data[2] << 16) + (data[3] << 24);
     }
-
     template<auto L>
-    inline static float from_chars(const std::array<char, L>& str) {
+    constexpr float from_chars(const std::array<char, L>& str) {
         float value = 0;
         int8_t decimals = -1;
 
@@ -67,14 +65,14 @@ namespace etl {
         return value;
     }
     template<typename T>
-    bool equalStore(T& a, const T& b) {
+    constexpr bool equalStore(T& a, const T& b) {
         const bool result = (a == b);
         a = b;
         return result;
     }
 
     template<typename C>
-    bool contains(const C& c, const typename C::value_type e) {
+    constexpr bool contains(const C& c, const typename C::value_type e) {
         for(const auto& i : c) {
             if (e == i) {
                 return true;
@@ -91,7 +89,6 @@ namespace etl {
         lhs = rhs;
         return rhs;
     }
-
     static inline uint8_t assignH(volatile uint8_t& lhs, const uint16_t rhs) {
         const uint8_t v = (rhs >> 8);
         lhs = v;
@@ -126,12 +123,7 @@ namespace etl {
             ((c[II + 1] > max ? max = c[II + 1]: 0), ...);
             return max;
         }(std::make_index_sequence<std::tuple_size_v<C> - 1>{});
-    }   
-    // template<typename T>
-    // constexpr T maximum(const T v, ...) {
-    //     T max;
-
-    // }
+    }
     template<typename C>
     inline consteval bool isSet(const C& c) {
         using size_type = C::size_type;
@@ -229,6 +221,5 @@ namespace etl {
             (c.push_back(nth_byte<sizeof(T) - II - 1>(v)), ...);
         }(std::make_index_sequence<sizeof(T)>{});
     }
-
 }
 

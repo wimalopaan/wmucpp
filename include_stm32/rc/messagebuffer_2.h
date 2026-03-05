@@ -133,7 +133,6 @@ namespace Util {
         static inline void clearEvent() {
             mResponseEvent = ResponseEvent::None;
         }
-
         static inline void event(const Event e) {
             mEvent = e;
         }

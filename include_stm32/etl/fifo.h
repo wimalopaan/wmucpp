@@ -36,16 +36,13 @@ namespace etl {
         static_assert(etl::isPowerof2(Size));
         
         using size_type = uint16_t;
-//        using size_type = etl::typeForValue_t<Size>;
 
         static inline constexpr size_type size_mask = Size - 1;
         
         inline static constexpr size_type size() {
             return Size;
         }
-        // using index_type = size_type;
         using index_type = std::conditional_t<std::is_volatile_v<T>, volatile size_type, size_type>;
-//        using index_type = etl::uint_ranged_circular<size_type, 0, size() - 1>;
 
         template<typename U>
         inline bool emplace_back(const U& item) {
@@ -55,7 +52,6 @@ namespace etl {
                 return false;
             }
             mData[in] = item;
-            // std::copy(std::begin(item), std::end(item), std::begin(mData[in]));
             in = next;
             return true;
         }
@@ -71,7 +67,6 @@ namespace etl {
         inline bool push_back(const T& item) {
             size_type next{in};
             next = (next + 1) & size_mask;
-            
             if (out == next) {
                 return false;
             }
@@ -147,5 +142,4 @@ namespace etl {
         }
     private:
     };
-    
 }
