@@ -80,10 +80,11 @@ namespace RC {
             namespace V4 {
                 static inline constexpr uint32_t baudrate{420'000};
 				static inline constexpr uint32_t baudrateHandset{400'000};
+                static inline constexpr std::array baudratesHandset{400'000u, 420'000u, 460'800u, 921'600u, 1'870'000u};
 #ifdef CRSF_LESS_BAUDRATES
                 static inline constexpr std::array baudrates{420'000u, 921'000u};
 #else
-                static inline constexpr std::array baudrates{400'000u, 420'000u, 921'000u};
+                static inline constexpr std::array baudrates{400'000u, 420'000u, 921'600u}; // TBS uses 400k
 #endif
                 namespace Address {
                     inline static constexpr std::byte StartByte{0xc8};
