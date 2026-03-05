@@ -17,12 +17,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-# LD_PRELOAD=/usr/local/lib/libstlink.so /usr/local/bin/st-flash --reset --connect-under-reset write cc01.bin  0x8000000
-# LD_PRELOAD=/usr/local/lib/libstlink.so /usr/local/bin/st-trace --trace=24000000     
+# st-flash --reset --connect-under-reset write msw30.bin 0x8000000
 
 CPU = cortex-m0plus
-#FPU = -mfpu=softvfp
-#FLOAT-ABI = -mfloat-abi=soft
 
 CPPFLAGS += -I../../include_stm32
 CPPFLAGS += -I../../../STM32CubeG0/Drivers/CMSIS/Core/Include
@@ -30,7 +27,8 @@ CPPFLAGS += -I../../../STM32CubeG0/Drivers/CMSIS/Device/ST/STM32G0xx/Include
 CPPFLAGS += -I../../../STM32CubeG0/Drivers/STM32G0xx_HAL_Driver/Inc
 CPPFLAGS += -DSTM32G030xx
 
-#CXXFLAGS += -g
+CPPFLAGS += -DHW_MSW10
+
 OPTFLAGS = -Os
 
 LDSCRIPT = link_g030.ld
@@ -38,22 +36,21 @@ LOADLIBES += startup_g030.o system_g0.o
 
 targets += startup_g030.o
 targets += system_g0.o
-
-#targets += msw20.elf msw20.bin
 targets += msw30.elf msw30.bin
 
 system030: system_g0.o startup_g030.o
 
-g030: system030
-	make -f Makefile msw30.bin
+g030: clean system030 msw30.bin
 	
-g031:
+g031: clean
 	make -f Makefile.G031 g031
 	
-g051:
+g051: clean
 	make -f Makefile.G051 g051
 	
-g0b1:
+g0b1: clean
 	make -f Makefile.G0B1 g0b1
+
+gall: g030 g031 g051 g0b1
 
 -include ../../Makefile.arm.include

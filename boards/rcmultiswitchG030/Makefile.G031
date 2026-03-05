@@ -17,12 +17,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-# LD_PRELOAD=/usr/local/lib/libstlink.so /usr/local/bin/st-flash --reset --connect-under-reset write cc01.bin  0x8000000
-# LD_PRELOAD=/usr/local/lib/libstlink.so /usr/local/bin/st-trace --trace=24000000
+# st-flash --reset --connect-under-reset write msw30.bin 0x8000000
 
 CPU = cortex-m0plus
-#FPU = -mfpu=softvfp
-#FLOAT-ABI = -mfloat-abi=soft
 
 CPPFLAGS += -I../../include_stm32
 CPPFLAGS += -I../../../STM32CubeG0/Drivers/CMSIS/Core/Include
@@ -30,7 +27,8 @@ CPPFLAGS += -I../../../STM32CubeG0/Drivers/CMSIS/Device/ST/STM32G0xx/Include
 CPPFLAGS += -I../../../STM32CubeG0/Drivers/STM32G0xx_HAL_Driver/Inc
 CPPFLAGS += -DSTM32G031xx
 
-#CXXFLAGS += -g
+CPPFLAGS += -DHW_MSW11
+
 OPTFLAGS = -Os
 
 LDSCRIPT = link_g031.ld
@@ -43,6 +41,6 @@ targets += system031
 
 system031: system_g0.o startup_g031.o
 
-g031: system031 msw30.bin
+g031: clean system031 msw30.bin
 
 -include ../../Makefile.arm.include
