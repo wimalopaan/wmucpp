@@ -166,8 +166,8 @@ struct CrsfCallback {
                                    }
                                 return true;}});
         addNode(p, Param_t{parent2, PType::Sel, "Baudrate", "400k;420k", &eeprom.outputParams[index].baudrate, 0, 1, [](const uint8_t v){Meta::nth_element<index, crsf_ifaces>::baud((v == 0) ? 400'000 : 420'000); return true;}});
-
-        addNode(p, Param_t{parent2, PType::Str, "TX Rewrite Name", nullptr, nullptr, 0, 0, nullptr, 0, 0, 0, &eeprom.outputParams[index].tx_name[0]});
+        
+        addNode(p, Param_t{parent2, PType::Str, "TX Rewrite Name", nullptr, nullptr, 0, 0, nullptr, 0, eeprom.outputParams[index].tx_name.size(), 0, &eeprom.outputParams[index].tx_name[0]});
         addNode(p, Param_t{parent2, PType::Sel, "Rewrite Name", "Off;On", &eeprom.outputParams[index].rewrite_name, 0, 1, [](const uint8_t v){Meta::nth_element<index, crsf_ifaces>::rewriteName(v == 1); return true;}});
 
         addNode(p, Param_t{parent2, PType::Sel, "LinkStat", "Off;Forward;Transform;Tunnel", &eeprom.outputParams[index].link_stat_mode, 0, 3, [](const uint8_t v){Meta::nth_element<index, crsf_ifaces>::linkStatMode(v); return true;}});
@@ -228,7 +228,7 @@ struct CrsfCallback {
         addOutput<3>(p, 0, "Port FD2");
         addOutput<4>(p, 0, "Port FD3");
         addOutput<5>(p, 0, "Port FD4");
-
+        
         if (p.size() >= p.capacity()) {
             void fp();
             fp(); // compile-time check (call to undefined function)

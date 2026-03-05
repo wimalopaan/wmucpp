@@ -134,6 +134,9 @@ struct Devices<SW10, Config, MCU> {
         static inline void tunnelLinkStat(auto) {}
         static inline void forwardTelemetry(auto) {}
         static inline void tunnelTelemetry(auto) {}
+        static inline void linkStatMode(auto) {}
+        static inline void forwardTelemetryMode(auto, auto&) {}
+        static inline constexpr bool halfDuplex = false;
     };
 	using debugtx = crsf_fd4_tx;
     struct DebugConfig;
@@ -157,12 +160,7 @@ struct Devices<SW10, Config, MCU> {
     struct CrsfFD6Config;
     using crsf_6 = RC::Protokoll::Crsf::V4::PacketRelayRewrite<6, CrsfFD6Config, MCU>;
 
-#ifdef USE_DEBUG
-    // using crsf_ifaces = Meta::List<crsf_1, crsf_2, crsf_3, crsf_5, crsf_6>;
     using crsf_ifaces = Meta::List<crsf_2, crsf_1, crsf_3, crsf_4, crsf_5, crsf_6>;
-#else
-    using crsf_ifaces = Meta::List<crsf_2, crsf_1, crsf_3, crsf_4, crsf_5, crsf_6>;
-#endif
 	
     // Led
     using led = Mcu::Stm::Pin<gpiob, 2, MCU>;
@@ -302,7 +300,7 @@ struct Devices<SW10, Config, MCU> {
 		using dmaChWrite = csrfFd5DmaChannelComponent2;
         // using storage = Devices::storage;
         using storage =  StorageAdapter<4>;
-        using debug = Devices::debug;
+        using debug = Devices::debug1;
         using tp = void;
         using tp1 = void;
         using tp2 = void;
@@ -348,6 +346,7 @@ struct Devices<SW10, Config, MCU> {
         crsf_1::init();
         crsf_2::init();
         crsf_3::init();
+
 #ifdef USE_DEBUG
         debug::init();
 #else

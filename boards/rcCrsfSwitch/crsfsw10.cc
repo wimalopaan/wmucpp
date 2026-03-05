@@ -18,12 +18,12 @@
 
 #define NDEBUG
 
-#define USE_IRDA
+// #define USE_IRDA
 
 #define SW_VERSION 8
 #define HW_VERSION 2
 
-// #define USE_DEBUG
+// #define USE_DEBUG 
 
 #include <cstdint>
 #include <chrono>

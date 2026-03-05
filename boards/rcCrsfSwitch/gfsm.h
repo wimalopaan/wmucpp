@@ -39,6 +39,7 @@ struct GFSM {
     using led = devs::ledBlinker;
     using crsf_in = devs::crsf_in;
     using crsf_cb = devs::crsf_cb;
+    using crsf_pa = crsf_in::input;
 
     using crsf_ifaces = devs::crsf_ifaces;
 
@@ -54,8 +55,7 @@ struct GFSM {
     static inline constexpr External::Tick<systemTimer> telemetryTicks{20ms};
     static inline constexpr External::Tick<systemTimer> updateTicks{20ms};
     static inline constexpr External::Tick<systemTimer> directTicks{1000ms};
-    static inline constexpr External::Tick<systemTimer> packagesCheckTicks{300ms};
-    static inline constexpr External::Tick<systemTimer> baudCheckTicks{1000ms};
+    static inline constexpr External::Tick<systemTimer> baudCheckTicks{300ms};
     static inline constexpr External::Tick<systemTimer> pingTicks{500ms};
 
     static inline auto rcPacket = []{
@@ -97,22 +97,6 @@ struct GFSM {
     static inline void ratePeriodic() {
         periodics::ratePeriodic();
 
-        (++mPackagesCheckTick).on(packagesCheckTicks, []{
-            const uint16_t ch_p = crsf_in::input::template channelPackages<true>();
-            const uint16_t l_p = crsf_in::input::template linkPackages<true>();
-            if ((ch_p > 0)) {
-                if  ((l_p == 0)) {
-                    event(Event::DirectConnected);
-                }
-                else {
-                    event(Event::ReceiverConnected);
-                }
-            }
-            else {
-                event(Event::ConnectionLost);
-            }
-        });
-
         ++mStateTick;
         const auto oldState = mState;
         switch(mState) {
@@ -138,17 +122,15 @@ struct GFSM {
             });
             break;
         case State::CheckBaudrate:
-            mEvent.on(Event::ReceiverConnected, []{
-                mState = State::RunConnected;
-            }).thenOn(Event::DirectConnected, []{
-                mState = State::DirectMode;
-            });
             mStateTick.on(baudCheckTicks, []{
+                checkPackages();
+                if (mEvent.is(Event::ReceiverConnected) || mEvent.is(Event::DirectConnected)) {
+                    mState = State::RunConnected;
+                    return;
+                }
                 nextBaudrate();
+                resetCounter();
             });
-            // (++mUpdateTick).on(updateTicks, []{
-            //     sendRCFrame();
-            // });
             break;
         case State::RunUnconnected:
             mEvent.on(Event::ReceiverConnected, []{
@@ -230,6 +212,38 @@ struct GFSM {
         }
     }
 private:
+    static inline void resetCounter() {
+        crsf_pa::template channelPackages<true>();
+        crsf_pa::template linkPackages<true>();
+        crsf_pa::template pingPackages<true>();
+        crsf_in::template commandPackages<true>();
+    }
+    static inline void checkPackages() {
+        const uint16_t ch_p = crsf_pa::template channelPackages<true>();
+        const uint16_t l_p = crsf_pa::template linkPackages<true>();
+        const uint16_t p_p = crsf_pa::template pingPackages<true>();
+#ifdef USE_COMMAND_DETECTION
+        const uint16_t com_p = crsf::template commandPackages<true>();
+        IO::outl<debug>("com_p: ", com_p, " ch_p: ", ch_p, " l_p: ", l_p, " p_p: ", p_p);
+#else
+        IO::outl<debug>("ch_p: ", ch_p, " l_p: ", l_p, " p_p: ", p_p);
+#endif
+        if ((ch_p > 10) || (p_p > 0) || (l_p > 3)
+#ifdef USE_COMMAND_DETECTION
+            || (com_p > 0)
+#endif
+            ) {
+            if  (l_p == 0) {
+                event(Event::DirectConnected);
+            }
+            else {
+                event(Event::ReceiverConnected);
+            }
+        }
+        else {
+            event(Event::ConnectionLost);
+        }
+    }
     static inline void enableRelayPorts(const bool on) {
         for(uint8_t p = 0; p < storage::eeprom.outputParams.size(); ++p) {
             if (storage::eeprom.outputParams[p].failsafe_mode == 0) {
