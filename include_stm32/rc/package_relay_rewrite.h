@@ -55,7 +55,9 @@ namespace RC::Protokoll::Crsf {
             using tp = Config::tp;
             using tp1 = Config::tp1;
             using tp2 = Config::tp2;
-
+            
+            using tick_t = External::Tick<systemTimer, uint32_t>;
+            
             using router = Reflection::getRouter_t<Config>;
 
 			using bcastIfaces = Config::bcastInterfaces;
@@ -266,6 +268,14 @@ namespace RC::Protokoll::Crsf {
                 IO::outl<debug>("# iRoute: ", Config::id, " src: ", srcAddr);
                 router::backwardSrcAddress(Config::id, srcAddr, true);
             }
+            static inline void disableTelemetryWithAutoOn() {
+                IO::outl<debug>("# disable telemetry");
+                mTelemetryTemporaryOff = true;
+                mTelemTick.reset();
+            }
+            static inline void telemetryTempOffDuration(const uint8_t d) {
+                autoOnTicks = tick_t::fromRaw(d * 1000u);                
+            }
             static inline void periodic() {
                 using namespace RC::Protokoll::Crsf::V4;
                 if (!mActive) return;
@@ -276,7 +286,7 @@ namespace RC::Protokoll::Crsf {
                     break;
                 case State::Run:
                     if (mRxEvent.is(RxEvent::ReceiveComplete)) {
-                        IO::outl<debug>("# RX E");
+                        // IO::outl<debug>("# RX E");
                         // [[maybe_unused]] Debug::Scoped<tp> _tp;
                         handleIncoming();
                     }
@@ -289,7 +299,7 @@ namespace RC::Protokoll::Crsf {
             static inline void ratePeriodic() {
                 if (!mActive) return;
                 messageBuffer::ratePeriodic();
-
+                                
                 const auto oldState = mState;
                 ++mStateTick;
                 switch(mState) {
@@ -299,6 +309,10 @@ namespace RC::Protokoll::Crsf {
                     });
                     break;
                 case State::Run:
+                    (++mTelemTick).on(autoOnTicks, []{
+                        mTelemetryTemporaryOff = false;
+                        IO::outl<debug>("# telemetry enable");
+                    });
                     mStateTick.on(updateTicks, []{
                         update();
                     });
@@ -329,13 +343,12 @@ namespace RC::Protokoll::Crsf {
                         const auto f2 = [&](const volatile uint8_t* const data, const uint16_t size){
                             [[maybe_unused]] Debug::Scoped<tp1> tp1;
                             f();
-                            IO::outl<debug>("# onIdle: ", size);
+                            // IO::outl<debug>("# onIdle: ", size);
                             if (validityCheck(data, size)) {
                                 [[maybe_unused]] Debug::Scoped<tp> tp;
                                 mRxEvent = RxEvent::ReceiveComplete;
                                 return true;
                             }
-                            // return true;
                             return false;
                         };
                         uart::Isr::onIdle(f2);
@@ -453,6 +466,10 @@ namespace RC::Protokoll::Crsf {
 
                                 if (type >= (uint8_t)Type::Ping) {
                                     IO::outl<debug>("# wrong type");
+                                    return;
+                                }
+                                
+                                if (mTelemetryTemporaryOff) {
                                     return;
                                 }
 
@@ -623,7 +640,9 @@ namespace RC::Protokoll::Crsf {
 
             static inline bool validityCheck(const volatile uint8_t* const data, const uint16_t) {
                 if (const uint8_t s = data[0]; ((s != (uint8_t)RC::Protokoll::Crsf::V4::Address::StartByte) &&
-                                                (s != (uint8_t)RC::Protokoll::Crsf::V4::Address::Handset))) {
+                                                (s != (uint8_t)RC::Protokoll::Crsf::V4::Address::Handset) && 
+                                                (s != (uint8_t)RC::Protokoll::Crsf::V4::Address::RX) // RM ERS Sensoren
+                                                )) {
                     return false;
                 }
                 if (const uint8_t l = data[1]; l > RC::Protokoll::Crsf::V4::maxPayloadSize) {
@@ -654,6 +673,11 @@ namespace RC::Protokoll::Crsf {
                     });
                 }
             }
+            static inline tick_t autoOnTicks{30'000ms};
+            
+            static inline bool mTelemetryTemporaryOff  = false;
+            static inline tick_t mTelemTick;
+            
             static inline bool mEnabled  = true;
             static inline bool mSendBCast  = true;
             static inline bool mSendLinkStats  = true;

@@ -98,10 +98,9 @@ namespace RC {
                                         baud = baud * 256 + (uint8_t)payload[9];
                                         baud = baud * 256 + (uint8_t)payload[10];
                                         baud = baud * 256 + (uint8_t)payload[11];
-                                        // if constexpr(requires(){callback::baud(port, baud);}) {
+                                        if constexpr(requires(){callback::baud(port, baud);}) {
                                             callback::baud(port, baud);
-                                        // }
-
+                                        }
                                     }
                                 }
                             }
@@ -267,6 +266,9 @@ namespace RC {
                                         }
                                     }
                                     params[index].stringValue[paylength] = '\0';
+                                }
+                                if (params[index].cb) {
+                                    mustSave = params[index].cb(typename Param_t::value_type{});
                                 }
                             }
                             else {
@@ -536,7 +538,9 @@ namespace RC {
                     private:
                     static inline bool validityCheck(const volatile uint8_t* const data, const uint16_t) {
                         if (const uint8_t s = data[0]; ((s != (uint8_t)RC::Protokoll::Crsf::V4::Address::StartByte) &&
-                                                        (s != (uint8_t)RC::Protokoll::Crsf::V4::Address::Handset))) {
+                                                        (s != (uint8_t)RC::Protokoll::Crsf::V4::Address::Handset) &&
+                                                        (s != (uint8_t)RC::Protokoll::Crsf::V4::Address::RX) // RM ERS Sensoren 
+                                                        )) {
                             return false;
                         }
                         if (const uint8_t l = data[1]; l > RC::Protokoll::Crsf::V4::maxPayloadSize) {
