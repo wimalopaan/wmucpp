@@ -31,9 +31,9 @@ namespace External {
 
     namespace Morse {
         struct Entry {
-            char letter;
-            uint8_t length;
-            uint8_t pattern; // LSB first, 0: dit; 1: dah
+            const char letter;
+            const uint8_t length;
+            const uint8_t pattern; // LSB first, 0: dit; 1: dah
         };
         static inline constexpr std::array<Entry, 45> lut = {{
             { 'A', 2, 0b01},
@@ -79,8 +79,8 @@ namespace External {
             { '?', 6, 0b001100 },
             { '!', 6, 0b101011 },
             { '-', 6, 0b100001 },
-            { '=', 6, 0b10001 },
-            { '+', 6, 0b01010 }
+            { '=', 5, 0b10001 },
+            { '+', 5, 0b01010 }
         }};
 
         template<typename Pin, typename Config, typename Pwm = void>
@@ -92,7 +92,7 @@ namespace External {
 
             enum class State : uint8_t {Off, On, IntervallOff, IntervallOn, IntervallGap,
                                         PwmMode,
-                                        MorseStart, MorseNext, MorseDah, MorseDit, MorseGap, MorseIGap};
+                                        MorseStart, MorseNext, MorseDah, MorseDit, MorseGap, MorseIGap, MorseWGap};
             enum class Event : uint8_t {None, Off, On, PwmModeOn, PwmModeOff};
             enum class Blink : uint8_t {Steady, Blink, Morse};
 
@@ -134,6 +134,10 @@ namespace External {
             static inline void morse_igap_dezi(const uint8_t b) {
                 IO::outl<Debug>("# Pin: ", Pin::number, " igap: ", b);
                 morseIGapTicks = External::Tick<Timer>::fromRaw(b * 200);
+            }
+            static inline void morse_wgap_dezi(const uint8_t b) {
+                IO::outl<Debug>("# Pin: ", Pin::number, " wgap: ", b);
+                morseWGapTicks = External::Tick<Timer>::fromRaw(b * 200);
             }
             static inline void on_dezi(const uint8_t b) {
                 IO::outl<Debug>("# Pin: ", Pin::number, " Ion: ", b);
@@ -216,7 +220,6 @@ namespace External {
                     uint8_t charIndex = 0;
                     uint8_t signsLeft = 0;
                 } morseState;
-
                 const auto oldState = mState;
                 ++mStateTick;
                 switch(mState) {
@@ -266,25 +269,33 @@ namespace External {
                     break;
                 case State::MorseGap:
                     mStateTick.on(morseGapTicks, [] static {
-                      if (--morseState.signsLeft == 0) {
-                          ++morseState.charIndex;
-                          if ((text[morseState.charIndex] == '\0') || (morseState.charIndex >= text.size())) {
-                              mState = State::Off;
-                          }
-                          else {
+                        if (--morseState.signsLeft == 0) {
+                            ++morseState.charIndex;
+                            if ((text[morseState.charIndex] == '\0') || (morseState.charIndex >= text.size())) {
+                                mState = State::Off;
+                            }
+                            else if (text[morseState.charIndex] == ' ') {
+                                mState = State::MorseWGap;
+                            }
+                            else {
                                 mState = State::MorseIGap;
+                            }
                         }
-                      }
-                      else {
-                          morseState.actualPattern >>= 1;
-                          mState = State::MorseNext;
-                      }
+                        else {
+                            morseState.actualPattern >>= 1;
+                            mState = State::MorseNext;
+                        }
                       });
                     break;
                 case State::MorseIGap:
                     mStateTick.on(morseIGapTicks, [] static {
-                                     mState = State::MorseStart;
-                                  });
+                        mState = State::MorseStart;
+                    });
+                    break;
+                case State::MorseWGap:
+                    mStateTick.on(morseIGapTicks, [] static {
+                        mState = State::MorseStart;
+                    });
                     break;
                 case State::On:
                     mEvent.on(Event::Off, [] static {mState = State::Off;});
@@ -381,6 +392,11 @@ namespace External {
                         Pin::reset();
                         Pin::template dir<Mcu::Output>();
                         break;
+                    case State::MorseWGap:
+                        IO::outl<Debug>("# Pin: ", Pin::number, " MoWGap");
+                        Pin::reset();
+                        Pin::template dir<Mcu::Output>();
+                        break;
                     case State::On:
                         IO::outl<Debug>("# Pin: ", Pin::number, " On");
                         on();
@@ -450,6 +466,7 @@ namespace External {
             static inline External::Tick<Timer> morseDahTicks{600ms};
             static inline External::Tick<Timer> morseGapTicks{200ms};
             static inline External::Tick<Timer> morseIGapTicks{200ms};
+            static inline External::Tick<Timer> morseWGapTicks{400ms};
             static inline External::Tick<Timer> onTicks{100ms};
             static inline External::Tick<Timer> offTicks{100ms};
             static inline uint8_t flashCount = 1;
