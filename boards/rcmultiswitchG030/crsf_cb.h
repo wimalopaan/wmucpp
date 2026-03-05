@@ -38,6 +38,10 @@ struct CrsfCallback {
     };
     using swDecoder = RC::Protokoll::Crsf::V4::Util::SwitchDecoder<DecoderConfig>;
 
+#ifdef USE_MORSE
+    static inline constexpr auto& morse_text = Config::morse_text;
+#endif
+
     using bsws = Config::bswList;
     using pwms = Config::pwmList;
     using timer = Config::timer;
@@ -92,7 +96,7 @@ struct CrsfCallback {
     }
     static inline void setParameterValue(const uint8_t index, const auto data, const uint8_t paylength) {
 #ifdef USE_MORSE
-        if (RC::Protokoll::Crsf::V4::Util::setParameter<decltype(params), storage::eeprom.morse_text.size()>(params, index, data, paylength)) {
+        if (RC::Protokoll::Crsf::V4::Util::setParameter<decltype(params), storage::eeprom.morse_texts[0].size()>(params, index, data, paylength)) {
             storage::save();
         }
 #else
@@ -154,6 +158,41 @@ struct CrsfCallback {
         mEepromMode = prevMode;
     }
 private:
+#ifdef USE_MORSE
+    template<typename C>
+    static inline bool empty_string(const C& s) {
+        for(const auto c : s) {
+            if (c == '\0') return true;
+            if (c != ' ') return false;
+        }
+        return true;
+    }
+    template<bool Separate = false>
+    static inline void appendIfNotEmpty(uint8_t& i, auto& dst, auto& t) {
+        if (!empty_string(t)) {
+            if constexpr(Separate) {
+                dst[i++] = ' ';
+            }
+            for(const char c : t) {
+                if (c == '\0') break;
+                dst[i++] = c;
+            }
+        }
+    }
+    static inline bool mergeMorseStrings(const uint8_t) {
+        uint8_t i = 0;
+
+        appendIfNotEmpty<false>(i, morse_text, storage::eeprom.morse_texts[0]);
+        if constexpr(storage::eeprom.morse_texts.size() >= 4) {
+            appendIfNotEmpty<true>(i, morse_text, storage::eeprom.morse_texts[1]);
+            appendIfNotEmpty<true>(i, morse_text, storage::eeprom.morse_texts[2]);
+            appendIfNotEmpty<true>(i, morse_text, storage::eeprom.morse_texts[3]);
+        }
+        morse_text[std::min(i, uint8_t(morse_text.size() - 1))] = '\0';
+        IO::outl<debug>("# morse text: ", morse_text);
+        return true;
+    }
+#endif
     static inline bool resetAllParameter() {
 		IO::outl<debug>("# reset all");
 		storage::reset();
@@ -271,14 +310,13 @@ private:
     static inline auto params = []{
 #ifdef HW_MSW12
 # ifdef HW_MSW12_G051
-        etl::FixedVector<Param_t, 215> p;
+        etl::FixedVector<Param_t, 225> p;
 # else
-		etl::FixedVector<Param_t, 250> p;
+        etl::FixedVector<Param_t, 255> p;
 # endif
 #else
         etl::FixedVector<Param_t, 132> p;
 #endif
-		// etl::FixedVector<Param_t, 132> p;
         addNode(p, Param_t{0, PType::Folder, ""}); // unvisible top folder
         addNode(p, Param_t{0, PType::Info, "Version(HW/SW)", &mVersionString[0]});
         addNode(p, Param_t{0, PType::Info, "Watchdog", &mWdgString[0]});
@@ -358,7 +396,14 @@ private:
 
 #ifdef USE_MORSE
         parent = addParent(p, Param_t{0, PType::Folder, "Morse"});
-        addNode(p, Param_t{parent, PType::Str, "Text", nullptr, nullptr, 0, 0, nullptr, 0, 0, 0, &storage::eeprom.morse_text[0]}); // not supported by elrsv3.lua?
+        // addNode(p, Param_t{parent, PType::Str, "Text1", nullptr, nullptr, 0, 0, mergeMorseStrings, 0, 4, 0, &storage::eeprom.morse_texts[0][0]});
+        addNode(p, Param_t{parent, PType::Str, "Text1", nullptr, nullptr, 0, 0, mergeMorseStrings, 0, storage::eeprom.morse_texts[0].size(), 0, &storage::eeprom.morse_texts[0][0]}); 
+        if constexpr(storage::eeprom.morse_texts.size() >= 4) {
+            addNode(p, Param_t{parent, PType::Str, "Text2", nullptr, nullptr, 0, 0, mergeMorseStrings, 0, storage::eeprom.morse_texts[1].size(), 0, &storage::eeprom.morse_texts[1][0]}); 
+            addNode(p, Param_t{parent, PType::Str, "Text3", nullptr, nullptr, 0, 0, mergeMorseStrings, 0, storage::eeprom.morse_texts[2].size(), 0, &storage::eeprom.morse_texts[2][0]}); 
+            addNode(p, Param_t{parent, PType::Str, "Text4", nullptr, nullptr, 0, 0, mergeMorseStrings, 0, storage::eeprom.morse_texts[3].size(), 0, &storage::eeprom.morse_texts[3][0]}); 
+            addNode(p, Param_t{parent, PType::Info, "Full Text", &morse_text[0]});
+        }
         addNode(p, Param_t{parent, PType::U8,  "Dit duration", nullptr, &storage::eeprom.morse_dit, 1, 10, [](const uint8_t v){
                                Meta::visit<bsws>([&]<typename T>(Meta::Wrapper<T>){
                                    T::morse_dit_dezi(v);
@@ -376,6 +421,11 @@ private:
         addNode(p, Param_t{parent, PType::U8,  "Inter S. Gap dur.", nullptr, &storage::eeprom.morse_igap, 1, 10, [](const uint8_t v){
                                Meta::visit<bsws>([&]<typename T>(Meta::Wrapper<T>){
                                    T::morse_igap_dezi(v);
+                               });
+                               return true;}, 1, 0, 1, nullptr, " [100ms]"});
+        addNode(p, Param_t{parent, PType::U8,  "Inter W. Gap dur.", nullptr, &storage::eeprom.morse_wgap, 1, 10, [](const uint8_t v){
+                               Meta::visit<bsws>([&]<typename T>(Meta::Wrapper<T>){
+                                   T::morse_wgap_dezi(v);
                                });
                                return true;}, 1, 0, 1, nullptr, " [100ms]"});
 #endif

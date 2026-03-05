@@ -7,15 +7,19 @@ hardware:
 * uqfn32 version
 * solder-jumper to connect external power to JST-GH
 
+to test:
+--------
+* multiple morse texts
+
 todo:
 -----
+* if g0b1: select 1-of-N morse texts via menu
 * add command to transfer morse-text (e.g. from widget)
 * compile-time option to swap rx/tx for input
 * add restart command (NVIC_SystemReset)
 * add NDEBUG=false mode with assertions using reset vector NVIC_SystemReset()
 * pattern: add virtual support
 * more easily config, e.g. USE_RESPONSE_SLOT for CRSF_TX_OPENDRAIN
-* unify stm32 g031/g051/g071/g0b1 variants
 * statt Expo: PWM Duty Max Scaling 1/0.1/0.01
 * serial-bootloader (maybe OTA) (maybe use ESCape32-tool)
 
@@ -28,6 +32,8 @@ details:
 
 done:
 -----
+* unify stm32 g031/g051/g071/g0b1 variants
+* longer morse texts: use several menu entries (4x16 = 64 chars)
 * PWM-Mode: Off;On;Remote;Dimming
 * check for command messages too (just because RM Sensors do not forward link-stat and rc-channels :-( ) optional: slow-failsafe?
 * global pwm modulation via rc-channel / prop_set command for virtual

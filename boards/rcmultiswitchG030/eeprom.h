@@ -35,7 +35,7 @@ struct EEProm {
         etl::copy("Output 6", outputs[6].name);
         etl::copy("Output 7", outputs[7].name);
 #ifdef USE_MORSE
-        etl::copy("SOS", morse_text);
+        etl::copy("SOS", morse_texts[0]);
 #endif
     }
     struct Output {
@@ -93,11 +93,16 @@ struct EEProm {
 #endif
     std::array<Output, 8> outputs{};
 #ifdef USE_MORSE
-    std::array<char, 128> morse_text{};
+#if defined(HW_MSW12) || defined(HW_MSW12_G051)
+    std::array<std::array<char, 16>, 4> morse_texts{};
+#else
+    std::array<std::array<char, 16>, 1> morse_texts{};
+#endif
     uint8_t morse_dit = 3;
     uint8_t morse_dah = 6;
     uint8_t morse_gap = 3;
     uint8_t morse_igap = 3;
+    uint8_t morse_wgap = 9;
 #endif
 
 #ifdef USE_VIRTUALS

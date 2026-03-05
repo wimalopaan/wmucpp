@@ -56,7 +56,30 @@ namespace Local {
                 static_assert(false);
             }
         }
+        static inline void expo(const uint8_t e) {
+            if ((e > 0) && (e < 5)) {
+                mExpo = e;
+            }
+        }
+    private:
+        static inline uint32_t approximation(const uint8_t x) {
+            if (x <= 100) {
+                uint32_t res = x;
+                uint32_t p = x;
+                uint32_t n = 1;
+                uint32_t max = Pwm::period;
+                for(uint8_t i = 1; i < mExpo; ++i) {
+                    n = n * (i + 1);
+                    p *= x;
+                    p /= n;
+                    
+                    res += p;
+                }
+                return res;
+            }
+            return 0;                        
+        } 
+        static inline uint8_t mExpo = 1;
     };
-
 }
 

@@ -58,13 +58,12 @@ struct GFSM {
                                };
 
 #ifdef USE_COMMAND_DETECTION
-    static inline constexpr External::Tick<systemTimer> packagesCheckTicks{3000ms};
+    static inline constexpr External::Tick<systemTimer> baudCheckTicks{3000ms};
 #else
-    static inline constexpr External::Tick<systemTimer> packagesCheckTicks{300ms};
+    static inline constexpr External::Tick<systemTimer> baudCheckTicks{300ms};
 #endif
     static inline constexpr External::Tick<systemTimer> initTicks{100ms};
     static inline constexpr External::Tick<systemTimer> debugTicks{500ms};
-    static inline constexpr External::Tick<systemTimer> baudCheckTicks{1000ms};
     static inline constexpr External::Tick<systemTimer> telemTicks{100ms};
 
     static inline void update(const bool eepromMode = true) {
@@ -92,7 +91,7 @@ struct GFSM {
             decltype(w)::type::ratePeriodic();
         });
 
-        checkPackages();
+        // checkPackages();
         checkButton();
 
         ++mStateTick;
@@ -109,20 +108,20 @@ struct GFSM {
             });
             break;
         case State::CheckBaudrate:
-            if (mEvent.is(Event::ReceiverConnected) || mEvent.is(Event::DirectConnected)) {
-                if (storage::eeprom.telemetry) {
-                    mState = State::RunWithTelemetry;
+            mStateTick.on(baudCheckTicks, []{
+                checkPackages();
+                if (mEvent.is(Event::ReceiverConnected) || mEvent.is(Event::DirectConnected)) {
+                    if (storage::eeprom.telemetry) {
+                        mState = State::RunWithTelemetry;
+                    }
+                    else {
+                        mState = State::RunNoTelemetry;
+                    }
+                    return;
                 }
-                else {
-                    mState = State::RunNoTelemetry;
-                }
-            }
-            else {
-                mStateTick.on(baudCheckTicks, []{
-                    nextBaudrate();
-                    resetCounter();
-                });
-            }
+                nextBaudrate();
+                resetCounter();
+            });
             break;
         case State::RunNoTelemetry:
             mStateTick.on(debugTicks, []{
@@ -196,7 +195,6 @@ struct GFSM {
                 IO::outl<debug>("# Ck Baud");
                 led::count(1);
                 led::event(led::Event::Medium);
-                // nextBaudrate();
                 mEvent = Event::None;
                 break;
             case State::RunNoTelemetry:
@@ -280,7 +278,9 @@ struct GFSM {
                 crsf::setIrDA(true, txinvert, rxinvert);
                 // crsf_out::telemetrySlot(1);
 #else
-                crsf::setHalfDuplex(false);
+                if constexpr(requires{crsf::setHalfDuplex(false);}) {
+                    crsf::setHalfDuplex(false);
+                }
                 baudState = BaudState::FullDuplex;
 #endif
             }
@@ -303,30 +303,30 @@ struct GFSM {
         crsf::template commandPackages<true>();
     }
     static inline void checkPackages() {
-        (++mPackagesCheckTick).on(packagesCheckTicks, []{
-            const uint16_t ch_p = crsf_pa::template channelPackages<true>();
-            const uint16_t l_p = crsf_pa::template linkPackages<true>();
-            const uint16_t p_p = crsf_pa::template pingPackages<true>();
+        const uint16_t ch_p = crsf_pa::template channelPackages<true>();
+        const uint16_t l_p = crsf_pa::template linkPackages<true>();
+        const uint16_t p_p = crsf_pa::template pingPackages<true>();
 #ifdef USE_COMMAND_DETECTION
-            const uint16_t com_p = crsf::template commandPackages<true>();
-            IO::outl<debug>("com_p: ", com_p);
+        const uint16_t com_p = crsf::template commandPackages<true>();
+        IO::outl<debug>("com_p: ", com_p, " ch_p: ", ch_p, " l_p: ", l_p, " p_p: ", p_p);
+#else
+        IO::outl<debug>("ch_p: ", ch_p, " l_p: ", l_p, " p_p: ", p_p);
 #endif
-            if ((ch_p > 10) || (p_p > 0) || (l_p > 3)
+        if ((ch_p > 10) || (p_p > 0) || (l_p > 3)
 #ifdef USE_COMMAND_DETECTION
-                || (com_p > 0)
+            || (com_p > 0)
 #endif
-                ) {
-                if  (l_p == 0) {
-                    event(Event::DirectConnected);
-                }
-                else {
-                    event(Event::ReceiverConnected);
-                }
+            ) {
+            if  (l_p == 0) {
+                event(Event::DirectConnected);
             }
             else {
-                event(Event::ConnectionLost);
+                event(Event::ReceiverConnected);
             }
-        });
+        }
+        else {
+            event(Event::ConnectionLost);
+        }
     }
     static inline void checkButton() {
         if constexpr(!std::is_same_v<btn, void>) {

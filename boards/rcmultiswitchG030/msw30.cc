@@ -16,6 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#if !defined(HW_MSW10) && !defined(HW_MSW11) && !defined(HW_MSW12) && !defined(HW_NUCLEO) && !defined(HW_WEACT)
 // select one(!) of the following hardware definitions
 // #define HW_MSW10 // MultiSwitch_10 (32K), ATTENTION: use Makefile
 // #define HW_MSW11 // MultiSwitch_11 (64k), ATTENTION: use Makefile.G031
@@ -23,6 +24,8 @@
 // #define HW_MSW12_G051 // if above board is populated with G051 instead of G0B1
 // #define HW_NUCLEO // STM Nucleo G031K8 (64K) (incl. ST-Link), ATTENTION: use Makefile.G031
 // #define HW_WEACT // WeAct G031F8 (64K), ATTENTION: use Makefile.G031
+// #define HW_WMG0B1 // WM G0B1 (64K), ATTENTION: use Makefile.G0B1
+#endif
 
 // feature selection
 // if you get an error (undefined symbol fp()), deselect features to free memory
@@ -50,14 +53,14 @@
 
 // debugging settings (do not change)
 
-#define CRSF_LESS_BAUDRATES // only check a limited set of baudrates at startup
-//#define NO_DEFAULTS_MSW12
+// #define CRSF_LESS_BAUDRATES // only check a limited set of baudrates at startup (Attention: TBS uses 400k, do not use this option)
+// #define NO_DEFAULTS_MSW12
 // #define USE_WATCHDOG_TEST
 
 #define NDEBUG // do not change: dev option
  
 // STM32G0B1: capable of all features
-#if defined(HW_MSW12) && !defined(NO_DEFAULTS_MSW12)
+#if (defined(HW_MSW12) || defined(HW_WMG0B1)) && !defined(NO_DEFAULTS_MSW12)
 
 #if defined(HW_MSW12_G051)
 # if !defined(SERIAL_DEBUG)
@@ -120,9 +123,6 @@
 # if !defined(USE_PWM_GLOBAL_MODULATION)
 #  define USE_PWM_GLOBAL_MODULATION
 # endif
-# if !defined(USE_COMMAND_DETECTION)
-#  define USE_COMMAND_DETECTION
-# endif
 #endif
 #endif
 
@@ -145,6 +145,8 @@
 # ifdef SERIAL_DEBUG
 #  warning "serial out pn PA14 disables SWD programming -> use NRST to reset when start programming"
 # endif
+#elif defined(HW_WMG0B1)
+# define HW_VERSION 12
 #else
 # error "wrong hardware definition"
 #endif
@@ -155,7 +157,7 @@
 # undef USE_PATTERNS
 #endif
 
-#define SW_VERSION 41
+#define SW_VERSION 42
 
 #include <cstdint>
 #include <array>
@@ -202,6 +204,9 @@ using devs = Devices<Nucleo, DevsConfig>;
 #endif
 #ifdef HW_WEACT
 using devs = Devices<WeAct, DevsConfig>;
+#endif
+#ifdef HW_WMG0B1
+using devs = Devices<WMG0B1, DevsConfig>;
 #endif
 
 struct DevsConfig {
