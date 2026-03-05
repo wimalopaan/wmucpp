@@ -73,7 +73,7 @@
 #include "crsfchannelcollector.h"
 #include "uuid.h"
 #include "qmc5883l.h"
-#include "mpu6050.h"
+#include "peripheral/mpu6050.h"
 #include "bluetooth/jdy10.h"
 #include "ws2812b.h"
 
