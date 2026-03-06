@@ -3,6 +3,7 @@ bugs:
 
 todo:
 =====
+* disbale telemetry when receicing config-protocol
 * menu: option for using 0xc8 address as additional broadcast (all RM Sensors use 0xc8 as their address with MSP-over-CRSF addressing)
 * Sensor-ID transformation if identical ID on different interfaces
 * watchdog

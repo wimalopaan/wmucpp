@@ -286,7 +286,7 @@ struct Devices<WeAct, Config, MCU> {
         using debug = Devices::debug;
         using tp = void;
         using callback = crsf_cb;
-        static inline constexpr uint8_t fifoSize = 16;
+        static inline constexpr uint8_t fifoSize = 32;
     };
     struct CrsfCallbackConfig {
         using src = Devices::crsf;
