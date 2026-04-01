@@ -19,6 +19,7 @@
 
 subdirs += G431Mp6543_01
 subdirs += G431L6234_01
+subdirs += G473DRV8317_01
 
 -include ../../Makefile.include
 
