@@ -26,14 +26,15 @@ struct SerialBuffered {
     using pin = Config::pin;
     static inline void init() {
         uart::init();
-        if constexpr(Mcu::Stm::V4::detail::getSwap_v<Config>) {
-            static uint8_t af = Mcu::Stm::AlternateFunctions::mapper_v<pin, uart, Mcu::Stm::AlternateFunctions::RX>;
-            pin::afunction(af);
-        }
-        else {
-            static uint8_t af = Mcu::Stm::AlternateFunctions::mapper_v<pin, uart, Mcu::Stm::AlternateFunctions::TX>;
-            pin::afunction(af);
-        }
+        static constexpr uint8_t af = []{
+            if constexpr(Mcu::Stm::V4::detail::getSwap_v<Config>) {
+                return Mcu::Stm::AlternateFunctions::mapper_v<pin, uart, Mcu::Stm::AlternateFunctions::RX>;
+            }
+            else {
+                return Mcu::Stm::AlternateFunctions::mapper_v<pin, uart, Mcu::Stm::AlternateFunctions::TX>;
+            }
+        }();
+        pin::afunction(af);
     }
     static inline void reset() {
         uart::reset();
