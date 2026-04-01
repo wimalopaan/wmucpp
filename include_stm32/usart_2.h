@@ -375,6 +375,12 @@ namespace Mcu::Stm {
                     RCC->CCIPR |= 0x01 << RCC_CCIPR_USART2SEL_Pos;
 #endif
                 }
+#if defined(STM32G4) 
+                else if constexpr (N == 3) {
+                    RCC->APB1ENR1 |= RCC_APB1ENR1_USART3EN;
+                    RCC->CCIPR |= 0x01 << RCC_CCIPR_USART3SEL_Pos;
+                }
+#endif
 #ifdef STM32G0B1xx
                 else if constexpr (N == 3) {
                     RCC->APBENR1 |= RCC_APBENR1_USART3EN;
@@ -468,7 +474,10 @@ namespace Mcu::Stm {
                             cr1 |= USART_CR1_FIFOEN;
                         }
 #ifdef STM32G4
-                        if constexpr (N == 2) {
+                        else if constexpr (N == 2) {
+                            cr1 |= USART_CR1_FIFOEN;
+                        }
+                        else if constexpr (N == 3) {
                             cr1 |= USART_CR1_FIFOEN;
                         }
 #endif
@@ -479,7 +488,7 @@ namespace Mcu::Stm {
                         else if constexpr(N == 102) {
                             cr1 |= USART_CR1_FIFOEN;
                         }
-		#endif
+#endif
 						else if constexpr(N == 101) {
                             cr1 |= USART_CR1_FIFOEN;
                         }

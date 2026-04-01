@@ -94,6 +94,11 @@ namespace Mcu::Stm {
 			template<Mcu::Stm::G4xx MCU>
             struct Impl<Pin<A, 10>, Usart<1>, RX, MCU> : std::integral_constant<uint8_t, 7> {};
 
+            template<Mcu::Stm::G4xx MCU>
+            struct Impl<Pin<B, 6>, Usart<1>, TX, MCU> : std::integral_constant<uint8_t, 7> {};
+			template<Mcu::Stm::G4xx MCU>
+            struct Impl<Pin<B, 7>, Usart<1>, RX, MCU> : std::integral_constant<uint8_t, 7> {};
+            
 			template<Mcu::Stm::G4xx MCU>
             struct Impl<Pin<A, 14>, Usart<2>, TX, MCU> : std::integral_constant<uint8_t, 7> {};
             template<Mcu::Stm::G4xx MCU>
@@ -108,7 +113,12 @@ namespace Mcu::Stm {
             struct Impl<Pin<B, 3>, Usart<2>, TX, MCU> : std::integral_constant<uint8_t, 7> {};
             template<Mcu::Stm::G4xx MCU>
             struct Impl<Pin<B, 4>, Usart<2>, RX, MCU> : std::integral_constant<uint8_t, 7> {};
-			
+
+            template<Mcu::Stm::G4xx MCU>
+            struct Impl<Pin<B, 10>, Usart<3>, TX, MCU> : std::integral_constant<uint8_t, 7> {};
+            template<Mcu::Stm::G4xx MCU>
+            struct Impl<Pin<B, 11>, Usart<3>, RX, MCU> : std::integral_constant<uint8_t, 7> {};
+            
 			template<Mcu::Stm::G4xx MCU>
             struct Impl<Pin<A, 2>, Usart<101>, TX, MCU> : std::integral_constant<uint8_t, 12> {};
             template<Mcu::Stm::G4xx MCU>
@@ -122,7 +132,10 @@ namespace Mcu::Stm {
             struct Impl<Pin<F, 1>, SPI<2>, SCLK, MCU> : std::integral_constant<uint8_t, 5> {};
 			template<Mcu::Stm::G4xx MCU>
             struct Impl<Pin<F, 0>, SPI<2>, CS, MCU> : std::integral_constant<uint8_t, 5> {};
-			
+            template<Mcu::Stm::G4xx MCU>
+            struct Impl<Pin<B, 14>, SPI<2>, MISO, MCU> : std::integral_constant<uint8_t, 5> {};
+			template<Mcu::Stm::G4xx MCU>
+            struct Impl<Pin<B, 15>, SPI<2>, MOSI, MCU> : std::integral_constant<uint8_t, 5> {};
 			
             template<Mcu::Stm::G0xx MCU>
             struct Impl<Pin<A, 11>, Timer<1>, CC<4>, MCU> : std::integral_constant<uint8_t, 2> {};
