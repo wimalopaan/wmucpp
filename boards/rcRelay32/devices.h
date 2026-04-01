@@ -446,7 +446,7 @@ struct Devices<Wmg0b1, Config, MCU> {
         using debug = Devices::debug;
         using tp = void;
         using callback = crsf_cb;
-        static inline constexpr uint8_t fifoSize = 64;
+        static inline constexpr uint8_t fifoSize = 128;
     };
     struct CrsfCallbackConfig {
         using src = Devices::crsf;

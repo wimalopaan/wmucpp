@@ -16,14 +16,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define USE_WEACT // STM32G031
-// #define USE_WMG0B1 // STM32G0B1
+// #define USE_WEACT // STM32G031
+#define USE_WMG0B1 // STM32G0B1
 // #define USE_NUCLEO_431 // STM32G431 (dev board)
 
 #define SERIAL_DEBUG // only for WMG0B1
 
 #define ALTERNATE_PINS // WmG0B1 only
-#define USE_IRDA
+// #define USE_IRDA
 
 // #define USE_IRDA_TX_INVERT // for testing only (or direct connection)
 
@@ -42,8 +42,10 @@
 #define SW_VERSION 14
 
 #ifdef ALTERNATE_PINS
-# warning "IrDA disabled"
-# undef USE_IRDA
+# ifdef USE_IRDA
+#  warning "IrDA disabled"
+#  undef USE_IRDA
+# endif
 #endif
 
 #include <cstdint>

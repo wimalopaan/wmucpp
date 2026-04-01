@@ -1,14 +1,23 @@
+Hardware:
+=========
+
+* V-10: PCB for JR-Bay-Modules
+* V-20: PCB for serial rx-as-tx
+
 Bugs:
 =====
 
+* Telemetry-Tunnel LUA: stopped working on EdgeTx 3.0?
+
+
 ToDo:
 =====
-* check 1,8MBaud with TBS tracer
 * watchdog (show watchdog counter in menu)
 * adc input: voltage, temperature
 
 Done:
 =====
+* check 1,8MBaud with TBS tracer (not not work)
 * menu: option for baudrate selection (400/420/460/921/1,8)
 * correct docu (RX and TX interchanged, A11 for half-duplex TX module)
 * allow more baudrates (e.g. 115200Bd for IR-Connection)
