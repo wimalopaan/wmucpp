@@ -43,11 +43,12 @@ struct Feetech {
                                 Run,
                                 Error};
 
-    static inline constexpr External::Tick<systemTimer> noiseMeasureTicks{500ms};
+    static inline constexpr External::Tick<systemTimer> noiseMeasureTicks{1000ms};
     static inline constexpr External::Tick<systemTimer> noiseWaitTicks{100ms};
     static inline constexpr External::Tick<systemTimer> deadSettleTicks{100ms};
     static inline constexpr External::Tick<systemTimer> rangeTicks{5000ms};
     static inline constexpr External::Tick<systemTimer> initTicks{500ms};
+    static inline constexpr External::Tick<systemTimer> debugTicks{250ms};
 
     static inline void init() {
         IO::outl<debug>("# FT init");
@@ -94,6 +95,7 @@ struct Feetech {
     static inline void periodic() {
     }
     static inline void ratePeriodic() {
+        ++mDebugTick;
         const auto oldState = mState;
         ++mStateTick;
         switch(mState) {
@@ -124,6 +126,9 @@ struct Feetech {
                 mNoiseAmplitude = mNoiseMax - mNoiseMin;
                 mState = State::StartPosition;
             });
+            (++mDebugTick).on(debugTicks, [&]{
+                IO::outl<Debug>("# Noise: v: ", v);
+            });
         }
             break;
         case State::StartPosition:
@@ -137,6 +142,11 @@ struct Feetech {
         case State::StartPositionRotate:
             if (const uint16_t v = Fb::read(); (v > 1500) && (v < 2500)) {
                 mState = State::DeadStartP;
+            }
+            else {
+                (++mDebugTick).on(debugTicks, [&]{
+                    IO::outl<Debug>("# StartPositionRot: v: ", v);
+                });
             }
             break;
         case State::DeadStartP:
@@ -376,4 +386,5 @@ struct Feetech {
     static inline Event mEvent{Event::None};
     static inline State mState{State::Start};
     static inline External::Tick<systemTimer> mStateTick;
+    static inline External::Tick<systemTimer> mDebugTick;
 };

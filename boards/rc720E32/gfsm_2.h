@@ -304,7 +304,8 @@ struct GFSM {
                 // IO::outl<debug>("# sbus aux: ", sbus_aux::value(0));
                 // IO::outl<debug>("_end:", &_end, " _ebss:", &_ebss, " heap:", heap);
                 // IO::outl<debug>("ch0: ", crsf_in_pa::value(0), " phi0: ", polar1::phi(), " amp0: ", polar1::amp(), " a0: ", Servos::actualPos(0), " t0: ", Servos::turns(0), " phi1: ", polar2::phi(), " amp1: ", polar2::amp(), " a1: ", Servos::actualPos(1), " t1: ", Servos::turns(1));
-				IO::outl<debug>("ec: ", esc32_1::errorCount(), " rpm: ", esc32_1::rpm());
+				// IO::outl<debug>("ec: ", esc32_1::errorCount(), " rpm: ", esc32_1::rpm());
+                IO::outl<debug>("adc: ", adc::values()[0], " ", adc::values()[1]);
             });
             break;
         case State::DirectMode:
@@ -379,7 +380,6 @@ struct GFSM {
                 crsf_in::address(std::byte(storage::eeprom.address));
                 led1::event(led1::Event::Slow);
                 led2::event(led2::Event::Off);
-                adc::start();
                 break;
             case State::DirectMode:
                 IO::outl<debug>("# DMode");

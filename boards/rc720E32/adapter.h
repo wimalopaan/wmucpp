@@ -134,21 +134,18 @@ struct FeedbackAdapter {
     using pin = Pin;
     static inline void init() {
         RessourceCount<adc>::acquire([]{
-            IO::outl<Debug>("FBA", Channel, " init");
+            IO::outl<Debug>("FBA ", Channel, " init");
             adc::init(); // only if first channel
-            adc::oversample(8); // 256
-            while(!adc::ready()) ;
-            IO::outl<Debug>("FBA", Channel, " init ready");
+            adc::start();
+            IO::outl<Debug>("FBA ", Channel, " init ready");
         });
         pin::analog();
     }
     static inline void reset() {
-        // todo: stoppping and restart ????
-
-        // RessourceCount<adc>::release([]{
-            // adc::reset(); // only if last channel
-            // adc::dmaChannel::enable(false);
-        // });
+        RessourceCount<adc>::release([]{
+            IO::outl<Debug>("FBA ", Channel, " reset");
+            adc::reset(); // only if last channel
+        });
     }
     static inline uint16_t read() {
         return adc::values()[Channel];

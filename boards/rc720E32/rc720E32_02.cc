@@ -16,7 +16,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-// #define USE_CRSF_V3
 #define ESCAPE32_ASCII // enable ESCape32 ascii configuration parameter menu
 // #define ESCAPE32_U8 // use only 8bit capable parameters
 #define SERVO_CALIBRATION // enable analog feedback servo calibration
@@ -25,7 +24,7 @@
 #define SERIAL_DEBUG // enable debug on esc-tlm-1
 #define TEST_EEPROM // fill eeprom with test setup
 
-#define SW_VERSION 21
+#define SW_VERSION 22
 #define HW_VERSION 2
 
 #define NDEBUG
@@ -99,8 +98,8 @@ int main() {
     NVIC_EnableIRQ(DMA1_Ch4_7_DMA2_Ch1_5_DMAMUX1_OVR_IRQn);
     NVIC_SetPriority(DMA1_Ch4_7_DMA2_Ch1_5_DMAMUX1_OVR_IRQn, defaultIntPrio);
 
-    NVIC_EnableIRQ(ADC1_COMP_IRQn);
-    NVIC_SetPriority(ADC1_COMP_IRQn, defaultIntPrio);
+    // NVIC_EnableIRQ(ADC1_COMP_IRQn);
+    // NVIC_SetPriority(ADC1_COMP_IRQn, defaultIntPrio);
 
     NVIC_EnableIRQ(TIM3_TIM4_IRQn);
     NVIC_SetPriority(TIM3_TIM4_IRQn, defaultIntPrio);

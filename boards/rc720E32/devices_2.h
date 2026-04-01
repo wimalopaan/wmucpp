@@ -111,7 +111,7 @@ struct Devices<SW01, Config, MCU> {
     using csrfInDmaChannelComponent1 = Mcu::Components::DmaChannel<typename dma1::component_t, 1>;
     using csrfInDmaChannelComponent2 = Mcu::Components::DmaChannel<typename dma1::component_t, 2>;
     // adc
-    using adcDmaChannel     = Mcu::Stm::Dma::Channel<dma1, 3, MCU>;
+    using adcDmaChannelComponent = Mcu::Components::DmaChannel<typename dma1::component_t, 3>;
     // half-duplex
     using srv1DmaChannelComponent = Mcu::Components::DmaChannel<typename dma1::component_t, 4>;
 
@@ -232,8 +232,17 @@ struct Devices<SW01, Config, MCU> {
 
     // Fb1:  PA6 : TIM3-CH1 (AF1), TIM16-CH1(AF5), ADC-IN6
     using fb1_pin = Mcu::Stm::Pin<gpioa, 6, MCU>;
-    using adc = Mcu::Stm::V3::Adc<1, Meta::NList<6, 5>, Mcu::Stm::ContinousSampling<16>, adcDmaChannel, std::array<uint16_t, 2>, Meta::List<Mcu::Stm::EndOfSequence>>;
-    using srv1_fb = FeedbackAdapter<0, adc, fb1_pin, debug>;
+ 
+    struct AdcConfig {
+        using debug = void;
+        using channels = std::integer_sequence<uint8_t, 5, 6>;
+        using dmaChannel = adcDmaChannelComponent;
+        using trigger = Mcu::Stm::ContinousSampling<16>;
+        using isrConfig = Meta::List<>;
+    };
+    using adc = Mcu::Stm::V4::Adc<1, AdcConfig>;
+    
+    using srv1_fb = FeedbackAdapter<1, adc, fb1_pin, debug>; // IN6: index=1
     using srv1_feetech = Feetech<0, polar1, srv1_fb, srv1_pwm, systemTimer, debug>;
 
     // time-multiplex for old analog switch-modules
@@ -294,9 +303,9 @@ struct Devices<SW01, Config, MCU> {
 
     // Fehler auf Platine (PWM Messung): mit PB5 (TIM3-CH2) verbinden
     // Fb2:  PA5 : ADC-IN5
-    using tp3 = Mcu::Stm::Pin<gpioa, 5, MCU>;
+    // using tp3 = Mcu::Stm::Pin<gpioa, 5, MCU>;
     using fb2_pin = Mcu::Stm::Pin<gpioa, 5, MCU>;
-    using srv2_fb = FeedbackAdapter<1, adc, fb2_pin>;
+    using srv2_fb = FeedbackAdapter<0, adc, fb2_pin>; // IN5 : Index = 0
     using srv2_feetech = Feetech<1, polar2, srv2_fb, srv2_pwm, systemTimer, debug>;
 
     // time-multiplex for old analog switch-modules
@@ -578,7 +587,7 @@ struct Devices<SW01, Config, MCU> {
         using clock = Devices::clock;
         using dmaChRead  = csrfInDmaChannelComponent1;
         using dmaChWrite = csrfInDmaChannelComponent2;
-        using debug = Devices::debug;
+        using debug = void;
         using tp = void;
         using callback = CrsfCallback<CrsfCallbackConfig, debug>;
         static inline constexpr uint8_t fifoSize = 16;
@@ -629,7 +638,7 @@ struct Devices<SW01, Config, MCU> {
         using systemTimer = Devices::systemTimer;
         using dmaChComponent = srv1DmaChannelComponent;
         using debug = Devices::debug;
-        using tp = tp3;
+        using tp = void;
         using callback = SPortTelemetryCallback<Srv1SPortCallbackConfig>;
     };
     struct WS2Config {
@@ -750,14 +759,11 @@ struct Devices<SW01, Config, MCU> {
 
         i2c::init();
 
-        // adc::init();
-        // adc::oversample(8); // 256
-
         qmc5883l::init();
         mpu6050::init();
 
         // tp1::template dir<Mcu::Output>();
-        tp3::template dir<Mcu::Output>();
+        // tp3::template dir<Mcu::Output>();
     }
 };
 
