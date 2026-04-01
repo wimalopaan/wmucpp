@@ -218,7 +218,7 @@ struct GFSM {
 #endif
             case State::RunWithTelemetry:
                 IO::outl<debug>("# Run WT");
-                IO::outl<debug>("# adr: ", storage::eeprom.address1);
+                IO::outl<debug>("# adr: ", storage::eeprom.addresses[0]);
                 crsf_out::enableReply(true);
 #ifdef HW_LED2
 				led::count(2);

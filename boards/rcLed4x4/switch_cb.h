@@ -79,37 +79,67 @@ struct SwitchCallback {
 		}
 		return false;
 	}
-	static inline void set(const uint8_t state8) {
-		for(uint8_t i = 0; i < 8; ++i) {
-			const bool use = (storage::eeprom.use_virtuals == 0) || !isMemberOfVirtual(i);
-			if (use) {
-				if (state8 & (1 << i)) {
-					setIndex(i, true);
-				}
-				else {
-					setIndex(i, false);
-				}
-			}
-		}
-	}
-	static inline void set2(const uint8_t state8) {
-		for(uint8_t i = 0; i < 8; ++i) {
-			const bool use = (storage::eeprom.use_virtuals == 0) || !isMemberOfVirtual(i + 8);
-			if (use) {
-				if (state8 & (1 << i)) {
-					setIndex(i + 8, true);
-				}
-				else {
-					setIndex(i + 8, false);
-				}
-			}
-		}
-	}
-	static inline void setIndex(const uint8_t index, const bool on) {
+    // static inline void set(const uint8_t state8) {
+    // 	for(uint8_t i = 0; i < 8; ++i) {
+    // 		const bool use = (storage::eeprom.use_virtuals == 0) || !isMemberOfVirtual(i);
+    // 		if (use) {
+    // 			if (state8 & (1 << i)) {
+    // 				setIndex(i, true);
+    // 			}
+    // 			else {
+    // 				setIndex(i, false);
+    // 			}
+    // 		}
+    // 	}
+    // }
+    // static inline void set2(const uint8_t state8) {
+    // 	for(uint8_t i = 0; i < 8; ++i) {
+    // 		const bool use = (storage::eeprom.use_virtuals == 0) || !isMemberOfVirtual(i + 8);
+    // 		if (use) {
+    // 			if (state8 & (1 << i)) {
+    // 				setIndex(i + 8, true);
+    // 			}
+    // 			else {
+    // 				setIndex(i + 8, false);
+    // 			}
+    // 		}
+    // 	}
+    // }
+    static inline void prop(const uint8_t adrIndex, const uint8_t channel, const uint8_t duty) {
+    }
+    static inline void set(const uint8_t adrIndex, const uint8_t state8) {
+            for(uint8_t i = 0; i < 8; ++i) {
+                setIndex(adrIndex, i, state8 & (1 << i));/*
+                const uint8_t offset = (adrIndex == 0) ? 0 : 8;
+                const bool use = (storage::eeprom.use_virtuals == 0) || !isMemberOfVirtual(i + offset);
+                if (use) {
+                    if (state8 & (1 << i)) {
+                        setIndex(i + offset, true);
+                    }
+                    else {
+                        setIndex(i + offset, false);
+                    }
+                }*/
+            }
+    }
+    static inline void setIndex(const uint8_t adrIndex, const uint8_t i, const bool on) {
+        if (adrIndex < 2) {
+            const uint8_t swIndex = (adrIndex == 0) ? i : (i + 8);
+            const bool use = (storage::eeprom.use_virtuals == 0) || !isMemberOfVirtual(swIndex);
+            if (use) {
+                setIndex(swIndex, on);
+            }
+        }
+    }
+private:
+    static inline void setIndex(const uint8_t swIndex, const bool on) {
+        if (swIndex >= 16) {
+            return;
+        }
 		if (on) {
-			if (storage::eeprom.outputs[index].groupStart > 0) {
-				const uint8_t group = storage::eeprom.outputs[index].group;
-				if ((group > 0) && !prevSwitchState[index]) {
+            if (storage::eeprom.outputs[swIndex].groupStart > 0) {
+                const uint8_t group = storage::eeprom.outputs[swIndex].group;
+                if ((group > 0) && !prevSwitchState[swIndex]) {
 					if (storage::eeprom.groups[group - 1].mode == 0) {
 						pca::groupStart(group - 1);
 						groupCount[group - 1] += 1;
@@ -120,14 +150,14 @@ struct SwitchCallback {
 					}
 				}
 			}
-			pca::ledControl(index, storage::eeprom.outputs[index].control);
-			prevSwitchState[index] = true;
+            pca::ledControl(swIndex, storage::eeprom.outputs[swIndex].control);
+            prevSwitchState[swIndex] = true;
 		}
 		else {
-			pca::ledControl(index, 0);
-			if (storage::eeprom.outputs[index].groupStart > 0) {
-				const uint8_t group = storage::eeprom.outputs[index].group;
-				if ((group > 0) && prevSwitchState[index]) {
+            pca::ledControl(swIndex, 0);
+            if (storage::eeprom.outputs[swIndex].groupStart > 0) {
+                const uint8_t group = storage::eeprom.outputs[swIndex].group;
+                if ((group > 0) && prevSwitchState[swIndex]) {
 					if (storage::eeprom.groups[group - 1].mode == 0) {
 						groupCount[group - 1] -= 1;
 						if (groupCount[group - 1] == 0) {
@@ -140,7 +170,7 @@ struct SwitchCallback {
 					}
 				}
 			}
-			prevSwitchState[index] = false;
+            prevSwitchState[swIndex] = false;
 		}
 	}
 };

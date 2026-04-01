@@ -18,6 +18,8 @@
 
 #pragma once
 
+#include "eeprom.h"
+
 template<typename Config, typename Trace = void>
 struct CrsfCallback {
     using trace = Trace;
@@ -32,7 +34,15 @@ struct CrsfCallback {
     using messageBuffer = crsf::messageBuffer;
     using storage = Config::storage;
 
-    using switchcallback = Config::switchcallback;
+    using switchCallback = Config::switchcallback;
+
+    struct DecoderConfig {
+        using debug = CrsfCallback::debug;
+        using storage = CrsfCallback::storage;
+        using callback = switchCallback;
+    };
+    using swDecoder = RC::Protokoll::Crsf::V4::Util::SwitchDecoder<DecoderConfig>;
+
 
     using pca = Config::pca;
 
@@ -70,7 +80,7 @@ struct CrsfCallback {
 
     static inline constexpr void updateName(name_t& n) {
         strncpy(&n[0], title, n.size());
-        auto r = std::to_chars(std::begin(n) + strlen(title), std::end(n), eeprom.address1);
+        auto r = std::to_chars(std::begin(n) + strlen(title), std::end(n), eeprom.addresses[EEProm::AdrIndex::Switch0_7]);
         *r.ptr++ = ':';
         r = std::to_chars(r.ptr, std::end(n), eeprom.crsf_address);
         *r.ptr++ = '\0';
@@ -126,7 +136,10 @@ struct CrsfCallback {
     static inline uint8_t protocolVersion() {
         return 0;
     }
-    static inline void command(const auto payload, const uint8_t ) {
+    static inline void command(const auto payload, [[maybe_unused]] const uint8_t paylength) {
+        swDecoder::process(payload, paylength);
+    }
+    static inline void command1(const auto payload, const uint8_t ) {
         const uint8_t destAddress = payload[3];
         const uint8_t srcAddress = payload[4];
         const uint8_t realm = payload[5];
@@ -152,15 +165,15 @@ struct CrsfCallback {
                 }
                 else if (cmd == (uint8_t)RC::Protokoll::Crsf::V4::SwitchCommand::InterModulePatternStopAll) {
                     const uint8_t group = (uint8_t)payload[7];
-                    if constexpr(requires(){switchcallback::patternStopAll(group);}) {
-                        switchcallback::patternStopAll(group);
+                    if constexpr(requires(){switchCallback::patternStopAll(group);}) {
+                        switchCallback::patternStopAll(group);
                     }
                 }
                 else if (cmd == (uint8_t)RC::Protokoll::Crsf::V4::SwitchCommand::InterModuleSlaveSet) {
                     const uint8_t master = (uint8_t)payload[7];
                     const uint8_t state = (uint8_t)payload[8];
-                    if constexpr(requires(){switchcallback::slaveSet(state, master);}) {
-                        switchcallback::slaveSet(state, master);
+                    if constexpr(requires(){switchCallback::slaveSet(state, master);}) {
+                        switchCallback::slaveSet(state, master);
                     }
                 }
             }
@@ -173,7 +186,7 @@ struct CrsfCallback {
                         const uint8_t swAddress = payload[8 + 3 * i];
                         const uint16_t sw = (payload[9 + 3 * i] << 8) + payload[10 + 3 * i];
                         IO::outl<debug>("# Switch set4M: ", i, " adr: ", swAddress);
-                        if (eeprom.address1 == swAddress) {
+                        if (eeprom.addresses[EEProm::AdrIndex::Switch0_7] == swAddress) {
                             IO::outl<debug>("# Switch set4M adr: ", swAddress, " v: ", sw);
                             uint8_t sw8 = 0;
                             for(uint8_t k = 0; k < 8; ++k) {
@@ -182,9 +195,9 @@ struct CrsfCallback {
                                     sw8 |= (1 << k);
                                 }
                             }
-                            switchcallback::set(sw8);
+                            switchCallback::set(sw8);
                         }
-                        else if (eeprom.address2 == swAddress) {
+                        else if (eeprom.addresses[EEProm::AdrIndex::Switch8_15] == swAddress) {
                             IO::outl<debug>("# Switch set4M adr: ", swAddress, " v: ", sw);
                             uint8_t sw8 = 0;
                             for(uint8_t k = 0; k < 8; ++k) {
@@ -193,9 +206,9 @@ struct CrsfCallback {
                                     sw8 |= (1 << k);
                                 }
                             }
-                            switchcallback::set2(sw8);
+                            switchCallback::set2(sw8);
                         }
-                        else if (eeprom.address4 == swAddress) {
+                        else if (eeprom.addresses[EEProm::AdrIndex::Virtuals] == swAddress) {
                             IO::outl<debug>("# Virt set4M adr: ", swAddress, " v: ", sw);
                             uint8_t sw8 = 0;
                             for(uint8_t k = 0; k < 8; ++k) {
@@ -204,16 +217,16 @@ struct CrsfCallback {
                                     sw8 |= (1 << k);
                                 }
                             }
-                            switchcallback::setVirtual(sw8);
+                            switchCallback::setVirtual(sw8);
                         }
                     }
                 }
                 else {
-                    if (eeprom.address1 == address) {
+                    if (eeprom.addresses[EEProm::AdrIndex::Switch0_7] == address) {
                         if (cmd == (uint8_t)RC::Protokoll::Crsf::V4::SwitchCommand::Set) {
                             const uint8_t sw = (uint8_t)payload[8];
                             IO::outl<trace>("# Cmd Set: ", address, " sw: ", sw);
-                            switchcallback::set(sw);
+                            switchCallback::set(sw);
                         }
                         else if (cmd == (uint8_t)RC::Protokoll::Crsf::V4::SwitchCommand::Set4) {
                             const uint16_t sw = (((uint16_t)payload[8]) << 8) + payload[9];
@@ -225,26 +238,26 @@ struct CrsfCallback {
                                     sw8 |= (1 << i);
                                 }
                             }
-                            switchcallback::set(sw8);
+                            switchCallback::set(sw8);
                         }
                         else if (cmd == (uint8_t)RC::Protokoll::Crsf::V4::SwitchCommand::Prop) {
                             const uint8_t ch = (uint8_t)payload[8];
                             const uint8_t duty = (uint8_t)payload[9];
-                            if constexpr(requires(){switchcallback::prop(ch, duty);}) {
+                            if constexpr(requires(){switchCallback::prop(ch, duty);}) {
                                 IO::outl<trace>("# Cmd Prop: ", address, " ch: ", ch, " d: ", duty);
-                                switchcallback::prop(ch, duty);
+                                switchCallback::prop(ch, duty);
                             }
                             else {
                                 IO::outl<trace>("# Cmd Prop: not implemented");
                             }
                         }
                     }
-                    else if (eeprom.address2 == address) {
+                    else if (eeprom.addresses[EEProm::AdrIndex::Switch8_15] == address) {
                         // out 8-17
                         if (cmd == (uint8_t)RC::Protokoll::Crsf::V4::SwitchCommand::Set) {
                             const uint8_t sw = (uint8_t)payload[8];
                             IO::outl<trace>("# Cmd Set: ", address, " sw: ", sw);
-                            switchcallback::set2(sw);
+                            switchCallback::set2(sw);
                         }
                         else if (cmd == (uint8_t)RC::Protokoll::Crsf::V4::SwitchCommand::Set4) {
                             const uint16_t sw = (((uint16_t)payload[8]) << 8) + payload[9];
@@ -256,26 +269,26 @@ struct CrsfCallback {
                                     sw8 |= (1 << i);
                                 }
                             }
-                            switchcallback::set2(sw8);
+                            switchCallback::set2(sw8);
                         }
                         else if (cmd == (uint8_t)RC::Protokoll::Crsf::V4::SwitchCommand::Prop) {
                             const uint8_t ch = (uint8_t)payload[8];
                             const uint8_t duty = (uint8_t)payload[9];
-                            if constexpr(requires(){switchcallback::prop2(ch, duty);}) {
+                            if constexpr(requires(){switchCallback::prop2(ch, duty);}) {
                                 IO::outl<trace>("# Cmd Prop: ", address, " ch: ", ch, " d: ", duty);
-                                switchcallback::prop2(ch, duty);
+                                switchCallback::prop2(ch, duty);
                             }
                             else {
                                 IO::outl<trace>("# Cmd Prop: not implemented");
                             }
                         }
                     }
-                    else if (eeprom.address3 == address) {
+                    else if (eeprom.addresses[EEProm::AdrIndex::Groups] == address) {
                         // group 0-3
                         if (cmd == (uint8_t)RC::Protokoll::Crsf::V4::SwitchCommand::Set) {
                             const uint8_t sw = (uint8_t)payload[8];
                             IO::outl<trace>("# Cmd Set Group: ", address, " sw: ", sw);
-                            switchcallback::setGroup(sw);
+                            switchCallback::setGroup(sw);
                         }
                         else if (cmd == (uint8_t)RC::Protokoll::Crsf::V4::SwitchCommand::Set4) {
                             const uint16_t sw = (((uint16_t)payload[8]) << 8) + payload[9];
@@ -287,15 +300,15 @@ struct CrsfCallback {
                                     sw8 |= (1 << i);
                                 }
                             }
-                            switchcallback::setGroup(sw8);
+                            switchCallback::setGroup(sw8);
                         }
                     }
-                    else if (eeprom.address4 == address) {
+                    else if (eeprom.addresses[EEProm::AdrIndex::Virtuals] == address) {
                         // virtual out 0 - 7
                         if (cmd == (uint8_t)RC::Protokoll::Crsf::V4::SwitchCommand::Set) {
                             const uint8_t sw = (uint8_t)payload[8];
                             IO::outl<trace>("# Cmd Virt: ", address, " sw: ", sw);
-                            switchcallback::setVirtual(sw);
+                            switchCallback::setVirtual(sw);
                         }
                         else if (cmd == (uint8_t)RC::Protokoll::Crsf::V4::SwitchCommand::Set4) {
                             const uint16_t sw = (((uint16_t)payload[8]) << 8) + payload[9];
@@ -307,7 +320,7 @@ struct CrsfCallback {
                                     sw8 |= (1 << i);
                                 }
                             }
-                            switchcallback::setVirtual(sw8);
+                            switchCallback::setVirtual(sw8);
                         }
                     }
                 }
@@ -368,7 +381,7 @@ private:
         addNode(p, Param_t{.parent = parent2, .type = PType::Sel, .name = "Group", .options = "None;0;1;2;3", .value_ptr = &eeprom.outputs[index].group, .min = 0, .max = 4, .cb = [](const uint8_t v){if (v  == 0) {pca::ledGradationMode(index, false);} else {pca::ledGradationMode(index, true); pca::ledGroup(index, (v - 1));} return true;}});
         addNode(p, Param_t{.parent = parent2, .type = PType::Sel, .name = "Gr Start", .options = "Off;On", .value_ptr = &eeprom.outputs[index].groupStart, .min = 0, .max = 1, .cb = [](const uint8_t){return true;}});
         addNode(p, Param_t{.parent = parent2, .type = PType::Sel, .name = "Control", .options = "Off;Full;Individual;Group", .value_ptr = &eeprom.outputs[index].control, .min = 1, .max = 3, .cb = [](const uint8_t){return true;}});
-        addNode(p, Param_t{.parent = parent2, .type = PType::Sel, .name = "Test", .options = "Off;On", .min = 0, .max = 1, .cb = [](const uint8_t v){switchcallback::setIndex(index, (v > 0)); return false;}});
+        addNode(p, Param_t{.parent = parent2, .type = PType::Sel, .name = "Test", .options = "Off;On", .min = 0, .max = 1, .cb = [](const uint8_t v){switchCallback::setIndex((index / 8), (index % 8), (v > 0)); return false;}});
     }
     template<uint8_t index>
     static inline constexpr void addGroup(auto& p, const uint8_t parent, const char* const name) {
@@ -381,7 +394,7 @@ private:
         addNode(p, Param_t{.parent = parent2, .type = PType::U8, .name = "Hold On time", .value_ptr = &eeprom.groups[index].holdOnTime, .min = 0, .max = 7, .cb = [](const uint8_t v){pca::groupHoldOnTime(index, v); return true;}});
         addNode(p, Param_t{.parent = parent2, .type = PType::U8, .name = "Hold Off time", .value_ptr = &eeprom.groups[index].holdOffTime, .min = 0, .max = 7, .cb = [](const uint8_t v){pca::groupHoldOffTime(index, v); return true;}});
         addNode(p, Param_t{.parent = parent2, .type = PType::Sel, .name = "Mode", .options = "Continous;Single", .value_ptr = &eeprom.groups[index].mode, .min = 0, .max = 1, .cb = [](const uint8_t v){pca::groupContinous(index, (v == 0)); return true;}});
-        addNode(p, Param_t{.parent = parent2, .type = PType::Sel, .name = "Test", .options = "Off;On", .min = 0, .max = 1, .cb = [](const uint8_t v){switchcallback::setGroupIndex(index, (v > 0)); return false;}});
+        addNode(p, Param_t{.parent = parent2, .type = PType::Sel, .name = "Test", .options = "Off;On", .min = 0, .max = 1, .cb = [](const uint8_t v){switchCallback::setGroupIndex(index, (v > 0)); return false;}});
     }
     template<uint8_t index>
     static inline constexpr void addVirtual(auto& p, const uint8_t parent, const char* const name) {
@@ -390,7 +403,7 @@ private:
         addNode(p, Param_t{.parent = parent2, .type = PType::I8, .name = "Member 1", .value_ptr = &eeprom.virtuals[index].member[1], .min = uint8_t(-1), .max = 15, .cb = [](const uint8_t){return true;}, .def = 0});
         addNode(p, Param_t{.parent = parent2, .type = PType::I8, .name = "Member 2", .value_ptr = &eeprom.virtuals[index].member[2], .min = uint8_t(-1), .max = 15, .cb = [](const uint8_t){return true;}, .def = 0});
         addNode(p, Param_t{.parent = parent2, .type = PType::I8, .name = "Member 3", .value_ptr = &eeprom.virtuals[index].member[3], .min = uint8_t(-1), .max = 15, .cb = [](const uint8_t){return true;}, .def = 0});
-        addNode(p, Param_t{.parent = parent2, .type = PType::Sel, .name = "Test", .options = "Off;On", .min = 0, .max = 1, .cb = [](const uint8_t v){switchcallback::setVirtualIndex(index, (v > 0)); return false;}});
+        addNode(p, Param_t{.parent = parent2, .type = PType::Sel, .name = "Test", .options = "Off;On", .min = 0, .max = 1, .cb = [](const uint8_t v){switchCallback::setVirtualIndex(index, (v > 0)); return false;}});
     }
 
     using params_t = etl::FixedVector<Param_t, 255>;
@@ -404,10 +417,11 @@ private:
         addNode(p, Param_t{.parent = parent, .type = PType::Sel, .name = "LED Exp.Br.", .options = "Off;On", .value_ptr = &eeprom.use_exp, .min = 0, .max = 1, .cb = [](const uint8_t v){pca::exponentialBrightness(v); return true;}});
         addNode(p, Param_t{.parent = parent, .type = PType::Sel, .name = "Virtuals", .options = "Off;On", .value_ptr = &eeprom.use_virtuals, .min = 0, .max = 1, .cb = [](const uint8_t){return true;}});
 
-        addNode(p, Param_t{parent, PType::U8, "Adr Out 0-7", nullptr, &eeprom.address1, 0, 255, setAddress});
-        addNode(p, Param_t{parent, PType::U8, "Adr Out 8-15", nullptr, &eeprom.address2, 0, 255, setAddress});
-        addNode(p, Param_t{parent, PType::U8, "Adr Grp 0-3", nullptr, &eeprom.address3, 0, 255, setAddress});
-        addNode(p, Param_t{parent, PType::U8, "Adr Virtuals", nullptr, &eeprom.address4, 0, 255, setAddress});
+        addNode(p, Param_t{parent, PType::U8, "Adr Out 0-7", nullptr, &eeprom.addresses[EEProm::AdrIndex::Switch0_7], 0, 255, setAddress});
+        addNode(p, Param_t{parent, PType::U8, "Adr Out 8-15", nullptr, &eeprom.addresses[EEProm::AdrIndex::Switch8_15], 0, 255, setAddress});
+        addNode(p, Param_t{parent, PType::U8, "Adr Grp 0-3", nullptr, &eeprom.addresses[EEProm::AdrIndex::Groups], 0, 255, setAddress});
+        addNode(p, Param_t{parent, PType::U8, "Adr Virtuals", nullptr, &eeprom.addresses[EEProm::AdrIndex::Virtuals], 0, 255, setAddress});
+        addNode(p, Param_t{parent, PType::U8, "Adr Specials", nullptr, &eeprom.addresses[EEProm::AdrIndex::Specials], 0, 255, setAddress});
 
         addNode(p, Param_t{parent, PType::U8, "CRSF Address", nullptr, &eeprom.crsf_address, 0xc0, 0xcf, [](const uint8_t v){
                                if (!mEepromMode) {

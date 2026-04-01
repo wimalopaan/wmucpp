@@ -59,10 +59,14 @@ struct EEProm {
 
     uint8_t magic = EEPROM_MAGIC;
 
-    uint8_t address1 = 0; // switches 0 - 7
-    uint8_t address2 = 1; // switches 8 - 15
-    uint8_t address3 = 2; // groups (whatever that will mean in the future)
-    uint8_t address4 = 3; // virtual switches
+    struct AdrIndex {
+        static inline constexpr uint8_t Switch0_7   = 0;
+        static inline constexpr uint8_t Switch8_15  = 1;
+        static inline constexpr uint8_t Groups      = 2;
+        static inline constexpr uint8_t Virtuals    = 3;
+        static inline constexpr uint8_t Specials    = 4;
+    };
+    std::array<uint8_t, 5> addresses = {0, 1, 2, 3, 4};
 
     uint8_t master = 0; // slave mode master
 
