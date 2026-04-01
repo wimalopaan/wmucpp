@@ -40,7 +40,13 @@ struct CrsfCallback {
     static inline constexpr const char* const title = "CrsfSwitch@";
 
     using name_t = std::array<char, 32>;
-
+    
+    static inline constexpr void disableTelemetry() {
+        Meta::visit<crsf_ifaces>([](const auto w){
+            using iface = decltype(w)::type;
+            iface::disableTelemetryWithAutoOn();
+        });
+    }
     static inline constexpr void updateName(name_t& n) {
         strncpy(&n[0], title, n.size());
         auto r = std::to_chars(std::begin(n) + strlen(title), std::end(n), eeprom.address);
