@@ -242,7 +242,7 @@ struct Devices<SW01, Config, MCU> {
     };
     using adc = Mcu::Stm::V4::Adc<1, AdcConfig>;
     
-    using srv1_fb = FeedbackAdapter<1, adc, fb1_pin, debug>; // IN6: index=1
+    using srv1_fb = FeedbackAdapter<0, adc, fb1_pin, debug>; // IN6: index=1
     using srv1_feetech = Feetech<0, polar1, srv1_fb, srv1_pwm, systemTimer, debug>;
 
     // time-multiplex for old analog switch-modules
@@ -305,7 +305,7 @@ struct Devices<SW01, Config, MCU> {
     // Fb2:  PA5 : ADC-IN5
     // using tp3 = Mcu::Stm::Pin<gpioa, 5, MCU>;
     using fb2_pin = Mcu::Stm::Pin<gpioa, 5, MCU>;
-    using srv2_fb = FeedbackAdapter<0, adc, fb2_pin>; // IN5 : Index = 0
+    using srv2_fb = FeedbackAdapter<1, adc, fb2_pin>; // IN5 : Index = 0
     using srv2_feetech = Feetech<1, polar2, srv2_fb, srv2_pwm, systemTimer, debug>;
 
     // time-multiplex for old analog switch-modules

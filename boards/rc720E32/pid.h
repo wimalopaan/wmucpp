@@ -18,25 +18,26 @@
 
 #pragma once
 
-template<typename T = float>
+#include <algorithm>
+
+template<typename T = int>
 struct PID {
     using value_type = T;
 
-    explicit PID(const float max, const float min, const float kp, const float ki, const float kd) :
-        mMax{max}, mMin{min}, mKp{kp}, mKi{ki}, mKd{kd}
+    explicit PID(const T max, const T min, const T kp, const T ki, const T kd) :
+        mMax{max}, mMin{min}, mKp{kp}, mKi{ki}, mKd{kd}, mW{kp + ki + kd}
     {}
 
-    float process(const float set, const float meas) {
-        const float error = set - meas;
-        const float p = mKp * error;
+    float process(const T error) {
+        const T p = mKp * error;
 
-        mIntegral += error;
-        const float i = mKi * mIntegral;
+        mIntegral = std::clamp(mIntegral + error, mMin, mMax);
+        const T i = mKi * mIntegral;
 
-        const float  deriv = error - mLastError;
-        const float d = mKd * deriv;
+        const T  deriv = error - mLastError;
+        const T d = mKd * deriv;
 
-        const float out = std::max(std::min(p + i + d, mMax), mMin);
+        const T out = std::clamp((p + i + d) / (mKp + mKi + mKd), mMin, mMax);
 
         mLastError = error;
         return out;
@@ -50,4 +51,5 @@ struct PID {
     value_type mKp{};
     value_type mKi{};
     value_type mKd{};
+    value_type mW{};
 };

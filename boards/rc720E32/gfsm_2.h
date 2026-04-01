@@ -305,7 +305,7 @@ struct GFSM {
                 // IO::outl<debug>("_end:", &_end, " _ebss:", &_ebss, " heap:", heap);
                 // IO::outl<debug>("ch0: ", crsf_in_pa::value(0), " phi0: ", polar1::phi(), " amp0: ", polar1::amp(), " a0: ", Servos::actualPos(0), " t0: ", Servos::turns(0), " phi1: ", polar2::phi(), " amp1: ", polar2::amp(), " a1: ", Servos::actualPos(1), " t1: ", Servos::turns(1));
 				// IO::outl<debug>("ec: ", esc32_1::errorCount(), " rpm: ", esc32_1::rpm());
-                IO::outl<debug>("adc: ", adc::values()[0], " ", adc::values()[1]);
+                // IO::outl<debug>("adc: ", adc::values()[0], " ", adc::values()[1]);
             });
             break;
         case State::DirectMode:
