@@ -237,7 +237,7 @@ struct Devices<SW01, Config, MCU> {
         using debug = void;
         using channels = std::integer_sequence<uint8_t, 5, 6>;
         using dmaChannel = adcDmaChannelComponent;
-        using trigger = Mcu::Stm::ContinousSampling<16>;
+        using trigger = Mcu::Stm::ContinousSampling<256>;
         using isrConfig = Meta::List<>;
     };
     using adc = Mcu::Stm::V4::Adc<1, AdcConfig>;

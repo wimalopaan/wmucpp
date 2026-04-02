@@ -33,8 +33,9 @@ struct Feetech {
 
     enum class Event : uint8_t {None, Calibrate, Run};
     enum class State : uint8_t {Start, WaitNoise, Noise,
-                                StartPosition, StartPositionRotate,
+                                StartPosition, StartPositionRotate, StartPositionStop, StartPositionStopDecrease,
                                 DeadStartP, DeadSetP, DeadTestP,
+                                DeadTestWait,
                                 DeadStartN, DeadSetN, DeadTestN,
                                 DeadEnd,
                                 RangeStart, RangeRun, RangeEnd,
@@ -43,7 +44,7 @@ struct Feetech {
 
     static inline constexpr External::Tick<systemTimer> noiseMeasureTicks{1000ms};
     static inline constexpr External::Tick<systemTimer> noiseWaitTicks{100ms};
-    static inline constexpr External::Tick<systemTimer> deadSettleTicks{100ms};
+    static inline constexpr External::Tick<systemTimer> deadSettleTicks{200ms};
     static inline constexpr External::Tick<systemTimer> rangeTicks{50ms};
     static inline constexpr External::Tick<systemTimer> initTicks{500ms};
     static inline constexpr External::Tick<systemTimer> debugTicks{250ms};
@@ -128,10 +129,10 @@ struct Feetech {
             break;
         case State::StartPosition:
             if (const uint16_t v = Fb::read(); (v > 1500) && (v < 2500)) {
-                mState = State::DeadStartP;
+                mState = State::StartPositionStop;
             }
             mStateTick.on(deadSettleTicks, []{
-                if (const uint16_t d = std::abs(mLastFb - Fb::read()); d < mNoiseAmplitude) {
+                if (const uint16_t d = std::abs(mLastFb - Fb::read()); d < 2 * mNoiseAmplitude) {
                     mLastPwm += 100;
                     if (mLastPwm < 1700) {
                         Out::set(mLastPwm);
@@ -144,6 +145,26 @@ struct Feetech {
             break;
         case State::StartPositionRotate:
             mState = State::StartPosition;
+            break;
+        case State::StartPositionStop:
+            mStateTick.on(deadSettleTicks, []{
+                if (const uint16_t d = std::abs(mLastFb - Fb::read()); d < 2 * mNoiseAmplitude) {
+                    mState = State::DeadStartP;                                        
+                }
+                else {
+                    mState = State::StartPositionStopDecrease;
+                }
+            });
+            break;
+        case State::StartPositionStopDecrease:
+            mStateTick.on(deadSettleTicks, []{
+                if (mLastPwm < 900) {
+                    mState = State::Error;
+                }
+                else {
+                    mState = State::StartPositionStop;                
+                }
+            });
             break;
         case State::DeadStartP:
             mStateTick.on(deadSettleTicks, []{
@@ -160,13 +181,18 @@ struct Feetech {
             const uint16_t fb = Fb::read();
             const uint16_t d = std::abs(fb - mLastFb);
             if (d > (2 * mNoiseAmplitude)) {
-                mState = State::DeadStartN;
+                mState = State::DeadTestWait;
                 mFbInc = (fb > mLastFb);
             }
             else {
                 mState = State::DeadSetP;
             }
         }
+            break;
+        case State::DeadTestWait:
+            mStateTick.on(deadSettleTicks, []{
+                mState = State::DeadStartN;
+            });
             break;
         case State::DeadStartN:
             mStateTick.on(deadSettleTicks, []{
@@ -226,6 +252,21 @@ struct Feetech {
             mState = State::Run;
             break;
         case State::Run:
+        {
+            int32_t o = (mPid.process(error()) * mGain) / 10;
+            // if (o > 0) {
+            //     o += mDeadP;
+            // }
+            // else if (o < 0) {
+            //     o += mDeadN;
+            // }
+            // else {
+            //     o = mDeadMid;
+            // }
+            o += mDeadMid;
+            const uint16_t oc = std::clamp(o, int32_t(172), int32_t(1811)); // sbus
+            Out::set(oc);
+        }
             break;
         case State::Error:
             break;
@@ -251,6 +292,18 @@ struct Feetech {
                 mLastPwm = 992 + 200;
                 Out::set(mLastPwm); // rotate
                 break;
+            case State::StartPositionStop:
+                IO::outl<Debug>("# Srv:StartPositionStop");
+                mLastPwm = 992;
+                Out::set(mLastPwm); 
+                mLastFb = Fb::read();
+                break;
+            case State::StartPositionStopDecrease:
+                IO::outl<Debug>("# Srv:StartPositionStopDecrease");
+                mLastPwm -= 10;
+                Out::set(mLastPwm); 
+                mLastFb = Fb::read();
+                break;
             case State::DeadStartP:
                 mNoiseAmplitude = std::clamp(mNoiseAmplitude, uint16_t{2}, uint16_t{10});
                 mLastFb = Fb::read();
@@ -272,12 +325,16 @@ struct Feetech {
             case State::DeadTestP:
                 IO::outl<Debug>("# Srv:DeadTestP");
                 break;
+            case State::DeadTestWait:
+                IO::outl<Debug>("# Srv:DeadTestWait");
+                mDeadMid = Out::pwm::sbusMid;
+                Out::set(mDeadMid);
+                break;
             case State::DeadStartN:
                 IO::outl<Debug>("# Srv:DeadStartN NoiseA: ", mNoiseAmplitude);
                 mLastFb = Fb::read();
-                mDeadMid = Out::pwm::sbusMid;
-                Out::set(mDeadMid);
-                mDeadN = mDeadMid;
+                mDeadN = Out::pwm::sbusMid;
+                Out::set(mDeadN);
                 break;
             case State::DeadSetN:
                 mDeadN -= mDeadInc;
@@ -320,44 +377,6 @@ struct Feetech {
             }
         }
     }
-    static inline void zero() {
-    }
-    static inline void update_x() {
-        if (mState == State::Run) {
-            const int e = error();
-            const int ec = weight(e);
-            const int hyst = mNoiseAmplitude;
-            int o = mDeadMid;
-            if (ec > hyst) {
-                o = mDeadP + ec;
-            }
-            else if (ec < -hyst) {
-                o = mDeadN + ec;
-            }
-            IO::outl<Debug>("# Srv:update e: ", e, " ec: ", ec, " o: ", o);
-            // const volatile uint16_t oc = std::clamp(o, 172, 1811); // sbus
-            const uint16_t oc = std::clamp(o, 700, 1200); // sbus
-            Out::set(oc);
-        }
-    }
-    static inline void update() {
-        if (mState == State::Run) {
-            int32_t o = mPid.process(error()) * 4;
-            if (o > 0) {
-                o += mDeadP;
-            }
-            else if (o < 0) {
-                o += mDeadN;
-            }
-            else {
-                o = mDeadMid;
-            }
-            IO::outl<Debug>("# Srv:update e: ", o);
-            const uint16_t oc = std::clamp(o, int32_t(172), int32_t(1811)); // sbus
-            Out::set(oc);
-        }
-    }
-
     private:
     static inline uint16_t normalized() {
         if (mFbRange < 10) {
@@ -381,22 +400,8 @@ struct Feetech {
         }
         return e;
     }
-    static inline int weight(const int e) {
-        // quadratic + clamp
-        const int esqr = e * e;
-        const int cl = mSqrMax;
-        int ew = 0;
-        if (e > 0) {
-            ew = esqr / cl;
-        }
-        else if (e < 0) {
-            ew = -esqr / cl;
-        }
-        return std::clamp(ew, -cl, cl);
-    }
-    
-    static inline PID<int32_t> mPid{800, -800, 1000, 10, 0};
-    
+    static inline uint16_t mGain = 15;
+    static inline PID<int32_t> mPid{1000, -1000, 1000, 50, 500};
     static inline uint16_t mSqrMax{400};
     static inline uint16_t mNoiseAmplitude{2};
     static inline uint16_t mLastPwm{992};
