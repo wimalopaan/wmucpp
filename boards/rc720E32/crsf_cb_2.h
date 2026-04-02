@@ -37,6 +37,7 @@ struct CrsfCallback {
     using auxes = Config::auxes;
     using mapper = Config::mapper;
     using polars = Config::polars;
+    using fbservos = Config::fbservos;
 
     using esc1_slave = Config::esc1_slave;
     using esc2_slave = Config::esc2_slave;
@@ -485,6 +486,23 @@ private:
         }
     }
     using params_t = etl::FixedVector<Param_t, 255>;
+    
+    template<uint8_t index>
+    static inline constexpr void addFbServo(auto& p, const uint8_t parent, const char* const name) {
+        using fbs = Meta::nth_element<index, fbservos>;
+        const uint8_t parent2 = addParent(p, Param_t{parent, PType::Folder, name});
+        addNode(p, Param_t{parent2, PType::U16,  "CalibOnStart", nullptr,  &eeprom.fbservos[index].calibOnStart, 0, 1, [](const store_t v){fbs::calibOnStart(v == 1); return true;}});
+        addNode(p, Param_t{parent2, PType::U16,  "Comp. DeadBand", nullptr,  &eeprom.fbservos[index].compensateDeadband, 0, 1, [](const store_t v){fbs::useDead(v == 1); return true;}});
+        addNode(p, Param_t{parent2, PType::U16,  "DeadMin", nullptr,  &eeprom.fbservos[index].deadMin, 700, 992, [](const store_t v){fbs::deadMin(v); return true;}});
+        addNode(p, Param_t{parent2, PType::U16,  "DeadMax", nullptr,  &eeprom.fbservos[index].deadMax, 992, 1100, [](const store_t v){fbs::deadMax(v); return true;}});
+        addNode(p, Param_t{parent2, PType::U16,  "FbMin", nullptr,  &eeprom.fbservos[index].fbMin, 0, 500, [](const store_t v){fbs::fbMin(v); return true;}});
+        addNode(p, Param_t{parent2, PType::U16,  "FbMax", nullptr,  &eeprom.fbservos[index].fbMax, 3500, 4095, [](const store_t v){fbs::fbMax(v); return true;}});
+        addNode(p, Param_t{parent2, PType::U16,  "PID Gain", nullptr,  &eeprom.fbservos[index].gain, 1, 100, [](const store_t v){fbs::PID_gain(v); return true;}});
+        addNode(p, Param_t{parent2, PType::U16,  "PID Kp", nullptr,  &eeprom.fbservos[index].kp, 0, 1000, [](const store_t v){fbs::PID_kp(v); return true;}});
+        addNode(p, Param_t{parent2, PType::U16,  "PID Ki", nullptr,  &eeprom.fbservos[index].ki, 0, 1000, [](const store_t v){fbs::PID_ki(v); return true;}});
+        addNode(p, Param_t{parent2, PType::U16,  "PID Kd", nullptr,  &eeprom.fbservos[index].kd, 0, 1000, [](const store_t v){fbs::PID_kd(v); return true;}});
+    }    
+    
     static inline params_t params = []{
         params_t p;
         addNode(p, Param_t{0, PType::Folder, ""});
@@ -571,9 +589,13 @@ private:
 
 #ifdef SERVO_CALIBRATION
         parent = addParent(p, Param_t{0, PType::Folder, "Calibration"});
-        mServoCalibCommand = parent;
-        addNode(p, Param_t{parent, PType::Command, "Calibrate", mServoCalibTexts[0], nullptr, 0, 0, [](const store_t v){return servoCalibCb(v);}});
-        addNode(p, Param_t{parent, PType::Info, "Srv1 DeadL", &mDeadLowString[0]});
+        
+        addFbServo<0>(p, parent, "FBServo 1");
+        addFbServo<1>(p, parent, "FBServo 2");
+        
+        // mServoCalibCommand = parent;
+        // addNode(p, Param_t{parent, PType::Command, "Calibrate", mServoCalibTexts[0], nullptr, 0, 0, [](const store_t v){return servoCalibCb(v);}});
+        // addNode(p, Param_t{parent, PType::Info, "Srv1 DeadL", &mDeadLowString[0]});
 #endif
 
         parent = addParent(p, Param_t{0, PType::Folder, "CRSF"});

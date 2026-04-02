@@ -27,7 +27,7 @@
 
 using namespace std::literals::chrono_literals;
 
-template<uint8_t N, typename In, typename Fb, typename Out, typename systemTimer, typename Debug>
+template<uint8_t N, typename In, typename Fb, typename Out, typename CalibCB, typename systemTimer, typename Debug>
 struct Feetech {
     using debug = Debug;
 
@@ -88,6 +88,41 @@ struct Feetech {
     static inline uint16_t actualPos() {
         return mLastPhi;
     }
+    static inline void calibOnStart(const bool on) {
+        mCalibOnStart = on;
+    }
+    static inline void useDead(const bool on) {
+        mUseDead = on;
+    }
+    static inline void deadMin(const uint16_t v) {
+        mDeadN = v;
+        mDeadMid = (mDeadP + mDeadN) / 2;
+    }
+    static inline void deadMax(const uint16_t v) {
+        mDeadP = v;
+        mDeadMid = (mDeadP + mDeadN) / 2;
+    }
+    static inline void fbMin(const uint16_t v) {
+        mFbMin = v;
+        mFbRange= std::max((mFbMax - mFbMin), 3500);
+    }
+    static inline void fbMax(const uint16_t v) {
+        mFbMax = v;
+        mFbRange= std::max((mFbMax - mFbMin), 3500);
+    }
+    static inline void PID_gain(const uint16_t v) {
+        mGain = v;
+    }
+    static inline void PID_kp(const uint16_t v) {
+        mPid.kp(v);
+    }
+    static inline void PID_ki(const uint16_t v) {
+        mPid.ki(v);
+    }
+    static inline void PID_kd(const uint16_t v) {
+        mPid.kd(v);
+        
+    }
     static inline void event(const Event e) {
         mEvent = e;
     }
@@ -99,15 +134,20 @@ struct Feetech {
         ++mStateTick;
         switch(mState) {
         case State::Start:
-            if (const auto e = std::exchange(mEvent, Event::None); e == Event::Calibrate) {
-                mState = State::WaitNoise;
-            }
-            else if (e == Event::Run) {
+            // if (const auto e = std::exchange(mEvent, Event::None); e == Event::Calibrate) {
+            //     mState = State::WaitNoise;
+            // }
+            // else if (e == Event::Run) {
+            //     mState = State::Run;
+            // }
+            if (!mCalibOnStart) {
                 mState = State::Run;
             }
-            mStateTick.on(initTicks, []{
-                mState = State::WaitNoise;
-            });
+            else {
+                mStateTick.on(initTicks, []{
+                    mState = State::WaitNoise;
+                });
+            }
             break;
         case State::WaitNoise:
             mStateTick.on(noiseWaitTicks, []{
@@ -254,18 +294,26 @@ struct Feetech {
         case State::Run:
         {
             int32_t o = (mPid.process(error()) * mGain) / 10;
-            // if (o > 0) {
-            //     o += mDeadP;
-            // }
-            // else if (o < 0) {
-            //     o += mDeadN;
-            // }
-            // else {
-            //     o = mDeadMid;
-            // }
-            o += mDeadMid;
-            const uint16_t oc = std::clamp(o, int32_t(172), int32_t(1811)); // sbus
+            int32_t oo = 0;
+            if (mUseDead) {
+                if (o > 0) {
+                    oo = o + mDeadP;
+                }
+                else if (o < 0) {
+                    oo = o + mDeadN;
+                }
+                else {
+                    oo = o + mDeadMid;
+                }
+            }
+            else {
+                oo = o + mDeadMid;
+            }
+            const uint16_t oc = std::clamp(oo, int32_t(172), int32_t(1811)); // sbus
             Out::set(oc);
+            mStateTick.on(debugTicks, [&]{
+                IO::outl<Debug>("o: ", o, " oo: ", oo, " oc: ", oc, " e: ", error(), " p: ", In::phi(), " n: ", normalized());
+            });
         }
             break;
         case State::Error:
@@ -333,7 +381,7 @@ struct Feetech {
             case State::DeadStartN:
                 IO::outl<Debug>("# Srv:DeadStartN NoiseA: ", mNoiseAmplitude);
                 mLastFb = Fb::read();
-                mDeadN = Out::pwm::sbusMid;
+                mDeadN = Out::pwm::sbusMid - (mDeadP - Out::pwm::sbusMid);
                 Out::set(mDeadN);
                 break;
             case State::DeadSetN:
@@ -366,6 +414,10 @@ struct Feetech {
             case State::RangeEnd:
                 mFbRange = mFbMax - mFbMin;
                 IO::outl<Debug>("# Srv:RangeEnd fbmax: ", mFbMax, " fbmin: ", mFbMin, " fbrange: ", mFbRange);
+                CalibCB::deadMin(mDeadN);
+                CalibCB::deadMax(mDeadP);
+                CalibCB::fbMin(mFbMin);
+                CalibCB::fbMax(mFbMax);
                 break;
             case State::Run:
                 Out::set(mDeadMid);
@@ -389,20 +441,19 @@ struct Feetech {
     static inline int error() {
         const uint16_t phi = In::phi();
         const uint16_t fb = normalized();
-        int e = phi - fb;
-        mLastPhi = fb;
-        // circular
+        const int e = phi - fb;
         if (e > 2048) {
-            e -= 4096;
+            return e - 4096;
         }
-        if (e < -2048) {
-            e += 4096;
+        else if (e < -2048) {
+            return e + 4096;
         }
         return e;
     }
-    static inline uint16_t mGain = 15;
-    static inline PID<int32_t> mPid{1000, -1000, 1000, 50, 500};
-    static inline uint16_t mSqrMax{400};
+    static inline bool mCalibOnStart = true;
+    static inline bool mUseDead = false;
+    static inline uint16_t mGain = 20;
+    static inline PID<int32_t> mPid{1000, -1000, 1000, 0, 210};
     static inline uint16_t mNoiseAmplitude{2};
     static inline uint16_t mLastPwm{992};
     static inline uint16_t mLastFb{0};

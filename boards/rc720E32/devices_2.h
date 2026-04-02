@@ -242,8 +242,25 @@ struct Devices<SW01, Config, MCU> {
     };
     using adc = Mcu::Stm::V4::Adc<1, AdcConfig>;
     
+    template<auto N>
+    struct FbCalibCallback {
+        static inline void deadMin(const uint16_t v) {
+            storage::eeprom.fbservos[N].deadMin = v;
+        }
+        static inline void deadMax(const uint16_t v) {
+            storage::eeprom.fbservos[N].deadMax = v;
+        }
+        static inline void fbMin(const uint16_t v) {
+            storage::eeprom.fbservos[N].fbMin = v;
+        }
+        static inline void fbMax(const uint16_t v) {
+            storage::eeprom.fbservos[N].fbMax = v;
+        }
+    };
+    using fbcb0 = FbCalibCallback<0>;
+    
     using srv1_fb = FeedbackAdapter<0, adc, fb1_pin, debug>; // IN6: index=1
-    using srv1_feetech = Feetech<0, polar1, srv1_fb, srv1_pwm, systemTimer, debug>;
+    using srv1_feetech = Feetech<0, polar1, srv1_fb, srv1_pwm, fbcb0, systemTimer, debug>;
 
     // time-multiplex for old analog switch-modules
     struct MpxConfig1;
@@ -306,8 +323,11 @@ struct Devices<SW01, Config, MCU> {
     // using tp3 = Mcu::Stm::Pin<gpioa, 5, MCU>;
     using fb2_pin = Mcu::Stm::Pin<gpioa, 5, MCU>;
     using srv2_fb = FeedbackAdapter<1, adc, fb2_pin>; // IN5 : Index = 0
-    using srv2_feetech = Feetech<1, polar2, srv2_fb, srv2_pwm, systemTimer, debug>;
+    using fbcb1 = FbCalibCallback<1>;
+    using srv2_feetech = Feetech<1, polar2, srv2_fb, srv2_pwm, fbcb1, systemTimer, debug>;
 
+    using fbservos = Meta::List<srv1_feetech, srv2_feetech>;
+    
     // time-multiplex for old analog switch-modules
     // TIM14: need dma request generator
     struct MpxConfig2;
@@ -564,6 +584,7 @@ struct Devices<SW01, Config, MCU> {
         using mapper = inputs;
         using telemetry = telem;
         using polars = Devices::polars;
+        using fbservos = Devices::fbservos;
         using esc32ascii_1 = Devices::esc32ascii_1;
         using esc32ascii_2 = Devices::esc32ascii_2;
         using mpx1 = Devices::mpx1;

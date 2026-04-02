@@ -160,12 +160,16 @@ struct EEProm {
     eeprom_value_t prerun_check = 1;
     
     struct FBServo {
-        eeprom_value_t deadMin = 990;
-        eeprom_value_t deadMax = 994;
-        eeprom_value_t gain = 10;
+        eeprom_value_t calibOnStart = 0;
+        eeprom_value_t compensateDeadband = 0;
+        eeprom_value_t deadMin = 825;
+        eeprom_value_t deadMax = 1004;
+        eeprom_value_t fbMax = 4093;
+        eeprom_value_t fbMin = 5;
+        eeprom_value_t gain = 25;
         eeprom_value_t kp = 1000;
         eeprom_value_t ki = 0;
-        eeprom_value_t kd = 0;
+        eeprom_value_t kd = 500;
     };
     
     std::array<FBServo, 2> fbservos{};

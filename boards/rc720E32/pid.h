@@ -31,16 +31,28 @@ struct PID {
     float process(const T error) {
         const T p = mKp * error;
 
-        mIntegral = std::clamp(mIntegral + error, mMin, mMax);
-        const T i = mKi * mIntegral;
+        mIntegral = std::clamp(mIntegral + error, (mMin * mW), (mMax * mW));
+        const T i = mKi * mIntegral / 10;
 
         const T  deriv = error - mLastError;
         const T d = mKd * deriv;
 
-        const T out = std::clamp((p + i + d) / (mKp + mKi + mKd), mMin, mMax);
+        const T out = std::clamp((p + i + d) / mW, mMin, mMax);
 
         mLastError = error;
         return out;
+    }
+    void kp(const T v) {
+        mKp = v;
+        mW = mKp + mKi + mKd;
+    }
+    void ki(const T v) {
+        mKi = v;
+        mW = mKp + mKi + mKd;
+    }
+    void kd(const T v) {
+        mKd = v;
+        mW = mKp + mKi + mKd;
     }
 
     private:
