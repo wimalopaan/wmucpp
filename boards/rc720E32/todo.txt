@@ -103,6 +103,7 @@ Done bugs:
 
 Done:
 ------
+* analog feedback servos: implement actual position telemetry
 * watchdog
 * analog feedback servos
 * modes: Dual-Schottel, Passthru

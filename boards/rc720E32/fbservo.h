@@ -22,7 +22,6 @@
 #include <chrono>
 
 #include "ressources.h"
-
 #include "pid.h"
 
 using namespace std::literals::chrono_literals;
@@ -54,14 +53,13 @@ struct Feetech {
         mState = State::Start;
         mEvent = Event::None;
         mStateTick.reset();
-
         RessourceCount<Fb>::acquire([]{
             Fb::init();
         });
         RessourceCount<Out>::acquire([]{
             Out::init();
         });
-
+        mTurns = 0;
     }
     static inline void reset() {
         IO::outl<debug>("# FT reset");
@@ -72,10 +70,6 @@ struct Feetech {
             Out::reset(); // only if last
         });
     }
-    static inline void speed(const uint16_t) {
-    }
-    static inline void offset(const uint16_t) {
-    }
     static inline std::pair<uint8_t, uint8_t> hwVersion() {
         return {255, 255};
     }
@@ -83,7 +77,10 @@ struct Feetech {
         return {255, 255};
     }
     static inline int8_t turns() {
-        return 0;
+        return mTurns;
+    }
+    static inline int16_t absPos() {
+        return (mTurns * 4096) + mLastPhi;
     }
     static inline uint16_t actualPos() {
         return mLastPhi;
@@ -121,13 +118,11 @@ struct Feetech {
     }
     static inline void PID_kd(const uint16_t v) {
         mPid.kd(v);
-        
     }
     static inline void event(const Event e) {
         mEvent = e;
     }
-    static inline void periodic() {
-    }
+    // static inline void periodic() {}
     static inline void ratePeriodic() {
         ++mDebugTick;
         const auto oldState = mState;
@@ -438,10 +433,18 @@ struct Feetech {
         return ((v - mFbMin) * 4095) / mFbRange;
     }
 
-    static inline int error() {
+    static inline int16_t error() {
         const uint16_t phi = In::phi();
         const uint16_t fb = normalized();
-        const int e = phi - fb;
+        int16_t d = fb - mLastPhi;
+        if (d >= 2048) {
+            mTurns -= 1;
+        }
+        else if (d <= -2048) {
+            mTurns += 1;
+        }
+        mLastPhi = fb;
+        const int16_t e = phi - fb;
         if (e > 2048) {
             return e - 4096;
         }
@@ -450,6 +453,7 @@ struct Feetech {
         }
         return e;
     }
+    static inline int16_t mTurns = 0;
     static inline bool mCalibOnStart = true;
     static inline bool mUseDead = false;
     static inline uint16_t mGain = 20;
