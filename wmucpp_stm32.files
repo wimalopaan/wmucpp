@@ -108,7 +108,6 @@ boards/rc720E32/sport_cb.h
 boards/rc720E32/startup_g0b1.s
 boards/rc720E32/sumdv3.h
 boards/rc720E32/sumdv3_2.h
-boards/rc720E32/switches.h
 boards/rc720E32/system_g0.cc
 boards/rc720E32/telemetry.h
 boards/rc720E32/telemetry_2.h
