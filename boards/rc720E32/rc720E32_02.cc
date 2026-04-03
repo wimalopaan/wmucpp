@@ -24,7 +24,7 @@
 #define SERVO_ADDRESS_SET // eanble setting waveshare servo IDs
 #define CRSF_ADDRESS 192
 
-#define SERIAL_DEBUG // enable debug on esc-tlm-1
+// #define SERIAL_DEBUG // enable debug on esc-tlm-1
 #define TEST_EEPROM // fill eeprom with test setup
 
 #define SW_VERSION 23
