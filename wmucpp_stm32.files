@@ -796,6 +796,7 @@ include_stm32/rc/messagebuffer_2.h
 include_stm32/rc/multiplex_pulses.h
 include_stm32/rc/package_relay_2.h
 include_stm32/rc/package_relay_rewrite.h
+include_stm32/rc/pulse_input.h
 include_stm32/rc/rc.h
 include_stm32/rc/rc_2.h
 include_stm32/rc/roboremo.h

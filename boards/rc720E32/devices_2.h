@@ -24,7 +24,6 @@
 #include "etl/stackstring.h"
 
 #include "meta.h"
-
 #include "mcu/mcu.h"
 #include "mcu/mcu_traits.h"
 #include "mcu/arm.h"
@@ -54,6 +53,7 @@
 #include "rc/package_relay_2.h"
 #include "rc/package_relay_rewrite.h"
 #include "rc/multiplex_pulses.h"
+#include "rc/pulse_input.h"
 #include "exti_slave.h"
 #include "pwm.h"
 #include "adc.h"
@@ -68,7 +68,6 @@
 #include "telemetry_2.h"
 #include "telemetry_bt.h"
 #include "iservo.h"
-#include "pulse_input.h"
 #include "inputmapper.h"
 #include "crsfchannelcollector.h"
 #include "qmc5883l.h"
