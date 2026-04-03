@@ -28,7 +28,6 @@ Ideas
 Prio 0
 ------
 * manual start calibration for analog feedback servos (like auto-calib feature on startup)
-* watchdog
 * add messagebuffer to packet-relay (for injection of messages)
 * fix the telemetry mess: use telemetry ID, enable/disable Batt-telemetry
 * add switch for RGB or GRB byte-order WS2812B leds
@@ -104,6 +103,7 @@ Done bugs:
 
 Done:
 ------
+* watchdog
 * analog feedback servos
 * modes: Dual-Schottel, Passthru
 * support addressable LEDs like WS1812 / APA102 (as multiswitch)

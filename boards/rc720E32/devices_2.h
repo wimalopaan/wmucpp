@@ -76,6 +76,7 @@
 #include "peripheral/mpu6050.h"
 #include "bluetooth/jdy10.h"
 #include "ws2812b.h"
+#include "watchdog.h"
 
 template<typename Config>
 struct SPortTelemetryCallback {
@@ -96,6 +97,11 @@ struct Devices<SW01, Config, MCU> {
     using clock = Mcu::Stm::Clock<Mcu::Stm::ClockConfig<64_MHz, 4'000_Hz, Mcu::Stm::HSI>>;
     using systemTimer = Mcu::Stm::SystemTimer<clock, Mcu::UseInterrupts<false>, MCU>;
 
+    struct WdgConfig {
+        static inline constexpr uint32_t reload = 500; // 500ms
+    };
+    using watchDog = WatchDog<WdgConfig>;
+    
     using gpioa = Mcu::Stm::GPIO<Mcu::Stm::A, MCU>;
     using gpiob = Mcu::Stm::GPIO<Mcu::Stm::B, MCU>;
     using gpioc = Mcu::Stm::GPIO<Mcu::Stm::C, MCU>;
@@ -576,6 +582,7 @@ struct Devices<SW01, Config, MCU> {
     struct CrsfCallbackConfig {
         using storage = Config::storage;
         using timer = systemTimer;
+        using watchdog = Devices::watchDog;
         using src = crsf_in;
         using servos = Config::servos;
         using escs = Config::escs;
@@ -785,6 +792,8 @@ struct Devices<SW01, Config, MCU> {
 
         // tp1::template dir<Mcu::Output>();
         // tp3::template dir<Mcu::Output>();
+        
+        watchDog::init();        
     }
 };
 

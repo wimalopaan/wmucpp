@@ -37,7 +37,8 @@ struct GFSM {
     using devs = Devices;
     using systemTimer = devs::systemTimer;
     using storage = devs::storage;
-
+    using watchdog = devs::watchDog;
+    
     using debug = devs::debug;
 
     using crsf_in = devs::crsf_in;
@@ -165,6 +166,10 @@ struct GFSM {
     static inline constexpr External::Tick<systemTimer> calibMaxDuration{15000ms};
 
     static inline void ratePeriodic() {
+        if constexpr(!std::is_same_v<watchdog, void>) {
+            watchdog::ratePeriodic();
+        }
+
         led1::ratePeriodic();
         led2::ratePeriodic();
         i2c::ratePeriodic();
