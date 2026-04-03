@@ -22,8 +22,8 @@
 #include <utility>
 
 #include "mcu/mcu.h"
+#include "mcu/uuid.h"
 #include "meta.h"
-#include "uuid.h"
 #include "i2c.h"
 #include "tick.h"
 #include "rc/crsf_2.h"

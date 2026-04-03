@@ -22,7 +22,7 @@
 #include <cstdlib>
 #include <numbers>
 
-#include "fastmath.h"
+#include "etl/fastmath.h"
 #include "etl/util.h"
 
 template<uint8_t N, typename PA, typename NVM>

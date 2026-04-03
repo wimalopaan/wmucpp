@@ -1,7 +1,7 @@
 #pragma once
 
 #include "etl/algorithm.h"
-#include "fastmath.h"
+#include "etl/fastmath.h"
 #include "tick.h"
 #include "etl/event.h"
 #include "eeprom.h"

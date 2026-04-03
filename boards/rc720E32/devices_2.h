@@ -71,11 +71,10 @@
 #include "pulse_input.h"
 #include "inputmapper.h"
 #include "crsfchannelcollector.h"
-#include "uuid.h"
 #include "qmc5883l.h"
 #include "peripheral/mpu6050.h"
+#include "peripheral/ws2812b.h"
 #include "bluetooth/jdy10.h"
-#include "ws2812b.h"
 #include "watchdog.h"
 
 template<typename Config>

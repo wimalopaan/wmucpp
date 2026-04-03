@@ -20,7 +20,6 @@
 #include "mcu/eeprom.h"
 #include "meta.h"
 #include "eeprom.h"
-#include "uuid.h"
 #include "rc/rc_2.h"
 
 template<typename Config>

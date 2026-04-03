@@ -743,6 +743,7 @@ include_stm32/encoder.h
 include_stm32/etl/algorithm.h
 include_stm32/etl/circularbuffer.h
 include_stm32/etl/event.h
+include_stm32/etl/fastmath.h
 include_stm32/etl/fifo.h
 include_stm32/etl/fixedvector.h
 include_stm32/etl/ranged.h
@@ -762,6 +763,7 @@ include_stm32/mcu/arm.h
 include_stm32/mcu/eeprom.h
 include_stm32/mcu/mcu.h
 include_stm32/mcu/mcu_traits.h
+include_stm32/mcu/uuid.h
 include_stm32/mcu_traits.h
 include_stm32/meta.h
 include_stm32/motor/bdc.h
@@ -771,7 +773,9 @@ include_stm32/mpu6050.h
 include_stm32/opamp.h
 include_stm32/output.h
 include_stm32/pcal6408.h
+include_stm32/peripheral/mpu6050.h
 include_stm32/peripheral/pcal6408.h
+include_stm32/peripheral/ws2812b.h
 include_stm32/pwm.h
 include_stm32/pwm_dma.h
 include_stm32/qmc5883l.h

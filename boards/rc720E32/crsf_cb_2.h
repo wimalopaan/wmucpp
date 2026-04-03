@@ -19,9 +19,9 @@
 #pragma once
 
 #include "mcu/eeprom.h"
+#include "mcu/uuid.h"
 #include "meta.h"
 #include "eeprom.h"
-#include "uuid.h"
 #include "rc/rc_2.h"
 #include "rc/crsf_2.h"
 
