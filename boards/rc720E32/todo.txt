@@ -34,8 +34,6 @@ Prio 0
 * use std::variant<> instead of heap-allocated wrapper objects
 * add s.port master
 * telemetry transfor from s.port-masters to s.port-aux and to crsf-telemetry
-* crsf relay for ELRS-relay (from rcDesk32)
-* EByte E32-170T30D relay mode
 * SumDv3: option to swap ch1-16 and ch17-32
 * add mcp23017 / TLC59108(F) support for switch output
 * add SBus-out on servo/esc outputs
@@ -49,35 +47,24 @@ Prio 0
 ** unify SET/SET4/SET4M/SET64 and ArduPilot-tunneling
 ** general state-machine:
 *** introduce sub-states
-*** e.g. subdevide states "RunConnected" or "RunDisconnected" into main-state with common actions
+*** e.g. subdivide states "RunConnected" or "RunDisconnected" into main-state with common actions
 * telemetry temp. off -> LED blink code -> substate
 * CRSF-HD on ESC-Out (maybe also CRSF-FD: ESC/Tlm)
 * I2C bus: implement bus arbiter (time slot based)
 * use only one appid for tunneling packages to one widget
 ** appid 6000 -> Schottel
 ** appid 6010 -> MultiSwitch
-* watchdog
 * use additional CRC in command frames as described by TBS
 * correct packaging of ArduPilot frames
-* crsf refactor II
-** make chunking optional
-** make telemetry slot optional
-** parameter: underlying type (Bytes: 1, 2, 4)
 * use units in crsf-parameters
 * Escape32/Ascii: get fw version
 * Coordinate system: rotate pi/2 left (mathematical 0 as head) : help-text?
-* mode: cruise-controller -> channel-passthru
 * esc-mode forward or forward/backward
-* LUA: alarm3 test from crsf-menu
 * VEsc: slew-rate for throttle (crsf parameter)
-* make dma, timer, usart summary with hw-connections
-* crsf-command popups: useful texts
 
 Prio 1
 ------
 * implement SBus-Switch state input (like super-simple-multiswitch)
-* maybe F9P support: yaw from GPS (moving baseline)
-* GPS: RTCM messages (how to send them over ELRS???)
 
 Prio 2
 ------

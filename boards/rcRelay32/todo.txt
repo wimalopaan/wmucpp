@@ -9,11 +9,11 @@ Bugs:
 
 * Telemetry-Tunnel LUA: stopped working on EdgeTx 3.0?
 
-
 ToDo:
 =====
 * watchdog (show watchdog counter in menu)
 * adc input: voltage, temperature
+* EByte E32-170T30D relay mode
 
 Done:
 =====
