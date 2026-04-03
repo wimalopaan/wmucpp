@@ -16,12 +16,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+// don't change anything below unless you know what you are doing
+
 #define ESCAPE32_ASCII // enable ESCape32 ascii configuration parameter menu
 // #define ESCAPE32_U8 // use only 8bit capable parameters
 #define SERVO_CALIBRATION // enable analog feedback servo calibration
 #define SERVO_ADDRESS_SET // eanble setting waveshare servo IDs
 #define CRSF_ADDRESS 192
-#define SERIAL_DEBUG // enable debug on esc-tlm-1
+
+// #define SERIAL_DEBUG // enable debug on esc-tlm-1
 #define TEST_EEPROM // fill eeprom with test setup
 
 #define SW_VERSION 22

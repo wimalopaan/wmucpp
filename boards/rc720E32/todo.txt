@@ -27,6 +27,7 @@ Ideas
 
 Prio 0
 ------
+* manual start calibration for analog feedback servos (like auto-calib feature on startup)
 * watchdog
 * add messagebuffer to packet-relay (for injection of messages)
 * fix the telemetry mess: use telemetry ID, enable/disable Batt-telemetry
@@ -57,7 +58,7 @@ Prio 0
 ** appid 6000 -> Schottel
 ** appid 6010 -> MultiSwitch
 * watchdog
-* use additional CRC in command frames as describe by TBS
+* use additional CRC in command frames as described by TBS
 * correct packaging of ArduPilot frames
 * crsf refactor II
 ** make chunking optional
@@ -70,7 +71,6 @@ Prio 0
 * esc-mode forward or forward/backward
 * LUA: alarm3 test from crsf-menu
 * VEsc: slew-rate for throttle (crsf parameter)
-* modes: Dual-Schottel, Passthru
 * make dma, timer, usart summary with hw-connections
 * crsf-command popups: useful texts
 
@@ -104,6 +104,8 @@ Done bugs:
 
 Done:
 ------
+* analog feedback servos
+* modes: Dual-Schottel, Passthru
 * support addressable LEDs like WS1812 / APA102 (as multiswitch)
 * add mpx output on srv2 (limitations on TIM14)
 * test WS2812B output on other than srv1
