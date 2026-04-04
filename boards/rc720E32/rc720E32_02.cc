@@ -25,9 +25,9 @@
 #define CRSF_ADDRESS 192
 
 // #define SERIAL_DEBUG // enable debug on esc-tlm-1
-#define TEST_EEPROM // fill eeprom with test setup
+// #define TEST_EEPROM // fill eeprom with test setup
 
-#define SW_VERSION 25
+#define SW_VERSION 26
 #define HW_VERSION 2
 
 #define NDEBUG

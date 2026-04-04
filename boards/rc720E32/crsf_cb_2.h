@@ -352,7 +352,6 @@ struct CrsfCallback {
         mEepromMode = prevMode;
     }
     static inline void serialize(const uint8_t index, auto& buffer, const RC::Protokoll::Crsf::V4::Lua::CmdStep step = RC::Protokoll::Crsf::V4::Lua::CmdStep::Idle) {
-        IO::outl<debug>("# serialize: ", (uint8_t)step);
         params[index].serialize(buffer, params, step, index);
     }
     static inline void setI2CDev(const uint8_t dev, const uint8_t adr) {
@@ -551,8 +550,10 @@ private:
         addNode(p, Param_t{parent2, PType::U16,  "PID Ki", nullptr,  &eeprom.fbservos[index].ki, 0, 1000, [](const store_t v){fbs::PID_ki(v); return true;}});
         addNode(p, Param_t{parent2, PType::U16,  "PID Kd", nullptr,  &eeprom.fbservos[index].kd, 0, 1000, [](const store_t v){fbs::PID_kd(v); return true;}});
 
-        addNode(p, Param_t{parent2, PType::Command, "Calibrate", mServoCalibTexts[0], nullptr, 0, 0, [](const store_t v){
-                               IO::outl<debug>("# l servoCalib v: ", v);
+        addNode(p, Param_t{parent2, PType::Command, "Calibrate", mServoCalibTexts[0], nullptr, 
+                           // 10, // timeout = 10 * 100ms 
+                           250, // timeout = 250ms
+                           0, [](const store_t v){
                                return servoCalibCb<index>(v);
                            }
                 });
@@ -619,14 +620,14 @@ private:
         addNode(p, Param_t{parent, PType::U8,  "Sch2 ESC PWM Mid", nullptr, &eeprom.esc_mid[1], 0, 200, [](const store_t){return true;}});
         addNode(p, Param_t{parent, PType::U16,  "Sch2 Servo zPosition", nullptr,  &eeprom.offset2, 0, 359, [](const store_t v){servos::template offset<1>((uint32_t{v} * 4096) / 360); return true;}});
         addNode(p, Param_t{parent, PType::U8,  "Sch2 Servo Speed", nullptr, &eeprom.speed2, 1, 100, [](const store_t v){servos::template speed<1>(34 * v); return true;}});
-        addNode(p, Param_t{parent, PType::Command, "Act. Pos. as zPos 1", setServoZeroPosText, nullptr, 0, 0, [](const store_t v){return setZeroPosition(v);}});
-        addNode(p, Param_t{parent, PType::Command, "Act. Pos. as zPos 2", setServoZeroPosText, nullptr, 0, 0, [](const store_t v){return setZeroPosition(v);}});
+        addNode(p, Param_t{parent, PType::Command, "Act. Pos. as zPos 1", setServoZeroPosText, nullptr, 200 /*timeout*/, 0, [](const store_t v){return setZeroPosition(v);}});
+        addNode(p, Param_t{parent, PType::Command, "Act. Pos. as zPos 2", setServoZeroPosText, nullptr, 200 /*timeout*/, 0, [](const store_t v){return setZeroPosition(v);}});
 
 #ifdef ESCAPE32_ASCII
         parent = addParent(p, Param_t{0, PType(PType::Folder | PType::Hidden), "ESCape32 1"});
         mESCape321Folder = parent;
-        addNode(p, Param_t{parent, PType::Command, "Beep", nullptr, nullptr, 0, 0, [](const store_t){esc32ascii_1::beep(); return false;}});
-        addNode(p, Param_t{parent, PType::Command, "Save", nullptr, nullptr, 0, 0, [](const store_t){esc32ascii_1::save(); return false;}});
+        addNode(p, Param_t{parent, PType::Command, "Beep", nullptr, nullptr, 200 /*timeout*/, 0, [](const store_t){esc32ascii_1::beep(); return false;}});
+        addNode(p, Param_t{parent, PType::Command, "Save", nullptr, nullptr, 200 /*timeout*/, 0, [](const store_t){esc32ascii_1::save(); return false;}});
         [&]<size_t... II>(std::integer_sequence<size_t, II...>){
             (addNode(p, Param_t{parent, PType::U16, esc32ascii_1::params()[II].name, nullptr, &esc32ascii_1::params()[II].value, esc32ascii_1::params()[II].min, esc32ascii_1::params()[II].max, [](const store_t v){esc32ascii_1::setParam(II, v); return false;}}), ...);
         }(std::make_index_sequence<esc32ascii_1::params().size()>{});
@@ -634,8 +635,8 @@ private:
 
         parent = addParent(p, Param_t{0, PType(PType::Folder | PType::Hidden), "ESCape32 2"});
         mESCape322Folder = parent;
-        addNode(p, Param_t{parent, PType::Command, "Beep", nullptr, nullptr, 0, 0, [](const store_t){esc32ascii_1::beep(); return false;}});
-        addNode(p, Param_t{parent, PType::Command, "Save", nullptr, nullptr, 0, 0, [](const store_t){esc32ascii_1::save(); return false;}});
+        addNode(p, Param_t{parent, PType::Command, "Beep", nullptr, nullptr, 200 /*timeout*/, 0, [](const store_t){esc32ascii_1::beep(); return false;}});
+        addNode(p, Param_t{parent, PType::Command, "Save", nullptr, nullptr, 200 /*timeout*/, 0, [](const store_t){esc32ascii_1::save(); return false;}});
 
         [&]<size_t... II>(std::integer_sequence<size_t, II...>){
             (addNode(p, Param_t{parent, PType::U16, esc32ascii_2::params()[II].name, nullptr, &esc32ascii_2::params()[II].value, esc32ascii_2::params()[II].min, esc32ascii_2::params()[II].max, [](const store_t v){esc32ascii_2::setParam(II, v); return false;}}), ...);
@@ -646,12 +647,8 @@ private:
 
 #ifdef SERVO_CALIBRATION
         parent = addParent(p, Param_t{0, PType::Folder, "Calibration"});
-        
         addFbServo<0>(p, parent, "FBServo 1");
         addFbServo<1>(p, parent, "FBServo 2");
-        
-        // addNode(p, Param_t{parent, PType::Command, "Calibrate", mServoCalibTexts[0], nullptr, 0, 0, [](const store_t v){return servoCalibCb(v);}});
-        // addNode(p, Param_t{parent, PType::Info, "Srv1 DeadL", &mDeadLowString[0]});
 #endif
 
         parent = addParent(p, Param_t{0, PType::Folder, "CRSF"});
@@ -664,7 +661,7 @@ private:
                                return true;}});
         addNode(p, Param_t{parent, PType::Sel, "Inject (SBus)", "Yes;No", &eeprom.inject, 0, 1, [](const store_t){return true;}});
 #ifdef SERVO_ADDRESS_SET
-        addNode(p, Param_t{parent, PType::Command, "Set Servo ID", mServoAddressTexts[0], nullptr, 0, 0, [](const store_t v){return setServoAdrCb(v);}});
+        addNode(p, Param_t{parent, PType::Command, "Set Servo ID", mServoAddressTexts[0], nullptr, 200 /*timeout*/, 0, [](const store_t v){return setServoAdrCb(v);}});
         mServoAddressCommand = p.size() - 1;
         addNode(p, Param_t{parent, PType::U8,  "Servo ID to set", nullptr, nullptr, 1, 16, [](const store_t){return false;}});
 #endif
@@ -685,7 +682,7 @@ private:
         addNode(p, Param_t{parent, PType::Info, "Address 3:", &mI2CDevs[3][0]});
 
         parent = addParent(p, Param_t{0, PType::Folder, "Compass"});
-        addNode(p, Param_t{parent, PType::Command, "Calibrate", mCompassCalibTexts[0], nullptr, 0, 0, [](const store_t v){return compassCalibCb(v);}, 200});
+        addNode(p, Param_t{parent, PType::Command, "Calibrate", mCompassCalibTexts[0], nullptr, 200 /*timeout*/, 0, [](const store_t v){return compassCalibCb(v);}, 200});
         mCompassCalibCommand = p.size() - 1;
         addNode(p, Param_t{parent, PType::Info, "Cal. x-axis", &mCalTexts[0][0]});
         addNode(p, Param_t{parent, PType::Info, "Cal. y-axis", &mCalTexts[1][0]});
