@@ -21,6 +21,8 @@
 #include <numbers>
 #include <chrono>
 
+#include "etl/event.h"
+
 #include "ressources.h"
 #include "pid.h"
 
@@ -30,7 +32,7 @@ template<uint8_t N, typename In, typename Fb, typename Out, typename CalibCB, ty
 struct Feetech {
     using debug = Debug;
 
-    enum class Event : uint8_t {None, Calibrate, Run};
+    enum class Event : uint8_t {None, Calibrate, StopCalib};
     enum class State : uint8_t {Start, WaitNoise, Noise,
                                 StartPosition, StartPositionRotate, StartPositionStop, StartPositionStopDecrease,
                                 DeadStartP, DeadSetP, DeadTestP,
@@ -60,9 +62,11 @@ struct Feetech {
             Out::init();
         });
         mTurns = 0;
+        mActive = true;
     }
     static inline void reset() {
         IO::outl<debug>("# FT reset");
+        mActive = false;
         RessourceCount<Fb>::release([]{
             Fb::reset(); // only if last
         });
@@ -122,19 +126,21 @@ struct Feetech {
     static inline void event(const Event e) {
         mEvent = e;
     }
-    // static inline void periodic() {}
+    static inline void startCalibrate() {
+        event(Event::Calibrate);
+    }
+    static inline void stopCalibrate() {
+        event(Event::StopCalib);
+    }
+    static inline bool isCalibrating() {
+        return mActive && !((mState == State::Run) || (mState == State::Start));
+    }
     static inline void ratePeriodic() {
         ++mDebugTick;
         const auto oldState = mState;
         ++mStateTick;
         switch(mState) {
         case State::Start:
-            // if (const auto e = std::exchange(mEvent, Event::None); e == Event::Calibrate) {
-            //     mState = State::WaitNoise;
-            // }
-            // else if (e == Event::Run) {
-            //     mState = State::Run;
-            // }
             if (!mCalibOnStart) {
                 mState = State::Run;
             }
@@ -288,6 +294,9 @@ struct Feetech {
             break;
         case State::Run:
         {
+            mEvent.on(Event::Calibrate, []{
+                mState = State::WaitNoise;
+            });
             int32_t o = (mPid.process(error()) * mGain) / 10;
             int32_t oo = 0;
             if (mUseDead) {
@@ -453,6 +462,7 @@ struct Feetech {
         }
         return e;
     }
+    static inline bool mActive = false;
     static inline int16_t mTurns = 0;
     static inline bool mCalibOnStart = true;
     static inline bool mUseDead = false;
@@ -471,7 +481,7 @@ struct Feetech {
     static inline uint16_t mFbMax{std::numeric_limits<uint16_t>::max()};
     static inline uint16_t mFbMin{0};
     static inline bool mFbInc = false;
-    static inline Event mEvent{Event::None};
+    static inline etl::Event<Event> mEvent;
     static inline State mState{State::Start};
     static inline External::Tick<systemTimer> mStateTick;
     static inline External::Tick<systemTimer> mDebugTick;

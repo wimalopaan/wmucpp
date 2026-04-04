@@ -112,11 +112,8 @@ struct ChannelCallback {
             }
             auxes::update();
         }
-
     }
-
     private:
-
     static inline uint16_t phiToSbusValue(const uint16_t phi) {
         if (phi < 4096) {
             return (phi * RC::Protokoll::SBus::V2::amp) / 4095 + RC::Protokoll::SBus::V2::min;

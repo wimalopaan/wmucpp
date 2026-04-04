@@ -72,6 +72,8 @@ struct GFSM {
     using srv1_waveshare = devs::srv1_waveshare;
     using srv2_waveshare = devs::srv2_waveshare;
 
+    using fbservos = devs::fbservos;
+    
     using i2c = devs::i2c;
     using magnetometer = devs::qmc5883l;
     using accelerometer = devs::mpu6050;
@@ -82,6 +84,18 @@ struct GFSM {
     using ws2812b_1 = devs::ws2812b_1;
     using ws2812b_2 = devs::ws2812b_2;
 
+    template<typename list>
+    static inline bool isCalibrating() {
+        bool c = false;
+        Meta::visit<list>([&](auto W){
+            using dev = decltype(W)::type;
+            if (dev::isCalibrating()) {
+                c = true;
+            }
+        });
+        return c;
+    }
+    
     struct CalibClient {
         static inline void update() {
             event(Event::CompassCalibUpdate);
@@ -250,6 +264,23 @@ struct GFSM {
             });
             break;
         case State::RunConnected:
+        {
+            static bool cal = false;
+            if (isCalibrating<fbservos>()) {
+                if (!cal) {
+                    IO::outl<debug>("# fb calibrating on");
+                    cal = true;
+                    led2::event(led2::Event::Fast);
+                }
+            }
+            else {
+                if (cal) {
+                    IO::outl<debug>("# fb calibrating off");
+                    cal = false;
+                    led2::event(led2::Event::Off);
+                }
+            }
+        }
             mEvent.on(Event::ConnectionLost, []{
                 mState = State::RunUnconnected;
             }).thenOn(Event::DirectConnected, []{
@@ -383,6 +414,7 @@ struct GFSM {
             case State::RunConnected:
                 IO::outl<debug>("# Run con");
                 crsf_in::address(std::byte(storage::eeprom.address));
+                led1::count(2);
                 led1::event(led1::Event::Slow);
                 led2::event(led2::Event::Off);
                 break;

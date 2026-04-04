@@ -37,33 +37,9 @@ struct MpxAdapter {
         IO::outl<Debug>("Mpx reset");
         RessourceCount<Mpx>::release([]{
             IO::outl<Debug>("Mpx release");
-            // Mpx::reset(); // only if last channel
+            Mpx::reset(); // only if last channel
         });
         Pin::analog();
-    }
-    static inline std::pair<uint8_t, uint8_t> hwVersion() {
-        return {255, 255};
-    }
-    static inline std::pair<uint8_t, uint8_t> fwVersion() {
-        return {255, 255};
-    }
-    static inline uint16_t turns() {
-        return 0;
-    }
-    static inline uint16_t actualPos() {
-        return 0;
-    }
-    static inline void speed(uint16_t) {
-    }
-    static inline void offset(uint16_t) {
-    }
-    static inline void zero() {
-    }
-    static inline void update() {
-    }
-    static inline void periodic() {
-    }
-    static inline void ratePeriodic() {
     }
 };
 

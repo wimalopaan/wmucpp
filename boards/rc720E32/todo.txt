@@ -27,7 +27,7 @@ Ideas
 
 Prio 0
 ------
-* manual start calibration for analog feedback servos (like auto-calib feature on startup)
+* refactor the mess in GFSM (global state machine)
 * add messagebuffer to packet-relay (for injection of messages)
 * fix the telemetry mess: use telemetry ID, enable/disable Batt-telemetry
 * add switch for RGB or GRB byte-order WS2812B leds
@@ -90,6 +90,7 @@ Done bugs:
 
 Done:
 ------
+* manual start calibration for analog feedback servos (like auto-calib feature on startup)
 * analog feedback servos: implement actual position telemetry
 * watchdog
 * analog feedback servos

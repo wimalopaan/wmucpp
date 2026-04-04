@@ -615,7 +615,7 @@ struct Devices<SW01, Config, MCU> {
         using dmaChWrite = csrfInDmaChannelComponent2;
         using debug = void;
         using tp = void;
-        using callback = CrsfCallback<CrsfCallbackConfig, debug>;
+        using callback = CrsfCallback<CrsfCallbackConfig, Devices::debug>;
         static inline constexpr uint8_t fifoSize = 16;
     };
     struct SBus1Config {

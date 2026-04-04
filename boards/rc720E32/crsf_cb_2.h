@@ -352,6 +352,7 @@ struct CrsfCallback {
         mEepromMode = prevMode;
     }
     static inline void serialize(const uint8_t index, auto& buffer, const RC::Protokoll::Crsf::V4::Lua::CmdStep step = RC::Protokoll::Crsf::V4::Lua::CmdStep::Idle) {
+        IO::outl<debug>("# serialize: ", (uint8_t)step);
         params[index].serialize(buffer, params, step, index);
     }
     static inline void setI2CDev(const uint8_t dev, const uint8_t adr) {
@@ -433,7 +434,7 @@ private:
         }
         return res;
     }
-    static inline uint8_t mServoCalibCommand = 0;
+    static inline std::array<uint8_t, 2> mServoCalibCommand = {};
     static inline uint8_t mServoAddressCommand = 0;
     static inline uint8_t mCompassCalibCommand = 0;
     static inline uint8_t mESCape321Folder{};
@@ -451,12 +452,38 @@ private:
     }
 
     static inline std::array<const char*, 6> mServoCalibTexts {
-        "Set Address",
+        "Servo Calibrartion",
         "Start ...",
+        "Calibrating ...",
         "... End"
     };
-    static inline bool servoCalibCb(const uint8_t) {
-        return false;
+    template<auto N>
+    static inline bool servoCalibCb(const uint8_t v) {
+        IO::outl<debug>("# servoCalib v: ", v);
+        using fbs = Meta::nth_element<N, fbservos>;
+        const RC::Protokoll::Crsf::V4::Lua::CmdStep step{v};
+        bool res = false;
+        switch(step) {
+        case RC::Protokoll::Crsf::V4::Lua::CmdStep::Click:
+            params[mServoCalibCommand[N]].options = mServoCalibTexts[1];
+            res = true;
+            break;
+        case RC::Protokoll::Crsf::V4::Lua::CmdStep::Confirmed:
+            params[mServoCalibCommand[N]].options = mServoCalibTexts[2];
+            fbs::startCalibrate();
+            break;
+        case RC::Protokoll::Crsf::V4::Lua::CmdStep::Cancel:
+            params[mServoCalibCommand[N]].options = mServoCalibTexts[3];
+            fbs::stopCalibrate();
+            break;
+        case RC::Protokoll::Crsf::V4::Lua::CmdStep::Query:
+            params[mServoCalibCommand[N]].options = mServoCalibTexts[2];
+            res = fbs::isCalibrating();
+            break;
+        default:
+            break;
+        }
+        return res;
     }
 
     using i2c_strings_t = std::array<std::array<char, 16>, 4>;
@@ -523,6 +550,13 @@ private:
         addNode(p, Param_t{parent2, PType::U16,  "PID Kp", nullptr,  &eeprom.fbservos[index].kp, 0, 1000, [](const store_t v){fbs::PID_kp(v); return true;}});
         addNode(p, Param_t{parent2, PType::U16,  "PID Ki", nullptr,  &eeprom.fbservos[index].ki, 0, 1000, [](const store_t v){fbs::PID_ki(v); return true;}});
         addNode(p, Param_t{parent2, PType::U16,  "PID Kd", nullptr,  &eeprom.fbservos[index].kd, 0, 1000, [](const store_t v){fbs::PID_kd(v); return true;}});
+
+        addNode(p, Param_t{parent2, PType::Command, "Calibrate", mServoCalibTexts[0], nullptr, 0, 0, [](const store_t v){
+                               IO::outl<debug>("# l servoCalib v: ", v);
+                               return servoCalibCb<index>(v);
+                           }
+                });
+        mServoCalibCommand[index] = p.size() - 1;
     }    
     
     static inline params_t params = []{
@@ -616,7 +650,6 @@ private:
         addFbServo<0>(p, parent, "FBServo 1");
         addFbServo<1>(p, parent, "FBServo 2");
         
-        // mServoCalibCommand = parent;
         // addNode(p, Param_t{parent, PType::Command, "Calibrate", mServoCalibTexts[0], nullptr, 0, 0, [](const store_t v){return servoCalibCb(v);}});
         // addNode(p, Param_t{parent, PType::Info, "Srv1 DeadL", &mDeadLowString[0]});
 #endif
