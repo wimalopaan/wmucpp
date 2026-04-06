@@ -84,18 +84,6 @@ struct GFSM {
     using ws2812b_1 = devs::ws2812b_1;
     using ws2812b_2 = devs::ws2812b_2;
 
-    // template<typename list>
-    // static inline bool isCalibrating() {
-    //     bool c = false;
-    //     Meta::visit<list>([&](auto W){
-    //         using dev = decltype(W)::type;
-    //         if (dev::isCalibrating()) {
-    //             c = true;
-    //         }
-    //     });
-    //     return c;
-    // }
-    
     struct FbListener {
         static inline void calibStart() {
             event(Event::FbStartCalibrating);
@@ -238,15 +226,8 @@ struct GFSM {
             break;
         case State::Init:
             mStateTick.on(initTicks, []{
-                if (adc::ready()) {
-                    // mState = State::I2CScan;
-                    // mState = State::Calib;
-                }
-                else {
-                    mStateTick.reset();
-                }
+                mState = State::I2CScan;
             });
-            mState = State::I2CScan;
             break;
         case State::Calib:
             mState = State::RunUnconnected;
@@ -280,23 +261,6 @@ struct GFSM {
             });
             break;
         case State::RunConnected:
-        // {
-        //     static bool cal = false;
-        //     if (isCalibrating<fbservos>()) {
-        //         if (!cal) {
-        //             IO::outl<debug>("# fb calibrating on");
-        //             cal = true;
-        //             led2::event(led2::Event::Fast);
-        //         }
-        //     }
-        //     else {
-        //         if (cal) {
-        //             IO::outl<debug>("# fb calibrating off");
-        //             cal = false;
-        //             led2::event(led2::Event::Off);
-        //         }
-        //     }
-        // }
             mEvent.on(Event::ConnectionLost, []{
                 mState = State::RunUnconnected;
             }).thenOn(Event::DirectConnected, []{
@@ -375,7 +339,6 @@ struct GFSM {
                 crsf_in_responder::setDestination(RC::Protokoll::Crsf::V4::Address::Handset);
                 crsf_in::address(RC::Protokoll::Crsf::V4::Address::TX);
                 crsf_in_responder::sendRadioID();
-                // IO::outl<debug>("# send Radio ID");
             });
             break;
         case State::FbServosCalibrating:
