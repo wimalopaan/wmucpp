@@ -257,14 +257,11 @@ struct Devices<SW01, Config, MCU> {
     
     template<auto N>
     struct FbCalibCallback {
-        // using elistener = Config::fbEventListener;
         static inline void onCalibStart() {
             global::event = global::Event::FeedbackServoCalibrationStart;
-            // elistener::calibStart();
         }
         static inline void onCalibStop() {
             global::event = global::Event::FeedbackServoCalibrationStop;
-            // elistener::calibStop();
         }
         static inline void deadMin(const uint16_t v) {
             storage::eeprom.fbservos[N].deadMin = v;
@@ -791,17 +788,14 @@ struct Devices<SW01, Config, MCU> {
     struct CalibClient {
         static inline void update() {
             global::event = global::Event::CompassCalibUpdate;
-            // event(Event::CompassCalibUpdate);
         }
         static inline void start() {
             global::event = global::Event::CompassCalibStart;
-            // event(Event::CompassCalibStart);
         }
         static inline void end() {
             CrsfConfig::callback::update();
             CrsfConfig::callback::save();
             global::event = global::Event::CompassCalibEnd;
-            // event(Event::CompassCalibEnd);
         }
     };
     using compassCalibClient = CalibClient;
@@ -839,26 +833,6 @@ struct Devices<SW01, Config, MCU> {
         sport_aux::setValue1(1000 * HW_VERSION + SW_VERSION);
 
         stdComponents::init();
-        
-        // ledBlinker1::init();
-        // ledBlinker2::init();
-
-// #ifdef SERIAL_DEBUG
-//         debug::init();
-// #endif
-        // crsf_in::init();
-
-        // i2c::init();
-
-        // qmc5883l::init();
-        // mpu6050::init();
-
-        // compass::init();
-        
-        // tp1::template dir<Mcu::Output>();
-        // tp3::template dir<Mcu::Output>();
-        
-        // watchDog::init();        
     }
 };
 

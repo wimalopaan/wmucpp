@@ -35,10 +35,6 @@
 #include <cstdint>
 #include <chrono>
 
-// #include "output_aux.h"
-// #include "output_esc.h"
-// #include "output_relay.h"
-// #include "output_servo.h"
 #include "gfsm_2.h"
 #include "devices_2.h"
 #include "stdapp/scheduler.h"
@@ -70,20 +66,14 @@ struct Global {
     static inline etl::SlotEvent<Event> event;
 };
 
-struct DevsConfig;
-using devs = Devices<SW01, DevsConfig, Mcu::Stm::Stm32G0B1>;
-using gfsm = GFSM<devs>;
-
 struct DevsConfig {
     using storage = Storage;
     using global = Global;
-    // using compass = gfsm::compass;
-    // using compassCalibClient = gfsm::compassCalibClient;
-    // using fbEventListener = gfsm::fbListener;
 };
+using devs = Devices<SW01, DevsConfig, Mcu::Stm::Stm32G0B1>;
 
 struct SchedulerConfig {
-    using fsm = gfsm;
+    using fsm = GFSM<devs>;
     using timer = devs::systemTimer;    
 };
 
@@ -91,7 +81,6 @@ using app = Scheduler<SchedulerConfig>;
 
 int main() {
     Storage::init();
-    
     app::main([]{
         static constexpr uint8_t defaultIntPrio = 1;
         static constexpr uint8_t swUartIntPrio  = 0;
@@ -131,56 +120,6 @@ int main() {
         NVIC_EnableIRQ(EXTI4_15_IRQn);
         NVIC_SetPriority(EXTI4_15_IRQn, swUartIntPrio);        
     });
-    
-    // gfsm::init();
-    // gfsm::updateFromEeprom();
-
-    // static constexpr uint8_t defaultIntPrio = 1;
-    // static constexpr uint8_t swUartIntPrio  = 0;
-
-    // static_assert(swUartIntPrio < defaultIntPrio);
-
-    // NVIC_EnableIRQ(USART1_IRQn);
-    // NVIC_SetPriority(USART1_IRQn, defaultIntPrio);
-
-    // NVIC_EnableIRQ(USART2_LPUART2_IRQn);
-    // NVIC_SetPriority(USART2_LPUART2_IRQn, defaultIntPrio);
-
-    // NVIC_EnableIRQ(USART3_4_5_6_LPUART1_IRQn);
-    // NVIC_SetPriority(USART3_4_5_6_LPUART1_IRQn, defaultIntPrio);
-
-    // NVIC_EnableIRQ(DMA1_Channel2_3_IRQn);
-    // NVIC_SetPriority(DMA1_Channel2_3_IRQn, defaultIntPrio);
-
-    // NVIC_EnableIRQ(DMA1_Ch4_7_DMA2_Ch1_5_DMAMUX1_OVR_IRQn);
-    // NVIC_SetPriority(DMA1_Ch4_7_DMA2_Ch1_5_DMAMUX1_OVR_IRQn, defaultIntPrio);
-
-    // // NVIC_EnableIRQ(ADC1_COMP_IRQn);
-    // // NVIC_SetPriority(ADC1_COMP_IRQn, defaultIntPrio);
-
-    // NVIC_EnableIRQ(TIM3_TIM4_IRQn);
-    // NVIC_SetPriority(TIM3_TIM4_IRQn, defaultIntPrio);
-
-    // NVIC_EnableIRQ(TIM1_BRK_UP_TRG_COM_IRQn);
-    // NVIC_SetPriority(TIM1_BRK_UP_TRG_COM_IRQn, swUartIntPrio);
-
-    // NVIC_EnableIRQ(EXTI0_1_IRQn);
-    // NVIC_SetPriority(EXTI0_1_IRQn, swUartIntPrio);
-
-    // NVIC_EnableIRQ(EXTI2_3_IRQn);
-    // NVIC_SetPriority(EXTI2_3_IRQn, swUartIntPrio);
-
-    // NVIC_EnableIRQ(EXTI4_15_IRQn);
-    // NVIC_SetPriority(EXTI4_15_IRQn, swUartIntPrio);
-
-    // __enable_irq();
-
-    // while(true) {
-    //     gfsm::periodic();
-    //     devs::systemTimer::periodic([]{
-    //         gfsm::ratePeriodic();
-    //     });
-    // }
 }
 extern "C" {
 
