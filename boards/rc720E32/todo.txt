@@ -27,7 +27,6 @@ Ideas
 
 Prio 0
 ------
-* pid anti-windup integral-back-compute
 * refactor the mess in GFSM (global state machine)
 * add messagebuffer to packet-relay (for injection of messages)
 * fix the telemetry mess: use telemetry ID, enable/disable Batt-telemetry
@@ -91,6 +90,7 @@ Done bugs:
 
 Done:
 ------
+* pid anti-windup integral-back-compute
 * slotted event class
 * manual start calibration for analog feedback servos (like auto-calib feature on startup)
 * analog feedback servos: implement actual position telemetry
