@@ -331,6 +331,7 @@ struct Feetech {
             case State::WaitNoise:
                 Out::set(mDeadMid);
                 IO::outl<Debug>("# Srv:WaitNoise");
+                CalibCB::onCalibStart();
                 break;
             case State::Noise:
                 IO::outl<Debug>("# Srv:Noise");
@@ -426,6 +427,7 @@ struct Feetech {
             case State::Run:
                 Out::set(mDeadMid);
                 IO::outl<Debug>("# Srv:Run");
+                CalibCB::onCalibStop();
                 break;
             case State::Error:
                 IO::outl<Debug>("# Srv:Error");

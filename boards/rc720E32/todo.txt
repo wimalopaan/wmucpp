@@ -27,6 +27,7 @@ Ideas
 
 Prio 0
 ------
+* slotted event class
 * refactor the mess in GFSM (global state machine)
 * add messagebuffer to packet-relay (for injection of messages)
 * fix the telemetry mess: use telemetry ID, enable/disable Batt-telemetry

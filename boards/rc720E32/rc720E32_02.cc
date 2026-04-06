@@ -24,10 +24,10 @@
 #define SERVO_ADDRESS_SET // eanble setting waveshare servo IDs
 #define CRSF_ADDRESS 192
 
-// #define SERIAL_DEBUG // enable debug on esc-tlm-1
+#define SERIAL_DEBUG // enable debug on esc-tlm-1
 // #define TEST_EEPROM // fill eeprom with test setup
 
-#define SW_VERSION 26
+#define SW_VERSION 27
 #define HW_VERSION 2
 
 #define NDEBUG
@@ -74,6 +74,7 @@ struct DevsConfig {
     using relays = relayoutputs;
     using auxes = auxoutputs;
     using compass = gfsm::compass;
+    using fbEventListener = gfsm::fbListener;
 };
 
 int main() {
@@ -158,7 +159,6 @@ void TIM3_TIM4_IRQHandler() {
     pulse_in::onCapture([]{
     });
 }
-
 void ADC1_COMP_IRQHandler() {
     using adc = devs::adc;
     if (adc::mcuAdc->ISR & ADC_ISR_EOS) {
@@ -365,7 +365,6 @@ void _kill(int, int) {
 int _getpid(void) {
     return -1;
 }
-
 // strtof()
 #ifndef NDEBUG
 void _close(int){

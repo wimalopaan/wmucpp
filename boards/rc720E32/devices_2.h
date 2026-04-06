@@ -248,6 +248,13 @@ struct Devices<SW01, Config, MCU> {
     
     template<auto N>
     struct FbCalibCallback {
+        using elistener = Config::fbEventListener;
+        static inline void onCalibStart() {
+            elistener::calibStart();
+        }
+        static inline void onCalibStop() {
+            elistener::calibStop();
+        }
         static inline void deadMin(const uint16_t v) {
             storage::eeprom.fbservos[N].deadMin = v;
         }

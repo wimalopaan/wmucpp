@@ -2,6 +2,7 @@ ToDo:
 =====
 * cppm output
 * watchdog
+* slotted event class
 
 Done:
 =====

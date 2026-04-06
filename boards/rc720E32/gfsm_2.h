@@ -84,17 +84,27 @@ struct GFSM {
     using ws2812b_1 = devs::ws2812b_1;
     using ws2812b_2 = devs::ws2812b_2;
 
-    template<typename list>
-    static inline bool isCalibrating() {
-        bool c = false;
-        Meta::visit<list>([&](auto W){
-            using dev = decltype(W)::type;
-            if (dev::isCalibrating()) {
-                c = true;
-            }
-        });
-        return c;
-    }
+    // template<typename list>
+    // static inline bool isCalibrating() {
+    //     bool c = false;
+    //     Meta::visit<list>([&](auto W){
+    //         using dev = decltype(W)::type;
+    //         if (dev::isCalibrating()) {
+    //             c = true;
+    //         }
+    //     });
+    //     return c;
+    // }
+    
+    struct FbListener {
+        static inline void calibStart() {
+            event(Event::FbStartCalibrating);
+        }
+        static inline void calibStop() {
+            event(Event::FbStopCalibrating);            
+        }        
+    };
+    using fbListener = FbListener;
     
     struct CalibClient {
         static inline void update() {
@@ -133,12 +143,15 @@ struct GFSM {
         compass::init();
     }
 
-    enum class Event : uint8_t {None, ConnectionLost, DirectConnected, ReceiverConnected,
-                                CompassCalibStart, CompassCalibEnd, CompassCalibUpdate};
+    enum class Event : uint8_t {ConnectionLost, DirectConnected, ReceiverConnected,
+                                CompassCalibStart, CompassCalibEnd, CompassCalibUpdate,
+                                FbStartCalibrating, FbStopCalibrating,
+                               };
 
     enum class State : uint8_t {Undefined, Init,
                                 Calib,
                                 CompassCalib, CompassCalibUdated,
+                                FbServosCalibrating,
                                 I2CScan,
                                 RunConnected, RunUnconnected, DirectMode, CheckBaudrate};
 
@@ -213,6 +226,9 @@ struct GFSM {
                 event(Event::ConnectionLost);
             }
         });
+        // if (isCalibrating<fbservos>()) {
+        //     event(Event::FbCalibrating);
+        // }
 
         ++mStateTick;
         const auto oldState = mState;
@@ -240,7 +256,7 @@ struct GFSM {
                 mState = State::RunConnected;
             }).thenOn(Event::ReceiverConnected, []{
                 mState = State::DirectMode;
-            });
+            }).clear();
             mStateTick.on(baudCheckTicks, []{
                 nextBaudrate();
             });
@@ -255,7 +271,7 @@ struct GFSM {
                 mState = State::DirectMode;
             }).thenOn(Event::ConnectionLost, []{
                 mState = State::CheckBaudrate;
-            });
+            }).clear();
             (++mUpdateTick).on(updateTicks, []{
                 channelCallback::update();
             });
@@ -264,23 +280,23 @@ struct GFSM {
             });
             break;
         case State::RunConnected:
-        {
-            static bool cal = false;
-            if (isCalibrating<fbservos>()) {
-                if (!cal) {
-                    IO::outl<debug>("# fb calibrating on");
-                    cal = true;
-                    led2::event(led2::Event::Fast);
-                }
-            }
-            else {
-                if (cal) {
-                    IO::outl<debug>("# fb calibrating off");
-                    cal = false;
-                    led2::event(led2::Event::Off);
-                }
-            }
-        }
+        // {
+        //     static bool cal = false;
+        //     if (isCalibrating<fbservos>()) {
+        //         if (!cal) {
+        //             IO::outl<debug>("# fb calibrating on");
+        //             cal = true;
+        //             led2::event(led2::Event::Fast);
+        //         }
+        //     }
+        //     else {
+        //         if (cal) {
+        //             IO::outl<debug>("# fb calibrating off");
+        //             cal = false;
+        //             led2::event(led2::Event::Off);
+        //         }
+        //     }
+        // }
             mEvent.on(Event::ConnectionLost, []{
                 mState = State::RunUnconnected;
             }).thenOn(Event::DirectConnected, []{
@@ -288,7 +304,9 @@ struct GFSM {
             }).thenOn(Event::CompassCalibStart, []{
                 led1::event(led1::Event::Medium);
                 mState = State::CompassCalib;
-            });
+            }).thenOn(Event::FbStartCalibrating, []{
+                mState = State::FbServosCalibrating;
+            }).clear();           
             (++mUpdateTick).on(updateTicks, []{
                 channelCallback::update();
                 ws2812b_1::sendColors();
@@ -349,7 +367,7 @@ struct GFSM {
                 mState = State::RunUnconnected;
             }).thenOn(Event::ReceiverConnected, []{
                 mState = State::RunConnected;
-            });
+            }).clear();
             (++mUpdateTick).on(updateTicks, []{
                 channelCallback::update();
             });
@@ -360,12 +378,17 @@ struct GFSM {
                 // IO::outl<debug>("# send Radio ID");
             });
             break;
+        case State::FbServosCalibrating:
+            mEvent.on(Event::FbStopCalibrating, []{
+                mState = State::RunConnected; 
+            }).clear();
+            break;
         case State::CompassCalib:
             mEvent.on(Event::CompassCalibEnd, []{
                 mState = State::RunConnected;
             }).thenOn(Event::CompassCalibUpdate, []{
                 mState = State::CompassCalibUdated;
-            });
+            }).clear();
             mStateTick.on(calibMaxDuration, []{
                 compass::stopCalibrate();
             });
@@ -396,8 +419,6 @@ struct GFSM {
                 break;
             case State::Calib:
                 IO::outl<debug>("# Calib");
-                // servo1::event(servo1::Event::Calibrate);
-                // servo1::event(servo1::Event::Run);
                 break;
             case State::CheckBaudrate:
                 IO::outl<debug>("# Ck Baud");
@@ -423,12 +444,16 @@ struct GFSM {
                 led1::event(led1::Event::Fast);
                 led2::event(led2::Event::Fast);
                 break;
+            case State::FbServosCalibrating:
+                IO::outl<debug>("# FbServosCalibrating");
+                led2::event(led2::Event::Fast);
+                break;
             case State::CompassCalib:
-                // IO::outl<debug>("# CompassCalib");
+                IO::outl<debug>("# CompassCalib");
                 led2::event(led2::Event::Off);
                 break;
             case State::CompassCalibUdated:
-                // IO::outl<debug>("# CompassCalibUpdated");
+                IO::outl<debug>("# CompassCalibUpdated");
                 led2::event(led2::Event::Steady);
                 break;
             case State::I2CScan:
@@ -452,7 +477,7 @@ struct GFSM {
         crsf_in::nextBaudrate();
     }
     static inline const uint32_t uuid = Mcu::Stm::Uuid::get();
-    static inline etl::Event<Event> mEvent;
+    static inline etl::SlotEvent<Event> mEvent;
     static inline External::Tick<systemTimer> mPackagesCheckTick;
     static inline External::Tick<systemTimer> mGpsCheckTick;
     static inline External::Tick<systemTimer> mDirectTick;
