@@ -56,6 +56,8 @@ struct Compass {
     static inline constexpr auto& eeprom = storage::eeprom;
 
     static inline void init() {
+        magnetometer::init();
+        acc::init();
         mXCalib = Calib{eeprom.compass_calib[0].mean, eeprom.compass_calib[0].d};
         mYCalib = Calib{eeprom.compass_calib[1].mean, eeprom.compass_calib[1].d};
         mZCalib = Calib{eeprom.compass_calib[2].mean, eeprom.compass_calib[2].d};

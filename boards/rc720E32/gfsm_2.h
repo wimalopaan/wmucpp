@@ -28,13 +28,14 @@
 #include "tick.h"
 #include "rc/crsf_2.h"
 
-#include "compass.h"
+// #include "compass.h"
 
 using namespace std::literals::chrono_literals;
 
-template<typename Devices, typename Servos, typename Escs, typename Relays, typename Auxes>
+template<typename Devices>
 struct GFSM {
     using devs = Devices;
+    using global = devs::global;
     using systemTimer = devs::systemTimer;
     using storage = devs::storage;
     using watchdog = devs::watchDog;
@@ -84,39 +85,41 @@ struct GFSM {
     using ws2812b_1 = devs::ws2812b_1;
     using ws2812b_2 = devs::ws2812b_2;
 
-    struct FbListener {
-        static inline void calibStart() {
-            event(Event::FbStartCalibrating);
-        }
-        static inline void calibStop() {
-            event(Event::FbStopCalibrating);            
-        }        
-    };
-    using fbListener = FbListener;
+    // struct FbListener {
+    //     static inline void calibStart() {
+    //         event(Event::FbStartCalibrating);
+    //     }
+    //     static inline void calibStop() {
+    //         event(Event::FbStopCalibrating);            
+    //     }        
+    // };
+    // using fbListener = FbListener;
     
-    struct CalibClient {
-        static inline void update() {
-            event(Event::CompassCalibUpdate);
-        }
-        static inline void start() {
-            event(Event::CompassCalibStart);
-        }
-        static inline void end() {
-            crsf_cb::update();
-            crsf_cb::save();
-            event(Event::CompassCalibEnd);
-        }
-    };
-    struct CompassConfig {
-        using magnetometer = GFSM::magnetometer;
-        using timer = GFSM::systemTimer;
-        using client = CalibClient;
-        using accelerometer = GFSM::accelerometer;
-        using storage = GFSM::storage;
-        using tp = devs::tp1;
-        using debug = GFSM::debug;
-    };
-    using compass = Compass<CompassConfig>;
+    // struct CalibClient {
+    //     static inline void update() {
+    //         event(Event::CompassCalibUpdate);
+    //     }
+    //     static inline void start() {
+    //         event(Event::CompassCalibStart);
+    //     }
+    //     static inline void end() {
+    //         crsf_cb::update();
+    //         crsf_cb::save();
+    //         event(Event::CompassCalibEnd);
+    //     }
+    // };
+    // using compassCalibClient = CalibClient;
+    
+    // struct CompassConfig {
+    //     using magnetometer = GFSM::magnetometer;
+    //     using timer = GFSM::systemTimer;
+    //     using client = compassCalibClient;
+    //     using accelerometer = GFSM::accelerometer;
+    //     using storage = GFSM::storage;
+    //     using tp = devs::tp1;
+    //     using debug = GFSM::debug;
+    // };
+    // using compass = Compass<CompassConfig>;
 
     using sbus_aux = devs::sbus_aux;
     using gps_aux = devs::gps_aux;
@@ -128,12 +131,12 @@ struct GFSM {
 #endif
         crsf_in_responder::telemetrySlot(0);
 
-        compass::init();
+        // compass::init();
     }
 
     enum class Event : uint8_t {ConnectionLost, DirectConnected, ReceiverConnected,
-                                CompassCalibStart, CompassCalibEnd, CompassCalibUpdate,
-                                FbStartCalibrating, FbStopCalibrating,
+                                // CompassCalibStart, CompassCalibEnd, CompassCalibUpdate,
+                                // FbStartCalibrating, FbStopCalibrating,
                                };
 
     enum class State : uint8_t {Undefined, Init,
@@ -147,23 +150,35 @@ struct GFSM {
         mEvent = e;
     }
 
-    static inline void updateFromEeprom() {
-        crsf_cb::callbacks(true);
+    static inline void update(const bool eepromMode) {
+        crsf_cb::callbacks(eepromMode);
         crsf_cb::update();
     }
+    // static inline void updateFromEeprom() {
+    //     crsf_cb::callbacks(true);
+    //     crsf_cb::update();
+    // }
 
+    // using servooutputs = devs::servooutputs;
+    // using escoutputs = devs::escoutputs;
+    // using relayoutputs = devs::relayoutputs;
+    // using auxoutputs = devs::auxoutputs;
+    
     static inline void periodic() {
         // devs::tp1::set();
-        if constexpr(!std::is_same_v<debug, void>) {
-            debug::periodic();
-        }
-        i2c::periodic();
-        compass::periodic();
-        crsf_in::periodic();
-        Servos::periodic();
-        Escs::periodic();
-        Relays::periodic();
-        Auxes::periodic();
+        // if constexpr(!std::is_same_v<debug, void>) {
+        //     debug::periodic();
+        // }
+        devs::periodic();
+        
+        // i2c::periodic();
+        // compass::periodic();
+        // crsf_in::periodic();
+        // servooutputs::periodic();
+        // escoutputs::periodic();
+        // relayoutputs::periodic();
+        // auxoutputs::periodic();
+        
         // devs::tp1::reset();
     }
 
@@ -181,43 +196,25 @@ struct GFSM {
     static inline constexpr External::Tick<systemTimer> calibMaxDuration{15000ms};
 
     static inline void ratePeriodic() {
-        if constexpr(!std::is_same_v<watchdog, void>) {
-            watchdog::ratePeriodic();
-        }
-
-        led1::ratePeriodic();
-        led2::ratePeriodic();
-        i2c::ratePeriodic();
-        compass::ratePeriodic();
-        crsf_in::ratePeriodic();
+        // if constexpr(!std::is_same_v<watchdog, void>) {
+        //     watchdog::ratePeriodic();
+        // }
+        devs::ratePeriodic();
+        
+        // led1::ratePeriodic();
+        // led2::ratePeriodic();
+        // i2c::ratePeriodic();
+        // compass::ratePeriodic();
         telemetry::ratePeriodic();
         telem_bt::ratePeriodic();
-        Servos::ratePeriodic();
-        Escs::ratePeriodic();
-        Relays::ratePeriodic();
-        Auxes::ratePeriodic();
+        // crsf_in::ratePeriodic();
+        // servooutputs::ratePeriodic();
+        // escoutputs::ratePeriodic();
+        // relayoutputs::ratePeriodic();
+        // auxoutputs::ratePeriodic();
 
-        (++mPackagesCheckTick).on(packagesCheckTicks, []{
-            const uint16_t ch_p = crsf_in_pa::template channelPackages<true>();
-            const uint16_t l_p = crsf_in_pa::template linkPackages<true>();
-            const uint16_t sb = sbus_aux::packageCount();
-            // IO::outl<debug>("ch_p:", ch_p, " l_p:", l_p, " sb:", sb);
-            if ((ch_p > 0) || (sb > 0)) {
-                if  ((l_p == 0) && (sb == 0)) {
-                    event(Event::DirectConnected);
-                }
-                else {
-                    event(Event::ReceiverConnected);
-                }
-            }
-            else {
-                event(Event::ConnectionLost);
-            }
-        });
-        // if (isCalibrating<fbservos>()) {
-        //     event(Event::FbCalibrating);
-        // }
-
+        checkPackages();
+        
         ++mStateTick;
         const auto oldState = mState;
         switch(mState) {
@@ -265,12 +262,20 @@ struct GFSM {
                 mState = State::RunUnconnected;
             }).thenOn(Event::DirectConnected, []{
                 mState = State::DirectMode;
-            }).thenOn(Event::CompassCalibStart, []{
+            }).clear();
+            // }).thenOn(Event::CompassCalibStart, []{
+            //     led1::event(led1::Event::Medium);
+            //     mState = State::CompassCalib;
+            // }).clear();
+            // }).thenOn(Event::FbStartCalibrating, []{
+            //     mState = State::FbServosCalibrating;
+            // }).clear();           
+            global::event.on(global::Event::FeedbackServoCalibrationStart, []{
+                mState = State::FbServosCalibrating;
+            }).thenOn(global::Event::CompassCalibStart, []{
                 led1::event(led1::Event::Medium);
                 mState = State::CompassCalib;
-            }).thenOn(Event::FbStartCalibrating, []{
-                mState = State::FbServosCalibrating;
-            }).clear();           
+            }).clear();
             (++mUpdateTick).on(updateTicks, []{
                 channelCallback::update();
                 ws2812b_1::sendColors();
@@ -287,8 +292,8 @@ struct GFSM {
                         d.push_back((uint8_t)gps_aux::ublox::mSatCount);
                 });
                 telemetry::push((uint8_t)RC::Protokoll::Crsf::V4::Type::Attitude, [](auto& d){
-                    const auto [pitch, roll] = compass::pitchRoll_I();
-                    const int16_t yaw = compass::aComp_I();
+                    const auto [pitch, roll] = devs::compass::pitchRoll_I();
+                    const int16_t yaw = devs::compass::aComp_I();
                     d.push_back((int16_t)(pitch * 10));
                     d.push_back((int16_t)(roll * 10));
                     d.push_back((int16_t)(yaw * 10));
@@ -342,18 +347,21 @@ struct GFSM {
             });
             break;
         case State::FbServosCalibrating:
-            mEvent.on(Event::FbStopCalibrating, []{
+            global::event.on(global::Event::FeedbackServoCalibrationStart, []{
                 mState = State::RunConnected; 
             }).clear();
+            // mEvent.on(Event::FbStopCalibrating, []{
+            //     mState = State::RunConnected; 
+            // }).clear();
             break;
         case State::CompassCalib:
-            mEvent.on(Event::CompassCalibEnd, []{
+            global::event.on(global::Event::CompassCalibEnd, []{
                 mState = State::RunConnected;
-            }).thenOn(Event::CompassCalibUpdate, []{
+            }).thenOn(global::Event::CompassCalibUpdate, []{
                 mState = State::CompassCalibUdated;
             }).clear();
             mStateTick.on(calibMaxDuration, []{
-                compass::stopCalibrate();
+                devs::compass::stopCalibrate();
             });
             break;
         case State::CompassCalibUdated:
@@ -436,6 +444,25 @@ struct GFSM {
         }
     }
     private:
+    static inline void checkPackages() {
+        (++mPackagesCheckTick).on(packagesCheckTicks, []{
+            const uint16_t ch_p = crsf_in_pa::template channelPackages<true>();
+            const uint16_t l_p = crsf_in_pa::template linkPackages<true>();
+            const uint16_t sb = sbus_aux::packageCount();
+            // IO::outl<debug>("ch_p:", ch_p, " l_p:", l_p, " sb:", sb);
+            if ((ch_p > 0) || (sb > 0)) {
+                if  ((l_p == 0) && (sb == 0)) {
+                    event(Event::DirectConnected);
+                }
+                else {
+                    event(Event::ReceiverConnected);
+                }
+            }
+            else {
+                event(Event::ConnectionLost);
+            }
+        });
+    }
     static inline void nextBaudrate() {
         crsf_in::nextBaudrate();
     }

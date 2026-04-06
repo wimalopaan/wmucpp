@@ -25,14 +25,14 @@ struct PID {
     using value_type = T;
 
     explicit PID(const T max, const T min, const T kp, const T ki, const T kd) :
-        mMax{max}, mMin{min}, mKp{kp}, mKi{ki}, mKd{kd}, mW{kp + ki + kd}
+        mMax{max}, mMin{min}, mKp{kp}, mKi{ki / 10}, mKd{kd}, mW{kp + ki + kd}
     {}
 
     float process(const T error) {
         const T p = mKp * error;
 
         mIntegral = std::clamp(mIntegral + error, (mMin * mW), (mMax * mW));
-        const T i = mKi * mIntegral / 10;
+        const T i = mKi * mIntegral;
 
         const T  deriv = error - mLastError;
         const T d = mKd * deriv;

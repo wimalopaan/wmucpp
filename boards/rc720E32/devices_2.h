@@ -75,6 +75,13 @@
 #include "peripheral/ws2812b.h"
 #include "bluetooth/jdy10.h"
 #include "watchdog.h"
+#include "output_aux.h"
+#include "output_esc.h"
+#include "output_relay.h"
+#include "output_servo.h"
+#include "compass.h"
+
+#include "stdapp/stdcomp.h"
 
 template<typename Config>
 struct SPortTelemetryCallback {
@@ -91,6 +98,8 @@ template<typename Config, typename MCU>
 struct Devices<SW01, Config, MCU> {
     using storage = Config::storage;
 
+    using global = Config::global;
+    
     // periodic clock: 4KHz: needed for the sw-uart
     using clock = Mcu::Stm::Clock<Mcu::Stm::ClockConfig<64_MHz, 4'000_Hz, Mcu::Stm::HSI>>;
     using systemTimer = Mcu::Stm::SystemTimer<clock, Mcu::UseInterrupts<false>, MCU>;
@@ -248,12 +257,14 @@ struct Devices<SW01, Config, MCU> {
     
     template<auto N>
     struct FbCalibCallback {
-        using elistener = Config::fbEventListener;
+        // using elistener = Config::fbEventListener;
         static inline void onCalibStart() {
-            elistener::calibStart();
+            global::event = global::Event::FeedbackServoCalibrationStart;
+            // elistener::calibStart();
         }
         static inline void onCalibStop() {
-            elistener::calibStop();
+            global::event = global::Event::FeedbackServoCalibrationStop;
+            // elistener::calibStop();
         }
         static inline void deadMin(const uint16_t v) {
             storage::eeprom.fbservos[N].deadMin = v;
@@ -418,6 +429,14 @@ struct Devices<SW01, Config, MCU> {
     static inline constexpr Mcu::Stm::I2C::Address mpu6050Adr{0x68};
     using mpu6050 = External::MPU6050<i2c, mpu6050Adr, systemTimer, void>;
 
+    using servooutputs = ServoOutputs<Devices>;
+    using escoutputs = EscOutputs<Devices>;
+    using relayoutputs = Relays<Devices>;
+    using auxoutputs = Auxes<Devices>;
+
+    struct CompassConfig;
+    using compass = Compass<CompassConfig>;
+    
     struct RelayConfig {
         using pin = sbus_crsf_pin;
         using clock = Devices::clock;
@@ -554,7 +573,7 @@ struct Devices<SW01, Config, MCU> {
     struct InputConfig {
         using debug = Devices::debug;
         using stream1 = crsf_in::input;
-        using stream2 = Config::relays; // relay connector
+        using stream2 = relayoutputs; // relay connector
         using stream3 = sbus_aux; // aux
         using stream4 = bt; // aux
         using stream5 = bt2; // esc2 pins
@@ -570,7 +589,7 @@ struct Devices<SW01, Config, MCU> {
 
     using polars = Meta::List<polar1, polar2>;
 
-    using telem = Telemetry<crsfBuffer, storage, typename Config::servos, typename Config::escs, systemTimer, debug>;
+    using telem = Telemetry<crsfBuffer, storage, servooutputs, escoutputs, systemTimer, debug>;
 
     struct BtTelemConfig {
         using debug = Devices::debug;
@@ -578,21 +597,21 @@ struct Devices<SW01, Config, MCU> {
         using dev1 = bt;
         using dev2 = bt2;
         using storage = Devices::storage;
-        using sources = typename Config::escs;
+        using sources = escoutputs;
     };
     using telem_bt = External::Bluetooth::Telemetry<BtTelemConfig>;
 
-    using channelCallback = ChannelCallback<polars, typename Config::servos, typename Config::escs, typename Config::relays, typename Config::auxes, telem, storage>;
+    using channelCallback = ChannelCallback<polars, servooutputs, escoutputs, relayoutputs, auxoutputs, telem, storage>;
 
     struct CrsfCallbackConfig {
         using storage = Config::storage;
         using timer = systemTimer;
         using watchdog = Devices::watchDog;
         using src = crsf_in;
-        using servos = Config::servos;
-        using escs = Config::escs;
-        using relays = Config::relays;
-        using auxes = Config::auxes;
+        using servos = servooutputs;
+        using escs = escoutputs;
+        using relays = relayoutputs;
+        using auxes = auxoutputs;
         using mapper = inputs;
         using telemetry = telem;
         using polars = Devices::polars;
@@ -604,7 +623,7 @@ struct Devices<SW01, Config, MCU> {
         using sumdv3 = Devices::sumdv3_out;
         using sport_aux = Devices::sport_aux;
         using messageBuffer = crsfBuffer;
-        using compass = Config::compass;
+        using compass = Devices::compass;
         using bluetooth = Devices::bt;
         using esc1_slave = Devices::esc1_slave;
         using esc2_slave = Devices::esc2_slave;
@@ -769,6 +788,43 @@ struct Devices<SW01, Config, MCU> {
         using tp = void;
     };
 
+    struct CalibClient {
+        static inline void update() {
+            global::event = global::Event::CompassCalibUpdate;
+            // event(Event::CompassCalibUpdate);
+        }
+        static inline void start() {
+            global::event = global::Event::CompassCalibStart;
+            // event(Event::CompassCalibStart);
+        }
+        static inline void end() {
+            CrsfConfig::callback::update();
+            CrsfConfig::callback::save();
+            global::event = global::Event::CompassCalibEnd;
+            // event(Event::CompassCalibEnd);
+        }
+    };
+    using compassCalibClient = CalibClient;
+    
+    struct CompassConfig {
+        using magnetometer = qmc5883l;
+        using timer = systemTimer;
+        using client = compassCalibClient;
+        using accelerometer = mpu6050;
+        using storage = Devices::storage;
+        using tp = void;
+        using debug = Devices::debug;
+    };
+    
+    using stdComponents = StandardComponents<watchDog, debug, crsf_in, ledBlinker1, ledBlinker2, i2c, compass, servooutputs, escoutputs, relayoutputs, auxoutputs>;
+    
+    static inline void periodic() {
+        stdComponents::periodic();
+    }
+    static inline void ratePeriodic() {
+        stdComponents::ratePeriodic();
+    }
+    
     static inline void init() {
         clock::init();
         systemTimer::init();
@@ -782,23 +838,27 @@ struct Devices<SW01, Config, MCU> {
 
         sport_aux::setValue1(1000 * HW_VERSION + SW_VERSION);
 
-        led1::template dir<Mcu::Output>();
-        led2::template dir<Mcu::Output>();
+        stdComponents::init();
+        
+        // ledBlinker1::init();
+        // ledBlinker2::init();
 
-#ifdef SERIAL_DEBUG
-        debug::init();
-#endif
-        crsf_in::init();
+// #ifdef SERIAL_DEBUG
+//         debug::init();
+// #endif
+        // crsf_in::init();
 
-        i2c::init();
+        // i2c::init();
 
-        qmc5883l::init();
-        mpu6050::init();
+        // qmc5883l::init();
+        // mpu6050::init();
 
+        // compass::init();
+        
         // tp1::template dir<Mcu::Output>();
         // tp3::template dir<Mcu::Output>();
         
-        watchDog::init();        
+        // watchDog::init();        
     }
 };
 
