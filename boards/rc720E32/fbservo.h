@@ -469,7 +469,7 @@ struct Feetech {
     static inline bool mCalibOnStart = true;
     static inline bool mUseDead = false;
     static inline uint16_t mGain = 20;
-    static inline PID<int32_t> mPid{1000, -1000, 1000, 0, 210};
+    static inline PID<int32_t, 1000> mPid{1000, -1000, 1000, 0, 210};
     static inline uint16_t mNoiseAmplitude{2};
     static inline uint16_t mLastPwm{992};
     static inline uint16_t mLastFb{0};

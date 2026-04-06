@@ -20,42 +20,50 @@
 
 #include <algorithm>
 
-template<typename T = int>
+template<typename T = int32_t, T KIScale = 10>
 struct PID {
     using value_type = T;
 
     explicit PID(const T max, const T min, const T kp, const T ki, const T kd) :
-        mMax{max}, mMin{min}, mKp{kp}, mKi{ki / 10}, mKd{kd}, mW{kp + ki + kd}
-    {}
+        mMax{max}, mMin{min}, mKp{kp}, mKi{ki}, mKd{kd}, mW{kp + ki + kd}, mIMax{mMax * mW}, mIMin{mMin * mW} {}
 
     float process(const T error) {
         const T p = mKp * error;
 
-        mIntegral = std::clamp(mIntegral + error, (mMin * mW), (mMax * mW));
-        const T i = mKi * mIntegral;
+        mIntegral = std::clamp(mIntegral + error, mIMin, mIMax);
+        const T i = (mKi * mIntegral) / KIScale;
 
-        const T  deriv = error - mLastError;
+        const T deriv = error - mLastError;
         const T d = mKd * deriv;
 
-        const T out = std::clamp((p + i + d) / mW, mMin, mMax);
-
+        const T preOut = (p + i + d) / mW;
+        const T out = std::clamp(preOut, mMin, mMax);
+        
+        T antiWindup = (out - preOut) / mKi;
+        if (std::signbit(antiWindup) != std::signbit(mIntegral)) {
+            mIntegral += antiWindup;
+        }
         mLastError = error;
         return out;
     }
     void kp(const T v) {
         mKp = v;
-        mW = mKp + mKi + mKd;
+        update();
     }
     void ki(const T v) {
         mKi = v;
-        mW = mKp + mKi + mKd;
+        update();
     }
     void kd(const T v) {
         mKd = v;
-        mW = mKp + mKi + mKd;
+        update();
     }
-
     private:
+    void update() {
+        mW = mKp + mKi + mKd;
+        mIMin = mMin * mW;
+        mIMax = mMax * mW;        
+    }
     value_type mIntegral{};
     value_type mLastError{};
     value_type mMax{};
@@ -64,4 +72,6 @@ struct PID {
     value_type mKi{};
     value_type mKd{};
     value_type mW{};
+    value_type mIMax{};
+    value_type mIMin{};
 };
