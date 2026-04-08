@@ -28,6 +28,7 @@ template<typename Config, typename Debug = void>
 struct CrsfCallback {
     using debug = Debug;
     using timer = Config::timer;
+    using watchdog = Config::watchdog;
     using tp = Config::tp;
     using storage = Config::storage;
     using Param_t = RC::Protokoll::Crsf::V4::Parameter<uint8_t>;
@@ -79,10 +80,30 @@ struct CrsfCallback {
         }
         return false;
     }
+    static inline std::array<char, 16> mWdgString = {};
+
+    static inline void makeWdgString()
+        requires(!std::is_same_v<watchdog, void>)
+    {
+#ifdef USE_WATCHDOG_TEST
+        auto [ptr, e] = std::to_chars(std::begin(mWdgString), std::end(mWdgString), watchdog::testCount());
+        *ptr++ = ':';
+        auto r = std::to_chars(ptr, std::end(mWdgString), watchdog::wdgResets());
+        *r.ptr = '\0';
+#else
+        auto [ptr, e] = std::to_chars(std::begin(mWdgString), std::end(mWdgString), watchdog::pinResets());
+        *ptr++ = ':';
+        auto r = std::to_chars(ptr, std::end(mWdgString), watchdog::wdgResets());
+        *r.ptr = '\0';
+#endif
+    }
     static inline const char* name() {
         return &mName[0];
     }
     static inline uint32_t serialNumber() {
+        if constexpr(!std::is_same_v<watchdog, void>) {
+            makeWdgString();
+        }
         return mSerialNumber;
     }
     static inline uint32_t hwVersion() {
@@ -171,6 +192,7 @@ private:
         params_t p;
         addNode(p, Param_t{0, PType::Folder, "root"});
         addNode(p, Param_t{0, PType::Info, "Version(HW/SW)", &mVersionString[0]});
+        addNode(p, Param_t{0, PType::Info, "Watchdog", &mWdgString[0]});
         addNode(p, Param_t{0, PType::U8,  "CRSF Address", nullptr, &eeprom.address, 192, 207, [](const uint8_t a){
                                updateName(mName); src::address(std::byte(a));
                     return true;}});

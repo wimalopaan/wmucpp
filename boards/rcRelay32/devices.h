@@ -52,6 +52,7 @@
 #include "blinker.h"
 #include "debug_2.h"
 #include "button.h"
+#include "watchdog.h"
 
 #include "crsf_cb.h"
 
@@ -68,6 +69,11 @@ struct Devices<Nucleo, Config, MCU> {
     using clock = Mcu::Stm::Clock<Mcu::Stm::ClockConfig<60_MHz, 2'000_Hz, Mcu::Stm::HSI>>;
     using systemTimer = Mcu::Stm::SystemTimer<clock, Mcu::UseInterrupts<false>, MCU>;
 
+    struct WdgConfig {
+        static inline constexpr uint32_t reload = 500; // 500ms
+    };
+    using watchDog = WatchDog<WdgConfig>;
+    
     using storage = Config::storage;
 
     using gpioa = Mcu::Stm::GPIO<Mcu::Stm::A, MCU>;
@@ -151,6 +157,7 @@ struct Devices<Nucleo, Config, MCU> {
     struct CrsfCallbackConfig {
         using src = Devices::crsf;
         using storage = Config::storage;
+        using watchdog = Devices::watchDog;
         using timer = systemTimer;
         using relay = Devices::relay;
         using tp = void;
@@ -164,7 +171,7 @@ struct Devices<Nucleo, Config, MCU> {
         using isrConfig = Meta::List<>;
     };
 
-    using periodics = StandardComponents<debug, crsf, relay, ledBlinker, btn>;
+    using periodics = StandardComponents<debug, watchDog, crsf, relay, ledBlinker, btn>;
 
     static inline void periodic() {
         periodics::periodic();
@@ -210,6 +217,11 @@ struct Devices<WeAct, Config, MCU> {
     using clock = Mcu::Stm::Clock<Mcu::Stm::ClockConfig<64_MHz, 2'000_Hz, Mcu::Stm::HSI>>;
     using systemTimer = Mcu::Stm::SystemTimer<clock, Mcu::UseInterrupts<false>, MCU>;
 
+    struct WdgConfig {
+        static inline constexpr uint32_t reload = 500; // 500ms
+    };
+    using watchDog = WatchDog<WdgConfig>;
+    
     using storage = Config::storage;
 
     using gpioa = Mcu::Stm::GPIO<Mcu::Stm::A, MCU>;
@@ -291,6 +303,7 @@ struct Devices<WeAct, Config, MCU> {
     struct CrsfCallbackConfig {
         using src = Devices::crsf;
         using storage = Config::storage;
+        using watchdog = Devices::watchDog;
         using timer = systemTimer;
         using relay = Devices::relay;
         using tp = void;
@@ -304,7 +317,7 @@ struct Devices<WeAct, Config, MCU> {
         using isrConfig = Meta::List<>;
     };
 
-    using periodics = StandardComponents<debug, crsf, relay, ledBlinker, btn>;
+    using periodics = StandardComponents<debug, watchDog, crsf, relay, ledBlinker, btn>;
 	
 	static inline void periodic() {
         periodics::periodic();
@@ -347,6 +360,11 @@ template<typename Config, typename MCU>
 struct Devices<Wmg0b1, Config, MCU> {
     using clock = Mcu::Stm::Clock<Mcu::Stm::ClockConfig<64_MHz, 2'000_Hz, Mcu::Stm::HSI>>;
     using systemTimer = Mcu::Stm::SystemTimer<clock, Mcu::UseInterrupts<false>, MCU>;
+
+    struct WdgConfig {
+        static inline constexpr uint32_t reload = 500; // 500ms
+    };
+    using watchDog = WatchDog<WdgConfig>;
 
     using storage = Config::storage;
 
@@ -451,6 +469,7 @@ struct Devices<Wmg0b1, Config, MCU> {
     struct CrsfCallbackConfig {
         using src = Devices::crsf;
         using storage = Config::storage;
+        using watchdog = Devices::watchDog;
         using timer = systemTimer;
         using relay = Devices::relay;
         using tp = void;
@@ -464,7 +483,7 @@ struct Devices<Wmg0b1, Config, MCU> {
         using isrConfig = Meta::List<>;
     };
 
-    using periodics = StandardComponents<debug, crsf, relay, ledBlinker, ledBlinker2>;
+    using periodics = StandardComponents<debug, watchDog, crsf, relay, ledBlinker, ledBlinker2>;
 
     static inline void periodic() {
         periodics::periodic();
@@ -503,6 +522,8 @@ struct Devices<Wmg0b1, Config, MCU> {
         adc::init();
         adc::start();
 
+        watchDog::init();
+        
 #ifdef USE_TP
         tp::template dir<Mcu::Output>();
         tp1::template dir<Mcu::Output>();
