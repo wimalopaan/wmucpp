@@ -36,6 +36,7 @@
 #include "output.h"
 #include "concepts.h"
 #include "clock.h"
+#include "watchdog.h"
 #include "gpio.h"
 #include "tick.h"
 #include "meta.h"
@@ -66,6 +67,11 @@ struct Devices<WeAct_SFrog, Config, MCU> {
     using clock = Mcu::Stm::Clock<Mcu::Stm::ClockConfig<64_MHz, 2'000_Hz, Mcu::Stm::HSI>>;
     using systemTimer = Mcu::Stm::SystemTimer<clock, Mcu::UseInterrupts<false>, MCU>;
 
+    struct WdgConfig {
+        static inline constexpr uint32_t reload = 500; // 500ms
+    };
+    using watchDog = WatchDog<WdgConfig>;
+    
     using storage = Config::storage;
 
     using gpioa = Mcu::Stm::GPIO<Mcu::Stm::A, MCU>;
@@ -273,7 +279,7 @@ struct Devices<WeAct_SFrog, Config, MCU> {
         using storage = Devices::storage;
     };
 
-    using periodics = StandardComponents<debug, sbus, modcom, crsf, ledBlinker, ledBlinker1, ledBlinker2, btn,
+    using periodics = StandardComponents<debug, watchDog, sbus, modcom, crsf, ledBlinker, ledBlinker1, ledBlinker2, btn,
                                          btn0, btn1, btn2, btn3, adcAdapter>;
 
     static inline bool press1() {
@@ -308,6 +314,8 @@ struct Devices<WeAct_SFrog, Config, MCU> {
 
         dma1::init();
 
+        watchDog::init();
+        
         led::template dir<Mcu::Output>();
         ledBlinker::event(ledBlinker::Event::Off);
 
@@ -325,7 +333,11 @@ struct Devices<WeAct_SFrog, Config, MCU> {
 
         Meta::visit<digitals>([]<typename DI>(Meta::Wrapper<DI>){
             DI::template dir<Mcu::Input>();
-            DI::template pullup<true>();
+                          #ifdef USE_PULLDOWN
+                                  DI::template pulldown<true>();
+                          #else
+                                  DI::template pullup<true>();
+                          #endif
         });
         Meta::visit<analogs>([]<typename VI>(Meta::Wrapper<VI>){
             VI::analog();
@@ -340,13 +352,16 @@ struct Devices<WeAct_SFrog, Config, MCU> {
     }
 };
 
-
-
 template<typename Config, typename MCU>
 struct Devices<WeAct, Config, MCU> {
     using clock = Mcu::Stm::Clock<Mcu::Stm::ClockConfig<64_MHz, 2'000_Hz, Mcu::Stm::HSI>>;
     using systemTimer = Mcu::Stm::SystemTimer<clock, Mcu::UseInterrupts<false>, MCU>;
 
+    struct WdgConfig {
+        static inline constexpr uint32_t reload = 500; // 500ms
+    };
+    using watchDog = WatchDog<WdgConfig>;
+    
     using storage = Config::storage;
 
     using gpioa = Mcu::Stm::GPIO<Mcu::Stm::A, MCU>;
@@ -543,7 +558,7 @@ struct Devices<WeAct, Config, MCU> {
 		using storage = Devices::storage;
 	};
 	
-	using periodics = StandardComponents<debug, sbus, modcom, crsf, ledBlinker, btn, adcAdapter>;
+	using periodics = StandardComponents<debug, watchDog, sbus, modcom, crsf, ledBlinker, btn, adcAdapter>;
 
     static inline void periodic() {
         periodics::periodic();
@@ -558,6 +573,8 @@ struct Devices<WeAct, Config, MCU> {
 		
 		systemTimer::init();
 
+        watchDog::init();
+        
         gpioa::init();
         gpiob::init();
         gpioc::init();
@@ -573,7 +590,11 @@ struct Devices<WeAct, Config, MCU> {
 		
 		Meta::visit<digitals>([]<typename DI>(Meta::Wrapper<DI>){
 								  DI::template dir<Mcu::Input>();
-								  DI::template pullup<true>();
+                          #ifdef USE_PULLDOWN
+                                  DI::template pulldown<true>();
+                          #else
+                                  DI::template pullup<true>();
+                          #endif
 							  });
 		Meta::visit<analogs>([]<typename VI>(Meta::Wrapper<VI>){
 								 VI::analog();

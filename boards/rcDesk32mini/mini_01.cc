@@ -39,7 +39,9 @@
 // #define USE_SUMDV1
 // #define USE_SUMDV3
 
-#define USE_SFROG // make A3, A8 outputs for Stick-LEDs
+// #define USE_SFROG // make A3, A8 outputs for Stick-LEDs
+
+// #define USE_PULLDOWN // use pulldown instead of pullup for digital inputs
 
 #define INJECT_DIGITAL_START 8 // first channel to inject digitals into CRSF / SBUS (counting from 0)
 #define SWITCH_ADDRESS 0 // only valid for CSRF (using switch protocol extension)

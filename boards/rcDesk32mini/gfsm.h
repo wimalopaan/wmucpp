@@ -47,7 +47,7 @@ struct GFSM {
     using sumdv3 = devs::sumdv3;
 
     enum class State : uint8_t {Undefined, Init, Run, CheckSerial, Calibration1, Calibration2, BootPress, BootPressRelease};
-    enum class Event : uint8_t {None, ButtonPress, HeartBeat, StartCalib, StopCalib, StartNormal};
+    enum class Event : uint8_t {ButtonPress, HeartBeat, StartCalib, StopCalib, StartNormal};
 
     static inline constexpr External::Tick<systemTimer> initTicks{100ms};
     static inline constexpr External::Tick<systemTimer> debugTicks{500ms};
@@ -132,7 +132,7 @@ struct GFSM {
 			}).thenOn(Event::StartNormal, []{
 				save();
 				mState = State::Run;
-			});
+			}).clear();
 			(++mWaitTick).on(waitTicks, []{
 				mState = State::Run;				
 			});
@@ -156,7 +156,7 @@ struct GFSM {
                             mState = State::Calibration2;
                         }).thenOn(Event::StopCalib, []{
                             mState = State::CheckSerial;
-                        });
+                        }).clear();
                 }
             }
             else {
@@ -168,7 +168,7 @@ struct GFSM {
                         mState = State::Calibration2;
                     }).thenOn(Event::StopCalib, []{
                         mState = State::CheckSerial;
-                    });
+                    }).clear();
             }
             break;
         case State::Calibration2:
@@ -186,7 +186,7 @@ struct GFSM {
                             mState = State::Run;
                         }).thenOn(Event::StopCalib, []{
                             mState = State::CheckSerial;
-                        });
+                        }).clear();
                 }
             }
             else {
@@ -198,7 +198,7 @@ struct GFSM {
                         mState = State::Run;
                     }).thenOn(Event::StopCalib, []{
                         mState = State::CheckSerial;
-                    });
+                    }).clear();
             }
 			calibration();
 			update();
@@ -209,7 +209,7 @@ struct GFSM {
         case State::Run:
 			mEvent.on(Event::ButtonPress, []{
                 mState = State::Calibration1;
-			});
+			}).clear();
 			update();
 			(++mDebugTick).on(debugTicks, []{
 				print();
@@ -469,7 +469,7 @@ struct GFSM {
     }
 	static inline uint8_t mSwState = 0;
 	static inline std::array<uint8_t, 16> mSwitchPacket{(uint8_t)RC::Protokoll::Crsf::V4::Address::StartByte};
-    static inline etl::Event<Event> mEvent;
+    static inline etl::SlotEvent<Event> mEvent;
     static inline External::Tick<systemTimer> mStateTick;
     static inline External::Tick<systemTimer> mDebugTick;
 	static inline External::Tick<systemTimer> mWaitTick;
