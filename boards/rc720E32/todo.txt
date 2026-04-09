@@ -27,6 +27,8 @@ Ideas
 
 Prio 0
 ------
+* introduce LP filter for analog FB servo
+* report values (analog FB servo) via telemetry (abuse temp-array)
 * refactor the mess in GFSM (global state machine)
 * add messagebuffer to packet-relay (for injection of messages)
 * fix the telemetry mess: use telemetry ID, enable/disable Batt-telemetry
@@ -90,6 +92,7 @@ Done bugs:
 
 Done:
 ------
+* use dynamic range for analog FB servo
 * pid anti-windup integral-back-compute
 * slotted event class
 * manual start calibration for analog feedback servos (like auto-calib feature on startup)

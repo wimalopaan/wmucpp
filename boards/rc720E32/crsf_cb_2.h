@@ -539,8 +539,9 @@ private:
     static inline constexpr void addFbServo(auto& p, const uint8_t parent, const char* const name) {
         using fbs = Meta::nth_element<index, fbservos>;
         const uint8_t parent2 = addParent(p, Param_t{parent, PType::Folder, name});
-        addNode(p, Param_t{parent2, PType::U16,  "CalibOnStart", nullptr,  &eeprom.fbservos[index].calibOnStart, 0, 1, [](const store_t v){fbs::calibOnStart(v == 1); return true;}});
-        addNode(p, Param_t{parent2, PType::U16,  "Comp. DeadBand", nullptr,  &eeprom.fbservos[index].compensateDeadband, 0, 1, [](const store_t v){fbs::useDead(v == 1); return true;}});
+        addNode(p, Param_t{parent2, PType::Sel,  "CalibOnStart", "Off;On",  &eeprom.fbservos[index].calibOnStart, 0, 1, [](const store_t v){fbs::calibOnStart(v == 1); return true;}});
+        addNode(p, Param_t{parent2, PType::Sel,  "Comp. DeadBand", "Off;On",  &eeprom.fbservos[index].compensateDeadband, 0, 1, [](const store_t v){fbs::useDead(v == 1); return true;}});
+        addNode(p, Param_t{parent2, PType::Sel,  "Dynamic", "Off;On",  &eeprom.fbservos[index].dynamic, 0, 1, [](const store_t v){fbs::useDynamicRange(v == 1); return true;}});
         addNode(p, Param_t{parent2, PType::U16,  "DeadMin", nullptr,  &eeprom.fbservos[index].deadMin, 700, 992, [](const store_t v){fbs::deadMin(v); return true;}});
         addNode(p, Param_t{parent2, PType::U16,  "DeadMax", nullptr,  &eeprom.fbservos[index].deadMax, 992, 1100, [](const store_t v){fbs::deadMax(v); return true;}});
         addNode(p, Param_t{parent2, PType::U16,  "FbMin", nullptr,  &eeprom.fbservos[index].fbMin, 0, 500, [](const store_t v){fbs::fbMin(v); return true;}});

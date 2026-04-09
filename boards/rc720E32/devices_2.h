@@ -279,7 +279,7 @@ struct Devices<SW01, Config, MCU> {
     using fbcb0 = FbCalibCallback<0>;
     
     using srv1_fb = FeedbackAdapter<0, adc, fb1_pin, debug>; // IN6: index=1
-    using srv1_feetech = Feetech<0, polar1, srv1_fb, srv1_pwm, fbcb0, systemTimer, void>;
+    using srv1_feetech = Feetech<0, polar1, srv1_fb, srv1_pwm, fbcb0, systemTimer, debug>;
 
     // time-multiplex for old analog switch-modules
     struct MpxConfig1;

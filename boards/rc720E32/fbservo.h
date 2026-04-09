@@ -95,6 +95,9 @@ struct Feetech {
     static inline void useDead(const bool on) {
         mUseDead = on;
     }
+    static inline void useDynamicRange(const bool on) {
+        mDynamic = on;
+    }
     static inline void deadMin(const uint16_t v) {
         mDeadN = v;
         mDeadMid = (mDeadP + mDeadN) / 2;
@@ -316,7 +319,8 @@ struct Feetech {
             const uint16_t oc = std::clamp(oo, int32_t(172), int32_t(1811)); // sbus
             Out::set(oc);
             mStateTick.on(debugTicks, [&]{
-                IO::outl<Debug>("o: ", o, " oo: ", oo, " oc: ", oc, " e: ", error(), " p: ", In::phi(), " n: ", normalized());
+                // IO::outl<Debug>("# o: ", o, " oo: ", oo, " oc: ", oc, " e: ", error(), " p: ", In::phi(), " n: ", normalized());
+                IO::outl<Debug>("# RangeRun: fbMin: ", mFbMin, " fbMax: ", mFbMax);
             });
         }
             break;
@@ -437,11 +441,22 @@ struct Feetech {
     }
     private:
     static inline uint16_t normalized() {
+        const uint16_t a = Fb::read();
+        if (mDynamic) {
+            if (a < mFbMin) {
+                mFbMin = a;
+                mFbRange = mFbMax - mFbMin;
+            }
+            else if (a > mFbMax) {
+                mFbMax = a;
+                mFbRange = mFbMax - mFbMin;
+            }
+        }
         if (mFbRange < 10) {
             return 0;
         }
-        const int32_t v = std::clamp(Fb::read(), mFbMin, mFbMax);
-        return ((v - mFbMin) * 4095) / mFbRange;
+        const int32_t v = std::clamp(a, mFbMin, mFbMax);
+        return ((v - int32_t{mFbMin}) * 4095) / mFbRange;
     }
 
     static inline int16_t error() {
@@ -465,6 +480,7 @@ struct Feetech {
         return e;
     }
     static inline bool mActive = false;
+    static inline bool mDynamic = true;
     static inline int16_t mTurns = 0;
     static inline bool mCalibOnStart = true;
     static inline bool mUseDead = false;

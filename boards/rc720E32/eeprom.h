@@ -157,6 +157,7 @@ struct EEProm {
     struct FBServo {
         eeprom_value_t calibOnStart = 0;
         eeprom_value_t compensateDeadband = 0;
+        eeprom_value_t dynamic = 1;
         eeprom_value_t deadMin = 825;
         eeprom_value_t deadMax = 1004;
         eeprom_value_t fbMax = 4093;
