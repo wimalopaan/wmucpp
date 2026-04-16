@@ -18,6 +18,7 @@
 
 #pragma once
 
+#include "mcu/mcu.h"
 #include "mcu/mcu_traits.h"
 #include "concepts.h"
 
