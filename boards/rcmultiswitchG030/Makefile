@@ -27,7 +27,7 @@ CPPFLAGS += -I../../../STM32CubeG0/Drivers/CMSIS/Device/ST/STM32G0xx/Include
 CPPFLAGS += -I../../../STM32CubeG0/Drivers/STM32G0xx_HAL_Driver/Inc
 CPPFLAGS += -DSTM32G030xx
 
-CPPFLAGS += -DHW_MSW10
+g030 : CPPFLAGS += -DHW_MSW10
 
 OPTFLAGS = -Os
 
@@ -39,6 +39,8 @@ targets += system_g0.o
 targets += msw30.elf msw30.bin
 
 system030: system_g0.o startup_g030.o
+
+weact: clean system030 msw30.bin
 
 g030: clean system030 msw30.bin
 	

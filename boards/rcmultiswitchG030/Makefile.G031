@@ -27,7 +27,9 @@ CPPFLAGS += -I../../../STM32CubeG0/Drivers/CMSIS/Device/ST/STM32G0xx/Include
 CPPFLAGS += -I../../../STM32CubeG0/Drivers/STM32G0xx_HAL_Driver/Inc
 CPPFLAGS += -DSTM32G031xx
 
-CPPFLAGS += -DHW_MSW11
+g031: CPPFLAGS += -DHW_MSW11
+
+weact : CPPFLAGS += -DHW_WEACT
 
 OPTFLAGS = -Os
 
@@ -42,5 +44,7 @@ targets += system031
 system031: system_g0.o startup_g031.o
 
 g031: clean system031 msw30.bin
+
+weact: clean system031 msw30.bin
 
 -include ../../Makefile.arm.include
