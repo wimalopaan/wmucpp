@@ -40,7 +40,8 @@ targets += msw30.elf msw30.bin
 
 system030: system_g0.o startup_g030.o
 
-weact: clean system030 msw30.bin
+weact: clean 
+	make -f Makefile.G031 weact
 
 g030: clean system030 msw30.bin
 	
