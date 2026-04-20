@@ -579,7 +579,7 @@ private:
                                return true;
                            }});
         uint8_t parent = addParent(p, Param_t{0, PType::Folder, "Channels"});
-        addNode(p, Param_t{.parent = parent, .type = PType::Sel, .name = "Stream", .options = "Main/CRSF;Alternative;SBus;Bluetooth", .value_ptr = &eeprom.input_stream, .max = 3, .cb = [](const store_t s){mapper::stream(s); return true;}});
+        addNode(p, Param_t{.parent = parent, .type = PType::Sel, .name = "Stream", .options = "Main/CRSF;Alternative/Relay;SBus/Aux;Bluetooth", .value_ptr = &eeprom.input_stream, .max = 3, .cb = [](const store_t s){mapper::stream(s); return true;}});
         addNode(p, Param_t{.parent = parent, .type = PType::U8, .name = "Schottel 1: f/b", .value_ptr = &eeprom.channels[0].first, .max = 15, .cb = [](const store_t){return true;}});
         addNode(p, Param_t{.parent = parent, .type = PType::U8, .name = "Schottel 1: l/r", .value_ptr = &eeprom.channels[0].second, .max = 15, .cb = [](const store_t){return true;}});
         addNode(p, Param_t{parent, PType::U8, "Schottel 2: f/b", nullptr, &eeprom.channels[1].first, 0, 15, [](const store_t){return true;}});
@@ -698,7 +698,10 @@ private:
 		addNode(p, Param_t{parent, PType::Sel, "Switch inject", "off;on", &eeprom.inject_bt_switches, 0, 1, [](const store_t){return true;}});
 		addNode(p, Param_t{parent, PType::U8,  "Switch CRSF Adr", nullptr, &eeprom.inject_bt_crsf, 0xc0, 0xcf, [](const store_t){return true;}});
 		addNode(p, Param_t{parent, PType::U8,  "Switch Adr", nullptr, &eeprom.inject_bt_address, 0, 255, [](const store_t){return true;}});
-		
+
+        parent = addParent(p, Param_t{0, PType::Folder, "Telemetry"});
+        addNode(p, Param_t{parent, PType::Sel, "Mode", "Simple;Full", &eeprom.telemetry_mode, 0, 1, [](const store_t v){ telemetry::mode(v); return true;}});
+        
         return p;
     }();
     static inline const uint32_t uuid = Mcu::Stm::Uuid::get();

@@ -69,9 +69,11 @@ struct Telemetry {
             }
         }
     }
-
     static inline void event(const Event e) {
         mEvent = e;
+    }
+    static inline void mode(const uint8_t m) {
+        mMode = m;
     }
     static inline void disableWithAutoOn() {
         event(Event::OffWithAutoOn);
@@ -89,8 +91,14 @@ struct Telemetry {
         if (storage::eeprom.mode == 0) { // Schottel
 			switch(mFrameCounter) {
             case 0:
-				sendRmp();
-				++mFrameCounter;
+                if (mMode == 0) {
+                    sendSchottelSimple();                    
+                    mFrameCounter = 0;
+                }
+                else {
+                    sendRmp();
+                    ++mFrameCounter;
+                }
                 break;
             case 1:
 				sendBattery();
@@ -140,6 +148,22 @@ struct Telemetry {
 			d.push_back(RC::Protokoll::Crsf::V4::ArduPilotTunnel::Schottel::AppId);
 			d.push_back(RC::Protokoll::Crsf::V4::ArduPilotTunnel::Schottel::Type::CombinedTelemetry); // packet type
 			d.push_back(mValues);
+			d.push_back(mTurns);
+			d.push_back(mFlags);
+		});
+	}
+    static inline void sendSchottelSimple() {
+		buffer::create_back((uint8_t)RC::Protokoll::Crsf::V4::Type::ArduPilot, [&](auto& d){
+			d.push_back(RC::Protokoll::Crsf::V4::Address::Handset);
+			d.push_back((uint8_t)storage::eeprom.address);
+			d.push_back(RC::Protokoll::Crsf::V4::ArduPilotTunnel::Schottel::AppId);
+			d.push_back(RC::Protokoll::Crsf::V4::ArduPilotTunnel::Schottel::Type::SimpleTelemetry); // packet type
+			d.push_back(mValues[0]); // phi
+            d.push_back(mValues[1]); // amp
+            d.push_back(mValues[2]); // actual
+            d.push_back(mValues[5]);
+            d.push_back(mValues[6]);
+            d.push_back(mValues[7]);
 			d.push_back(mTurns);
 			d.push_back(mFlags);
 		});
@@ -205,18 +229,6 @@ struct Telemetry {
     static inline void actual(const uint8_t n, const uint16_t a) {
         mValues[5 * n + 2] = a;
     }
-    static inline uint16_t voltage(const uint8_t n) {
-        return mVoltage[n];
-    }
-    static inline void voltage(const uint8_t n, const uint16_t v) {
-        mVoltage[n] = v;
-    }
-    static inline uint16_t temp(const uint8_t n) {
-        return mTemp[n];
-    }
-    static inline void temp(const uint8_t n, const uint16_t t) {
-        mTemp[n] = t;
-    }
     static inline uint16_t current(const uint8_t n) {
         return mValues[5 * n + 3] / 10;
     }
@@ -228,6 +240,18 @@ struct Telemetry {
     }
     static inline void rpm(const uint8_t n, const uint16_t r) {
         mValues[5 * n + 4] = r;
+    }
+    static inline uint16_t voltage(const uint8_t n) {
+        return mVoltage[n];
+    }
+    static inline void voltage(const uint8_t n, const uint16_t v) {
+        mVoltage[n] = v;
+    }
+    static inline uint16_t temp(const uint8_t n) {
+        return mTemp[n];
+    }
+    static inline void temp(const uint8_t n, const uint16_t t) {
+        mTemp[n] = t;
     }
     static inline void turns(const uint8_t n, const int8_t t) {
         mTurns[n] = t;
@@ -241,6 +265,7 @@ struct Telemetry {
         }
     }
     private:
+    static inline uint8_t mMode = 0;
     static inline uint8_t mFrameCounter = 0;
     static inline std::array<uint16_t, 10> mValues{};
     static inline std::array<int8_t, 2> mTurns{};

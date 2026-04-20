@@ -39,8 +39,8 @@ struct Polar {
 
         mPhi = FastMath::uatan2<820, 4096>(v1, v2);
         const unsigned amp = FastMath::usqrt4(v1 * v1 + v2 * v2);
-        const unsigned amax = FastMath::usqrt4(amin * amin + pa::amp * pa::amp); // 96us
-        mAmp = (pa::amp * amp) / amax;
+        const unsigned amax = FastMath::usqrt4(amin * amin + pa::span * pa::span); // 96us
+        mAmp = (pa::span * amp) / amax;
         if (mAmp < eeprom.deadbands[N]) {
             mDead = true;
         }

@@ -46,6 +46,7 @@ namespace RC {
 
                     static inline constexpr uint16_t mid = RC::Protokoll::Crsf::V4::mid;
                     static inline constexpr uint16_t amp = RC::Protokoll::Crsf::V4::amp;
+                    static inline constexpr uint16_t span = RC::Protokoll::Crsf::V4::span;
 
                     static inline void init() {
                         for(auto& c : mChannels) {

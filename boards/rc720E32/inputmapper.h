@@ -33,6 +33,7 @@ struct InputMapper {
 
     static inline constexpr uint16_t mid = stream1::mid;
     static inline constexpr uint16_t amp = stream1::amp;
+    static inline constexpr uint16_t span = stream1::span;
 
     static inline uint16_t value(const uint8_t ch) {
         switch(mStream) {

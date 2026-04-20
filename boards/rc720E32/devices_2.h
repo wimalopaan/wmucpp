@@ -56,6 +56,7 @@
 #include "rc/pulse_input.h"
 #include "exti_slave.h"
 #include "pwm.h"
+#include "pwm_2.h"
 #include "adc.h"
 #include "blinker.h"
 #include "adapter.h"
@@ -63,6 +64,7 @@
 #include "sport_cb.h"
 #include "eeprom.h"
 #include "fbservo.h"
+#include "parallax.h"
 #include "polar.h"
 #include "channels.h"
 #include "telemetry_2.h"
@@ -279,7 +281,15 @@ struct Devices<SW01, Config, MCU> {
     using fbcb0 = FbCalibCallback<0>;
     
     using srv1_fb = FeedbackAdapter<0, adc, fb1_pin, debug>; // IN6: index=1
-    using srv1_feetech = Feetech<0, polar1, srv1_fb, srv1_pwm, fbcb0, systemTimer, debug>;
+    using srv1_feetech = Feetech<0, polar1, srv1_fb, srv1_pwm, fbcb0, systemTimer, void>;
+    
+    struct PwmInOutConfig1;
+    using pwm_inout3 = Mcu::Stm::V3::Pwm::InOut<3, PwmInOutConfig1>;
+    using srv1_pwm_out = PwmAdapter<pwm_inout3, srv1_pin, 3, storage, void>; // channel 3
+    using srv1_pwm_in  = PwmAdapterIn<pwm_inout3, fb1_pin, 1, storage, void>; // channel 1
+
+    struct ParaConfig1;
+    using srv1_parallax = Parallax<ParaConfig1>;
 
     // time-multiplex for old analog switch-modules
     struct MpxConfig1;
@@ -346,6 +356,13 @@ struct Devices<SW01, Config, MCU> {
     using srv2_feetech = Feetech<1, polar2, srv2_fb, srv2_pwm, fbcb1, systemTimer, void>;
 
     using fbservos = Meta::List<srv1_feetech, srv2_feetech>;
+
+    using srv2_pwm_out = PwmAdapter<pwm14, srv2_pin, 1, storage, void>; // channel 3
+    using srv2_pwm_in  = PwmAdapterIn<pwm_inout3, fb2_pin, 2, storage, void>; // channel 2
+
+    struct ParaConfig2;
+    using srv2_parallax = Parallax<ParaConfig2>;
+
     
     // time-multiplex for old analog switch-modules
     // TIM14: need dma request generator
@@ -508,7 +525,7 @@ struct Devices<SW01, Config, MCU> {
         };
     };
     struct SBusSoftUartConfig {
-        // static inline constexpr bool additionalChecks = true;
+        static inline constexpr bool additionalChecks = true;
         using pin = auxrx;
         using clock = Devices::clock;
         using systemTimer = Devices::systemTimer;
@@ -639,7 +656,7 @@ struct Devices<SW01, Config, MCU> {
         using debug = void;
         using tp = void;
         using callback = CrsfCallback<CrsfCallbackConfig, Devices::debug>;
-        static inline constexpr uint8_t fifoSize = 16;
+        static inline constexpr uint8_t fifoSize = 4;
     };
     struct SBus1Config {
         using clock = Devices::clock;
@@ -784,7 +801,38 @@ struct Devices<SW01, Config, MCU> {
         using debug = void;
         using tp = void;
     };
+    struct PwmInOutConfig1 {
+        using storage = Devices::storage;
+        using clock = Devices::clock;
+        using timer = systemTimer;
+        using dmaChComponent1 = srv1DmaChannelComponent;
+        using dmaChComponent2 = srv2DmaChannelComponent;
+        using pin_in_1 = fb1_pin;
+        using pin_in_2 = fb2_pin;
+        using pin_out_1 = srv1_pin;
+        using pin_out_2 = srv2_pin;
+        using debug = Devices::debug;
+    };
+    struct ParaConfig1 {
+        using storage = Devices::storage;
+        using clock = Devices::clock;
+        using timer = systemTimer;
+        using out = srv1_pwm_out;
+        using in = srv1_pwm_in;
+        using polar = polar1;
+        using debug = Devices::debug;
+    };
+    struct ParaConfig2 {
+        using storage = Devices::storage;
+        using clock = Devices::clock;
+        using timer = systemTimer;
+        using out = srv2_pwm_out;
+        using in = srv2_pwm_in;
+        using polar = polar2;
+        using debug = Devices::debug;
+    };
 
+    
     struct CalibClient {
         static inline void update() {
             global::event = global::Event::CompassCalibUpdate;
@@ -833,6 +881,8 @@ struct Devices<SW01, Config, MCU> {
         sport_aux::setValue1(1000 * HW_VERSION + SW_VERSION);
 
         stdComponents::init();
+        
+        crsfBuffer::freeRun(true);
     }
 };
 

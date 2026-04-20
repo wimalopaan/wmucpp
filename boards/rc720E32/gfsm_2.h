@@ -120,7 +120,7 @@ struct GFSM {
 
     static inline constexpr External::Tick<systemTimer> initTicks{500ms};
     static inline constexpr External::Tick<systemTimer> debugTicks{500ms};
-    static inline constexpr External::Tick<systemTimer> telemetryTicks{20ms};
+    static inline constexpr External::Tick<systemTimer> telemetryTicks{10ms};
     static inline constexpr External::Tick<systemTimer> updateTicks{20ms};
     static inline constexpr External::Tick<systemTimer> directTicks{1000ms};
 
@@ -200,22 +200,24 @@ struct GFSM {
                 ws2812b_2::sendColors();
             });
             (++mTelemetryTick).on(telemetryTicks, []{
-                telemetry::push((uint8_t)RC::Protokoll::Crsf::V4::Type::Gps, [](auto& d){
-                        d.push_back((int32_t)gps_aux::ublox::mLatitude);
-                        d.push_back((int32_t)gps_aux::ublox::mLongitude);
-                        d.push_back((uint16_t)gps_aux::ublox::mSpeed);
-                        // d.push_back(int16_t((compass::aComp_I() * 100)));
-                        d.push_back(int16_t(gps_aux::ublox::mHeading / 100));
-                        d.push_back(uint16_t(gps_aux::ublox::mAltitude / 1000 + 1000));
-                        d.push_back((uint8_t)gps_aux::ublox::mSatCount);
-                });
-                telemetry::push((uint8_t)RC::Protokoll::Crsf::V4::Type::Attitude, [](auto& d){
-                    const auto [pitch, roll] = devs::compass::pitchRoll_I();
-                    const int16_t yaw = devs::compass::aComp_I();
-                    d.push_back((int16_t)(pitch * 10));
-                    d.push_back((int16_t)(roll * 10));
-                    d.push_back((int16_t)(yaw * 10));
-                });
+                if (gps_aux::active()) {
+                    telemetry::push((uint8_t)RC::Protokoll::Crsf::V4::Type::Gps, [](auto& d){
+                            d.push_back((int32_t)gps_aux::ublox::mLatitude);
+                            d.push_back((int32_t)gps_aux::ublox::mLongitude);
+                            d.push_back((uint16_t)gps_aux::ublox::mSpeed);
+                            // d.push_back(int16_t((compass::aComp_I() * 100)));
+                            d.push_back(int16_t(gps_aux::ublox::mHeading / 100));
+                            d.push_back(uint16_t(gps_aux::ublox::mAltitude / 1000 + 1000));
+                            d.push_back((uint8_t)gps_aux::ublox::mSatCount);
+                    });
+                    telemetry::push((uint8_t)RC::Protokoll::Crsf::V4::Type::Attitude, [](auto& d){
+                        const auto [pitch, roll] = devs::compass::pitchRoll_I();
+                        const int16_t yaw = devs::compass::aComp_I();
+                        d.push_back((int16_t)(pitch * 10));
+                        d.push_back((int16_t)(roll * 10));
+                        d.push_back((int16_t)(yaw * 10));
+                    });
+                }
                 telemetry::next();
             });
             static uint16_t gps_pp = 0;

@@ -94,6 +94,7 @@ boards/rc720E32/output_relay.h
 boards/rc720E32/output_servo.h
 boards/rc720E32/package_relay.h
 boards/rc720E32/package_relay_2.h
+boards/rc720E32/parallax.h
 boards/rc720E32/pcal6408.h
 boards/rc720E32/pid.h
 boards/rc720E32/polar.h
@@ -776,6 +777,7 @@ include_stm32/peripheral/mpu6050.h
 include_stm32/peripheral/pcal6408.h
 include_stm32/peripheral/ws2812b.h
 include_stm32/pwm.h
+include_stm32/pwm_2.h
 include_stm32/pwm_dma.h
 include_stm32/qmc5883l.h
 include_stm32/ranged.h

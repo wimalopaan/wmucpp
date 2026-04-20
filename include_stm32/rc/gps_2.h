@@ -367,6 +367,9 @@ namespace External::GPS {
                 pin_rx::analog();
                 pin_tx::analog();
             }
+            static inline bool active() {
+                return mActive;
+            }
             enum class State : uint8_t {Init,
                                         SetMessageInterval1,
                                         SetMessageInterval2,

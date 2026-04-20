@@ -116,7 +116,7 @@ struct EEProm {
     eeprom_value_t sport_appId_switch = ((uint16_t)RC::Protokoll::SPort::V2::ValueId::DIY) >> 8;
     eeprom_value_t sport_appId_telemetry = ((uint16_t)RC::Protokoll::SPort::V2::ValueId::DIY2) >> 8;
 
-    std::array<eeprom_value_t, 2> out_mode_srv{3, 3};
+    std::array<eeprom_value_t, 2> out_mode_srv{0, 0};
 
     std::array<eeprom_value_t, 2> esc_slave{0, 0};
 
@@ -166,7 +166,9 @@ struct EEProm {
         eeprom_value_t kp = 1000;
         eeprom_value_t ki = 0;
         eeprom_value_t kd = 500;
-    };
-    
+    };    
     std::array<FBServo, 2> fbservos{};
+    
+    eeprom_value_t telemetry_mode = 0; // large/small ArduPilot passthru packets
+
 };

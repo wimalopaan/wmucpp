@@ -44,6 +44,11 @@ struct MpxAdapter {
 };
 
 template<typename Pwm, typename Pin, uint8_t Channel, typename Storage, typename EEpromOffsetIndex, typename Debug = void>
+struct PwmAdapterIn {
+    
+};
+
+template<typename Pwm, typename Pin, uint8_t Channel, typename Storage, typename EEpromOffsetIndex, typename Debug = void>
 struct PwmAdapter {
     static_assert(Channel >= 1);
     using pwm = Pwm;

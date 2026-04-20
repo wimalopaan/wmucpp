@@ -27,11 +27,14 @@ Ideas
 
 Prio 0
 ------
+* SPort-telemetry values for schottel-widget
+* fix/add the pwm-feedback servo
+* options for enabling which telemetry data sent
 * introduce LP filter for analog FB servo
-* report values (analog FB servo) via telemetry (abuse temp-array)
-* refactor the mess in GFSM (global state machine)
-* add messagebuffer to packet-relay (for injection of messages)
+* report values (analog FB servo) via telemetry (abuse temp-array)(testing only)
+* refactor the mess in GFSM (global state machine), new telemetry fsm
 * fix the telemetry mess: use telemetry ID, enable/disable Batt-telemetry
+* add messagebuffer to packet-relay (for injection of messages)
 * add switch for RGB or GRB byte-order WS2812B leds
 * use std::variant<> instead of heap-allocated wrapper objects
 * add s.port master

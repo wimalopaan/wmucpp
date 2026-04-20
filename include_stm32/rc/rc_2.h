@@ -227,6 +227,7 @@ namespace RC {
                         namespace Type {
                             inline static constexpr uint8_t CombinedTelemetry = 0x00;
                             inline static constexpr uint8_t DeviceInfo = 0x01;
+                            inline static constexpr uint8_t SimpleTelemetry = 0x02;
                         }
                     }
                     namespace Switch {
