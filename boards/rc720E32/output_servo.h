@@ -54,6 +54,13 @@ struct ServoOutputs {
             servos[N]->speed(s);
         }
     }
+    template<uint8_t N>
+    static inline void gear(const uint16_t s) {
+        static_assert(N <= 1);
+        if (servos[N]) {
+            servos[N]->gear(s);
+        }
+    }
     static inline void update() {
         for(const auto& s : servos) {
             if (s) {

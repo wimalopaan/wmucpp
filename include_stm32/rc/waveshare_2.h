@@ -110,6 +110,10 @@ namespace External::WaveShare {
                 IO::outl<debug>("# WS speed ", s);
                 mSpeed = std::min(s, uint16_t{3400});
             }
+            static inline void gear(const uint16_t s) {
+                IO::outl<debug>("# WS gear", s);
+                mGearPercent = std::min(s, uint16_t{600});
+            }
             static inline void event(const Event e) {
                 mEvent = e;
             }
@@ -117,7 +121,12 @@ namespace External::WaveShare {
                 event(Event::ResetServo);
             }
             static inline void update() {
+                mCircularMode = true;
                 mPhi = polar::phi();
+            }
+            static inline void set(const uint16_t sbus) {
+                mCircularMode = false;
+                mPhi = sbus2pos(sbus);
             }
             static inline void offset(const uint16_t o) {
                 mOffset = etl::normalize<4096>(o);
@@ -265,7 +274,12 @@ namespace External::WaveShare {
                         disableAutoReply();
                         break;
                     case State::SetPosition:
-                        setPosition();
+                        if (mCircularMode) {
+                            setPosition();
+                        }
+                        else {
+                            setPositionLinear();
+                        }
                         break;
                     case State::ReadPosition:
                         readPosition();
@@ -303,6 +317,29 @@ namespace External::WaveShare {
                 payload[0] = 0x02; // return len
                 mLastServoCommand = ServoCommand::ReadPosition;
                 send(mId, 0x38, payload, CmdRead); // address 0x38
+            }
+            static inline int32_t sbus2pos(const uint16_t sbus) {
+                int32_t v = ((sbus - int32_t{992}) * 4096 * mGearPercent) / (820 * 100);
+                return v;
+            }
+            static inline void setPositionLinear() {
+                std::array<uint8_t, 6> payload;
+                int32_t pa = std::clamp(mPhi, int16_t{-6 * 4096}, int16_t{6 * 4096});
+                const uint16_t s = std::abs(pa);
+                payload[2] = 0;
+                payload[3] = 0;
+                payload[4] = mSpeed;
+                payload[5] = mSpeed >> 8;
+                if (pa >= 0) {
+                    payload[0] = s;
+                    payload[1] = s >> 8;
+                    send(mId, 0x2a, payload);
+                }
+                else if (pa < 0) {
+                    payload[0] = s;
+                    payload[1] = (s >> 8) | 0x80 ; // neg. direction
+                    send(mId, 0x2a, payload);
+                }
             }
             static inline void setPosition() {
                 std::array<uint8_t, 6> payload;
@@ -353,20 +390,6 @@ namespace External::WaveShare {
                     etl::assign(data[i++], ~csum);
                     return i;
                 });
-                // volatile uint8_t* const data = uart::outputBuffer();
-                // uint8_t csum = 0;
-                // uint8_t i = 0;
-                // add(data, i, 0xff);
-                // add(data, i, 0xff);
-                // csum += add(data, i, id);
-                // csum += add(data, i, 1 + 1 + 1 + payload.size()); // len = 1(cmd) + 1(adr) + payload + 1(cs)
-                // csum += add(data, i, cmd);
-                // csum += add(data, i, address);
-                // for(uint8_t p = 0; p < payload.size(); ++p) {
-                //     csum += add(data, i, payload[p]);
-                // }
-                // add(data, i, ~csum);
-                // uart::startSend(i);
             }
             static inline void resetServo() {
                 uart::fillSendBuffer([](auto& data){
@@ -380,16 +403,6 @@ namespace External::WaveShare {
                     etl::assign(data[i++], ~csum);
                     return i;
                 });
-                // volatile uint8_t* const data = uart::outputBuffer();
-                // uint8_t csum = 0;
-                // uint8_t i = 0;
-                // add(data, i, 0xff);
-                // add(data, i, 0xff);
-                // csum += add(data, i, mId);
-                // csum += add(data, i, 2); // len = 1(cmd) + 1(cs)
-                // csum += add(data, i, CmdReset);
-                // add(data, i, ~csum);
-                // uart::startSend(i);
             }
             static inline bool validityCheck(const volatile uint8_t* const data, const uint16_t size) {
                 if (data[0] != 0xff) {
@@ -455,52 +468,6 @@ namespace External::WaveShare {
                         }
                     }
                 });
-
-                // ++mReceivedPackets;
-                // const uint8_t id = uart::readBuffer()[2];
-                // const uint8_t len = uart::readBuffer()[3];
-                // mLastError = uart::readBuffer()[4];
-                // uint8_t csum = id + len + mLastError;
-                // const uint8_t dataLength = len - 2;
-                // for(uint8_t i = 0; i < dataLength; ++i) {
-                //     csum += uart::readBuffer()[5 + i];
-                // }
-                // if (uart::readBuffer()[3 + len] != (~csum & 0xff)) {
-                //     ++mReadErrorCount;
-                // }
-                // else {
-                //     if (const auto c = std::exchange(mLastServoCommand, ServoCommand::None); c == ServoCommand::ReadFwHw) {
-                //         if (dataLength == 4) {
-                //             mFW.first  = uart::readBuffer()[5];
-                //             mFW.second = uart::readBuffer()[6];
-                //             mHW.first  = uart::readBuffer()[7];
-                //             mHW.second = uart::readBuffer()[8];
-                //         }
-                //         else {
-                //             ++mReadErrorCount;
-                //         }
-                //     }
-                //     else if (c == ServoCommand::ReadPosition) {
-                //         if (dataLength == 2) {
-                //             const uint8_t lb = uart::readBuffer()[5];
-                //             const uint8_t hb = uart::readBuffer()[6];
-                //             int16_t p = 0;
-                //             if (hb & 0x80) {
-                //                 p = -(((hb & 0x7f) << 8) + lb);
-                //             }
-                //             else {
-                //                 p =  (((hb & 0x7f) << 8) + lb);
-                //             }
-                //             mActualPos = normalize(p - mOffset);
-                //         }
-                //         else {
-                //             ++mReadErrorCount;
-                //         }
-                //     }
-                //     else {
-                //         ++mReadErrorCount;
-                //     }
-                // }
             }
             static inline bool mActive = false;
             static inline etl::Event<Event> mEvent;
@@ -514,11 +481,13 @@ namespace External::WaveShare {
             static inline External::Tick<systemTimer> mStateTick;
             static inline uint8_t mId = 1;
             static inline uint16_t mLastPos = 0;
-            static inline uint16_t mPhi = 0;
+            static inline int16_t mPhi = 0;
+            static inline uint16_t mGearPercent = 100;
             static inline int16_t mActualPos = 0;
             static inline uint16_t mOffset = 0;
             static inline uint16_t mSpeed = 1000;
             static inline int8_t mTurns = 0;
+            static inline bool mCircularMode = true;
         };
     }
 }

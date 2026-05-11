@@ -27,9 +27,10 @@ Ideas
 
 Prio 0
 ------
+* angle-limiting mode together with ESC backward/forward
+* options for enabling which telemetry data sent (depending on sensors: gps, compass, ...)
 * SPort-telemetry values for schottel-widget
 * fix/add the pwm-feedback servo
-* options for enabling which telemetry data sent
 * introduce LP filter for analog FB servo
 * report values (analog FB servo) via telemetry (abuse temp-array)(testing only)
 * refactor the mess in GFSM (global state machine), new telemetry fsm
@@ -95,6 +96,7 @@ Done bugs:
 
 Done:
 ------
+* added linear mode for waveshare servos
 * use dynamic range for analog FB servo
 * pid anti-windup integral-back-compute
 * slotted event class

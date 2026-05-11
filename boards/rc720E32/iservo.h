@@ -30,6 +30,7 @@ struct IServo : IDevice {
     virtual uint16_t actualPos() = 0;
     virtual void speed(uint16_t) = 0;
     virtual void offset(uint16_t) = 0;
+    virtual void gear(uint16_t) = 0;
     virtual void zero() = 0;
     virtual void update() = 0;
     virtual void set(uint16_t) = 0;
@@ -194,6 +195,11 @@ struct Servo : IServo {
     virtual void speed( const uint16_t s) {
         if constexpr(requires(){S::speed(s);}) {
             S::speed(s);
+        }
+    }
+    virtual void gear( const uint16_t s) {
+        if constexpr(requires(){S::gear(s);}) {
+            S::gear(s);
         }
     }
     virtual void offset( const uint16_t o) {

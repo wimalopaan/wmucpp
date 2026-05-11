@@ -616,11 +616,15 @@ private:
         addNode(p, Param_t{.parent = parent, .type = PType::U8, .name = "Sch1 ESC Deadband", .value_ptr = &eeprom.deadbands[0], .min = 1, .max = 20, .cb = [](const store_t){return true;}, .unitString = "%"});
         addNode(p, Param_t{.parent = parent, .type = PType::I8, .name = "Sch1 ESC PWM Mid", .value_ptr = &eeprom.esc_mid[0], .min = (store_t)-100, .max = 100, .cb = [](const store_t){return true;}, .unitString ="us"});
         addNode(p, Param_t{.parent = parent, .type = PType::I8, .name = "Sch1 Servo zPosition", .value_ptr = &eeprom.offset1, .min = (store_t)-90, .max = 90, .cb = [](const store_t v){servos::template offset<0>((uint32_t{v} * 4096) / 360); return true;}, .unitString ="°"});
-        addNode(p, Param_t{parent, PType::U8,  "Sch1 Servo Speed", nullptr, &eeprom.speed1, 1, 100, [](const store_t v){servos::template speed<0>(34 * v); return true;}});
-        addNode(p, Param_t{parent, PType::U8,  "Sch2 ESC Deadband", nullptr, &eeprom.deadbands[1], 1, 20, [](const store_t){return true;}});
-        addNode(p, Param_t{parent, PType::U8,  "Sch2 ESC PWM Mid", nullptr, &eeprom.esc_mid[1], 0, 200, [](const store_t){return true;}});
-        addNode(p, Param_t{parent, PType::U16,  "Sch2 Servo zPosition", nullptr,  &eeprom.offset2, 0, 359, [](const store_t v){servos::template offset<1>((uint32_t{v} * 4096) / 360); return true;}});
-        addNode(p, Param_t{parent, PType::U8,  "Sch2 Servo Speed", nullptr, &eeprom.speed2, 1, 100, [](const store_t v){servos::template speed<1>(34 * v); return true;}});
+        addNode(p, Param_t{.parent = parent, .type = PType::U8, .name = "Sch1 Servo Speed", .value_ptr = &eeprom.speed1, .min = 1, .max = 100, .cb = [](const store_t v){servos::template speed<0>(34 * v); return true;}});
+        addNode(p, Param_t{.parent = parent, .type = PType::U16, .name = "Sch1 Servo Gear", .value_ptr = &eeprom.gear1, .min = 10, .max = 500, .cb = [](const store_t v){servos::template gear<0>(v); return true;}});
+
+        addNode(p, Param_t{.parent = parent, .type = PType::U8, .name = "Sch2 ESC Deadband", .value_ptr = &eeprom.deadbands[1], .min = 1, .max = 20, .cb = [](const store_t){return true;}, .unitString = "%"});
+        addNode(p, Param_t{.parent = parent, .type = PType::I8, .name = "Sch2 ESC PWM Mid", .value_ptr = &eeprom.esc_mid[1], .min = (store_t)-100, .max = 100, .cb = [](const store_t){return true;}, .unitString ="us"});
+        addNode(p, Param_t{.parent = parent, .type = PType::I8, .name = "Sch2 Servo zPosition", .value_ptr = &eeprom.offset2, .min = (store_t)-90, .max = 90, .cb = [](const store_t v){servos::template offset<1>((uint32_t{v} * 4096) / 360); return true;}, .unitString ="°"});
+        addNode(p, Param_t{.parent = parent, .type = PType::U8, .name = "Sch2 Servo Speed", .value_ptr = &eeprom.speed2, .min = 1, .max = 100, .cb = [](const store_t v){servos::template speed<1>(34 * v); return true;}});
+        addNode(p, Param_t{.parent = parent, .type = PType::U16, .name = "Sch2 Servo Gear", .value_ptr = &eeprom.gear2, .min = 10, .max = 500, .cb = [](const store_t v){servos::template gear<1>(v); return true;}});
+
         addNode(p, Param_t{parent, PType::Command, "Act. Pos. as zPos 1", setServoZeroPosText, nullptr, 200 /*timeout*/, 0, [](const store_t v){return setZeroPosition(v);}});
         addNode(p, Param_t{parent, PType::Command, "Act. Pos. as zPos 2", setServoZeroPosText, nullptr, 200 /*timeout*/, 0, [](const store_t v){return setZeroPosition(v);}});
 

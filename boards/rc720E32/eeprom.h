@@ -92,8 +92,10 @@ struct EEProm {
     // servos
     eeprom_value_t offset1  = 0; // 0...360
     eeprom_value_t speed1 = 100;
+    eeprom_value_t gear1 = 12;
     eeprom_value_t offset2  = 0;
     eeprom_value_t speed2 = 100;
+    eeprom_value_t gear2 = 12;
 
     // (s)bus out
     // phi1/2, amp1/2 are injected in these channels
