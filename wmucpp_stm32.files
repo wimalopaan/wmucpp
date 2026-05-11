@@ -348,6 +348,16 @@ boards/rcRelay32/storage.h
 boards/rcRelay32/system_g0.cc
 boards/rcRelay32/system_g4.cc
 boards/rcRelay32/todo.txt
+boards/rcSerialServo/Makefile.G031
+boards/rcSerialServo/crsf_cb.h
+boards/rcSerialServo/devices.h
+boards/rcSerialServo/eeprom.h
+boards/rcSerialServo/gfsm.h
+boards/rcSerialServo/link_g031.ld
+boards/rcSerialServo/servo_01.cc
+boards/rcSerialServo/startup_g031.s
+boards/rcSerialServo/storage.h
+boards/rcSerialServo/system_g0.cc
 boards/rcVarioprop/Makefile
 boards/rcVarioprop/V01/Makefile
 boards/rcVarioprop/V01/buzzer.h
