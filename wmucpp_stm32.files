@@ -358,6 +358,7 @@ boards/rcSerialServo/servo_01.cc
 boards/rcSerialServo/startup_g031.s
 boards/rcSerialServo/storage.h
 boards/rcSerialServo/system_g0.cc
+boards/rcSerialServo/todo.txt
 boards/rcVarioprop/Makefile
 boards/rcVarioprop/V01/Makefile
 boards/rcVarioprop/V01/buzzer.h
