@@ -34,6 +34,8 @@ struct GFSM {
 	using crsf = devs::crsf;
     using crsf_in = devs::crsf_in;
     using crsf_cb = devs::crsf_cb;
+    
+    using srv = devs:: srv_waveshare;
 
     enum class State : uint8_t {Undefined, Init, Run, UnConnected};
     enum class Event : uint8_t {None, ConnectionLost, DirectConnected, ReceiverConnected};
@@ -85,7 +87,17 @@ struct GFSM {
                 mState = State::UnConnected;
             });
 			(++mDebugTick).on(debugTicks, []{
-                IO::outl<debug>("# p", crsf_in::channelPackages());
+                // IO::outl<debug>("# p", crsf_in::channelPackages());
+                uint8_t s = 0;
+                IO::outl<debug>("# srv[", s, "] p: ", srv::actualPos(s), " d: ", srv::absPhiDiff(s), 
+                                " l: ", srv::actualLoad(s), " c: ", srv::actualCurrent(s), 
+                                " s: ",  srv::actualSpeed(s), " m: ", (int)srv::isMoving(s), 
+                                " v: ", srv::actualVoltage(s), " e: ", srv::packets(s));
+                ++s;
+                IO::outl<debug>("# srv[", s, "] p: ", srv::actualPos(s), " d: ", srv::absPhiDiff(s), 
+                                " l: ", srv::actualLoad(s), " c: ", srv::actualCurrent(s), 
+                                " s: ",  srv::actualSpeed(s), " m: ", (int)srv::isMoving(s), 
+                                " v: ", srv::actualVoltage(s), " e: ", srv::packets(s));
 			});
             break;
         }

@@ -5,6 +5,16 @@ todo
 * servo serial output
 * menu
 * pwm input
+* multi-switch
+
+hardware
+========
+
+* crsf-input
+* sbus-input / pwm-input / cppm
+* 4 serial servos
+* switch-outputs
+* g0b1
 
 done
 =======

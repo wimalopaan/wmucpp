@@ -16,12 +16,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define USE_WEACT // STM32G031
-// #define USE_WMG0B1 // STM32G0B1
+// #define USE_WEACT // STM32G031
+#define USE_WMG0B1 // STM32G0B1
 
 #define SERIAL_DEBUG // only for WMG0B1
 
 #define NDEBUG // do not change: dev option
+#define USE_TP
 
 #define HW_VERSION 1
 #define SW_VERSION 1
@@ -74,10 +75,6 @@ int main() {
 extern "C" {
 #if defined(USE_WEACT)
 void USART1_IRQHandler(){
-    // using relay = devs::relay;
-    // static_assert(relay::uart::number == 1);
-    // relay::Isr::onTransferComplete([]{});
-    // relay::Isr::onIdle([]{});
 }
 #elif defined(USE_WMG0B1)
 void USART1_IRQHandler(){
@@ -98,10 +95,10 @@ void USART2_IRQHandler(){
 }
 #elif defined(USE_WMG0B1)
 void USART2_LPUART2_IRQHandler() {
-    using relay = devs::relay;
-    static_assert(relay::uart::number == 2);
-    relay::Isr::onTransferComplete([]{});
-    relay::Isr::onIdle([]{});
+    using srv = devs::srv_waveshare;
+    static_assert(srv::uart::number == 2);
+    srv::Isr::onTransferComplete([]{});
+    srv::Isr::onIdle([]{});
 }
 #else
 # warning "wrong board definition"

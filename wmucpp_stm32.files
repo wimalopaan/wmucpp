@@ -349,6 +349,7 @@ boards/rcRelay32/system_g0.cc
 boards/rcRelay32/system_g4.cc
 boards/rcRelay32/todo.txt
 boards/rcSerialServo/Makefile.G031
+boards/rcSerialServo/Makefile.G0B1
 boards/rcSerialServo/crsf_cb.h
 boards/rcSerialServo/devices.h
 boards/rcSerialServo/eeprom.h
@@ -759,6 +760,7 @@ include_stm32/etl/fifo.h
 include_stm32/etl/fixedvector.h
 include_stm32/etl/ranged.h
 include_stm32/etl/stackstring.h
+include_stm32/etl/state.h
 include_stm32/exti.h
 include_stm32/fifo.h
 include_stm32/fixedvector.h

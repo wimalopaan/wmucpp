@@ -485,7 +485,7 @@ private:
         return res;
     }
 
-    using i2c_strings_t = std::array<std::array<char, 16>, 4>;
+    using i2c_strings_t = std::array<std::array<char, 16>, 8>;
     static inline auto mI2CDevs = []{
         i2c_strings_t s;
         for(auto& d : s) {

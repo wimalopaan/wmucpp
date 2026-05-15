@@ -41,13 +41,8 @@
 #include "meta.h"
 #include "rc/rc_2.h"
 #include "rc/rc_2.h"
-#include "rc/sbus2_2.h"
-#include "rc/sbus_2.h"
-#include "rc/sumdv3_2.h"
 #include "rc/crsf_2.h"
-#include "rc/hwext.h"
-#include "rc/router.h"
-#include "rc/package_relay_rewrite.h"
+#include "rc/waveshare_2.h"
 #include "stdapp/stdcomp.h"
 #include "blinker.h"
 #include "debug_2.h"
@@ -87,24 +82,19 @@ struct Devices<WeAct, Config, MCU> {
     using crsfDmaChannel2 = Mcu::Components::DmaChannel<typename dma1::component_t, 4>;
     // using adcDmaChannel  = Mcu::Components::DmaChannel<typename dma1::component_t, 5>;
 
+    // UART1
     using servotx = Mcu::Stm::Pin<gpioa, 9, MCU>;
     using servorx = Mcu::Stm::Pin<gpioa, 10, MCU>;
 
 	using gfsm = Config::gfsm;
 	
+    // UART2
     using inputtx = Mcu::Stm::Pin<gpioa, 2, MCU>;
     using inputrx = Mcu::Stm::Pin<gpioa, 3, MCU>;
 
     struct CrsfConfig;
     using crsf = RC::Protokoll::Crsf::V4::Master<2, CrsfConfig, MCU>;
     using crsf_in = crsf::input;
-
-    struct RouterConfig;
-    using router = Router<RouterConfig>;
-    struct RouterConfig {
-        using storage = Devices::storage;
-        using debug = void;
-    };
 
 	using debug = void;
 	
@@ -186,35 +176,35 @@ struct Devices<Wmg0b1, Config, MCU> {
     using gpioc = Mcu::Stm::GPIO<Mcu::Stm::C, MCU>;
 
     using dma1 = Mcu::Stm::Dma::Controller<1, MCU>;
-    using auxDmaChannel1 = Mcu::Components::DmaChannel<typename dma1::component_t, 1>;
-    using auxDmaChannel2 = Mcu::Components::DmaChannel<typename dma1::component_t, 2>;
+    using srvDmaChannel1 = Mcu::Components::DmaChannel<typename dma1::component_t, 1>;
+    // using srvDmaChannel2 = Mcu::Components::DmaChannel<typename dma1::component_t, 2>;
     using crsfDmaChannel1 = Mcu::Components::DmaChannel<typename dma1::component_t, 3>;
     using crsfDmaChannel2 = Mcu::Components::DmaChannel<typename dma1::component_t, 4>;
-    using adcDmaChannel  = Mcu::Components::DmaChannel<typename dma1::component_t, 5>;
-
-    struct AdcConfig;
-    using adc = Mcu::Stm::V4::Adc<1, AdcConfig>;
+    // using adcDmaChannel  = Mcu::Components::DmaChannel<typename dma1::component_t, 5>;
 
     using gfsm = Config::gfsm;
 
-    struct RelayConfig;
 #ifdef ALTERNATE_PINS
-    using relaytx = Mcu::Stm::Pin<gpioa, 4, MCU>;
-    using relayrx = Mcu::Stm::Pin<gpiob, 9, MCU>;
-    using relay = RC::Protokoll::Crsf::V4::PacketRelayRewrite<6, RelayConfig, MCU>;
+    // UART6
+    using servotx = Mcu::Stm::Pin<gpioa, 4, MCU>;
+    using servorx = Mcu::Stm::Pin<gpiob, 9, MCU>;
 #else
-    using relaytx = Mcu::Stm::Pin<gpioa, 2, MCU>;
-    using relayrx = Mcu::Stm::Pin<gpioa, 3, MCU>;
-    using relay = RC::Protokoll::Crsf::V4::PacketRelayRewrite<2, RelayConfig, MCU>;
+    // UART2
+    using servotx = Mcu::Stm::Pin<gpioa, 2, MCU>;
+    using servorx = Mcu::Stm::Pin<gpioa, 3, MCU>;
+
+    struct WSConfig;
+    using srv_waveshare = External::WaveShare::V4::Servo<2, WSConfig, MCU>;
 #endif
 
+    // UART1
     using inputtx = Mcu::Stm::Pin<gpioa, 9, MCU>;
     using inputrx = Mcu::Stm::Pin<gpioa, 10, MCU>;
 
 #ifdef USE_TP
     using tp = Mcu::Stm::Pin<gpiob, 4, MCU>;
-    using tp1 = Mcu::Stm::Pin<gpiob, 6, MCU>;
-    using tp2 = Mcu::Stm::Pin<gpiob, 7, MCU>;
+    // using tp1 = Mcu::Stm::Pin<gpiob, 6, MCU>;
+    // using tp2 = Mcu::Stm::Pin<gpiob, 7, MCU>;
 #endif
 
     struct CrsfConfig;
@@ -222,6 +212,7 @@ struct Devices<Wmg0b1, Config, MCU> {
     using crsf_in = crsf::input;
 
 #ifdef SERIAL_DEBUG
+    // UART5
     using debugtx = Mcu::Stm::Pin<gpiob, 3, MCU>;
     struct DebugConfig;
     using debug = SerialBuffered<5, DebugConfig, MCU>;
@@ -239,32 +230,9 @@ struct Devices<Wmg0b1, Config, MCU> {
     struct DebugConfig {
         using pin = debugtx;
         using clock = Devices::clock;
-        static inline constexpr uint16_t bufferSize = 256;
+        static inline constexpr uint16_t bufferSize = 128;
     };
 #endif
-    struct RelayConfig {
-        using src = crsf_in;
-        using dest = crsf::messageBuffer;
-        using bcastInterfaces = Meta::List<>;
-        using rxpin = relayrx;
-        using txpin = relaytx;
-        using systemTimer = Devices::systemTimer;
-        using clock = Devices::clock;
-        using dmaChRead  = auxDmaChannel1;
-        using dmaChWrite = auxDmaChannel2;
-        using storage = Devices::storage;
-        using debug = Devices::debug;
-#ifdef USE_TP
-        using tp = Devices::tp;
-        using tp1 = Devices::tp1;
-        using tp2 = Devices::tp2;
-#else
-        using tp = void;
-        using tp1 = void;
-        using tp2 = void;
-#endif
-        static inline constexpr uint8_t fifoSize = 64;
-    };
     struct CrsfCallbackConfig;
     using crsf_cb = CrsfCallback<CrsfCallbackConfig, debug>;
     struct CrsfConfig {
@@ -277,26 +245,34 @@ struct Devices<Wmg0b1, Config, MCU> {
         using debug = Devices::debug;
         using tp = void;
         using callback = crsf_cb;
-        static inline constexpr uint8_t fifoSize = 128;
+        static inline constexpr uint8_t fifoSize = 16;
     };
     struct CrsfCallbackConfig {
         using src = Devices::crsf;
+        using srv = srv_waveshare;
         using storage = Config::storage;
         using watchdog = Devices::watchDog;
         using timer = systemTimer;
-        using relay = Devices::relay;
         using tp = void;
         using debug = Devices::debug;
     };
-    struct AdcConfig {
-        using debug = void;
-        using channels = std::integer_sequence<uint8_t, 5>;
-        using dmaChannel = adcDmaChannel;
-        using trigger = Mcu::Stm::ContinousSampling<2>;
-        using isrConfig = Meta::List<>;
+    struct WSConfig {
+        using pin = servotx;
+        using polar = void;
+        using dmaChComponent = srvDmaChannel1;
+        using timer = systemTimer;
+        using clk = clock;
+        using callback = struct {
+            static inline void onPing() {
+                crsf_cb::makeServoStrings();
+            }
+        };
+        using tp = Devices::tp;
+        using dbg = debug;
+        using storage = Devices::storage;
     };
 
-    using periodics = StandardComponents<debug, watchDog, crsf, relay, ledBlinker, ledBlinker2>;
+    using periodics = StandardComponents<debug, watchDog, crsf, srv_waveshare, ledBlinker, ledBlinker2>;
 
     static inline void periodic() {
         periodics::periodic();
@@ -326,21 +302,14 @@ struct Devices<Wmg0b1, Config, MCU> {
         crsf::init();
         crsf::baud(RC::Protokoll::Crsf::V4::baudrate);
 
-        relay::init();
-        relay::baud(RC::Protokoll::Crsf::V4::baudrateHandset);
-        relay::activateSource(true);
-        relay::activateLinkStats(false);
-        relay::activateChannels(false);
-
-        adc::init();
-        adc::start();
-
+        srv_waveshare::init();
+        
         watchDog::init();
         
 #ifdef USE_TP
         tp::template dir<Mcu::Output>();
-        tp1::template dir<Mcu::Output>();
-        tp2::template dir<Mcu::Output>();
+        // tp1::template dir<Mcu::Output>();
+        // tp2::template dir<Mcu::Output>();
 #endif
     }
 };

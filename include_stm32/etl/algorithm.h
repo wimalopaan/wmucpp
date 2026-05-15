@@ -72,6 +72,37 @@ namespace etl {
     }
 
     template<typename C>
+    constexpr auto make_array_fill(typename C::value_type v) {
+        C c;
+        for(auto& e: c) {
+            e = v;
+        }
+        return c;
+    }
+    namespace detail {
+        template<typename A>
+        struct Checker {
+            Checker(A& a) : mA{a}{}
+            Checker(A& a, const size_t i) : mA{a}, mIndex{i}{}
+            auto operator[](const size_t index) {
+                return Checker<A>{mA, index};
+            }
+            void operator=(const typename A::value_type& v) {
+                if (mIndex < mA.size()) {
+                    mA[mIndex] = v;
+                }
+            }
+        private:
+            A& mA;
+            size_t mIndex = -1;
+        };
+    }
+    template<typename C>
+    auto checked(C& c) {
+        return detail::Checker<C>{c};
+    }
+    
+    template<typename C>
     constexpr bool contains(const C& c, const typename C::value_type e) {
         for(const auto& i : c) {
             if (e == i) {
@@ -79,6 +110,12 @@ namespace etl {
             }
         }
         return false;
+    }
+    template<typename C>
+    void fill(C& dst, const typename C::value_type v) {
+        for(typename C::value_type& e: dst) {
+            e = v;
+        }
     }
     template<typename C1, typename C2>
     constexpr void copy(const C1& src, C2& dst) {
