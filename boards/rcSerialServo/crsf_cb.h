@@ -139,26 +139,25 @@ struct CrsfCallback {
             params[index].serialize(buffer, params, step, index);
         }
     }
+    template<auto L>
+    static inline void formatServoString(const uint8_t i, std::array<char, L>& dst){
+        std::to_chars_result r;
+        r.ptr = etl::char_cpy("Id: ", &dst[0]);
+        r = std::to_chars(r.ptr, std::end(dst), srv::servoIds()[i]);
+        r.ptr = etl::char_cpy(": Hw: ", r.ptr);
+        r = std::to_chars(r.ptr, std::end(dst), srv::hwVersion(i).first);
+        *r.ptr++ = '.';
+        r = std::to_chars(r.ptr, std::end(dst), srv::hwVersion(i).second);
+        r.ptr = etl::char_cpy(": Fw: ", r.ptr);
+        r = std::to_chars(r.ptr, std::end(dst), srv::fwVersion(i).first);
+        *r.ptr++ = '.';
+        r = std::to_chars(r.ptr, std::end(dst), srv::fwVersion(i).second);
+        *r.ptr = '\0';
+    }
     static inline void makeServoStrings() {
         IO::outl<debug>("# makeServoStrings");
         for(uint8_t i = 0; i < srv::servoIds().size(); ++i) {
-            auto r = std::to_chars(std::begin(mServos[i]), std::end(mServos[i]), srv::servoIds()[i]);
-            *r.ptr++ = ':';
-            *r.ptr++ = ' ';
-            *r.ptr++ = 'H';
-            *r.ptr++ = 'w';
-            *r.ptr++ = ':';
-            r = std::to_chars(r.ptr, std::end(mServos[i]), srv::hwVersion(i).first);
-            *r.ptr++ = '.';
-            r = std::to_chars(r.ptr, std::end(mServos[i]), srv::hwVersion(i).second);
-            *r.ptr++ = ' ';
-            *r.ptr++ = 'F';
-            *r.ptr++ = 'w';
-            *r.ptr++ = ':';
-            r = std::to_chars(r.ptr, std::end(mServos[i]), srv::fwVersion(i).first);
-            *r.ptr++ = '.';
-            r = std::to_chars(r.ptr, std::end(mServos[i]), srv::fwVersion(i).second);
-            *r.ptr = '\0';
+            formatServoString(i, mServos[i]);
         }
     }    
 private:
@@ -244,7 +243,7 @@ private:
         return name;
     }();
 
-    using srv_strings_t = std::array<std::array<char, 32>, 8>;
+    using srv_strings_t = std::array<std::array<char, 24>, 8>;
     static inline auto mServos = []{
         srv_strings_t s;
         for(auto& d : s) {

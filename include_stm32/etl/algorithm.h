@@ -103,7 +103,7 @@ namespace etl {
     }
     
     template<typename C>
-    constexpr bool contains(const C& c, const typename C::value_type e) {
+    constexpr bool contains(const C& c, const std::remove_cv_t<typename C::value_type>& e) {
         for(const auto& i : c) {
             if (e == i) {
                 return true;
@@ -112,7 +112,7 @@ namespace etl {
         return false;
     }
     template<typename C>
-    void fill(C& dst, const typename C::value_type v) {
+    void fill(C& dst, const std::remove_cv_t<typename C::value_type>& v) {
         for(typename C::value_type& e: dst) {
             e = v;
         }
@@ -121,6 +121,12 @@ namespace etl {
     constexpr void copy(const C1& src, C2& dst) {
         std::copy(std::begin(src), std::end(src), std::begin(dst));
     }
+    static inline char* char_cpy(const char* src, char* dst) {
+        while(*src != '\0') {
+            *dst++ = *src++;
+        }
+        return dst;
+    } 
     template<typename T>
     static inline T assign(T& lhs, const std::remove_cv_t<T> rhs) {
         lhs = rhs;
