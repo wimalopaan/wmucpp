@@ -27,8 +27,13 @@
 
 struct EEProm {
     uint32_t magic = EEPROM_MAGIC;
-
     uint8_t address = 0xc1;
-
     uint8_t tempOffTelemetry = 30; // seconds for temporary telemetry off after parameter request
+    
+    struct ServoSetting {
+        uint8_t torqueLimit = 100;
+        uint8_t speed       = 100;
+        uint8_t gear        = 10;
+    };
+    std::array<ServoSetting, 8> servos{};
 };

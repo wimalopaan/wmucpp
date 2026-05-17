@@ -24,6 +24,13 @@
 #include "rc/rc_2.h"
 #include "rc/crsf_2.h"
 
+#define ADDSERVO(index, parent, name) \
+    parent2 = addParent(p, Param_t{parent, PType::Folder, name});\
+    addNode(p, Param_t{parent2, PType::U8,  "Torque Limit", nullptr, &eeprom.servos[index].torqueLimit, 1, 100, [](const uint8_t v){srv::torque(index, v * 10); return true;}});\
+    addNode(p, Param_t{parent2, PType::U8,  "Speed",        nullptr, &eeprom.servos[index].speed,       1, 100, [](const uint8_t v){srv::speed(index, v * 34); return true;}});\
+    addNode(p, Param_t{parent2, PType::U8,  "Gear", nullptr,         &eeprom.servos[index].gear,        1, 50,  [](const uint8_t v){srv::gear(index, v * 10); return true;}});
+
+
 template<typename Config, typename Debug = void>
 struct CrsfCallback {
     using debug = Debug;
@@ -46,8 +53,9 @@ struct CrsfCallback {
     // static inline constexpr void disableTelemetry() {
     // }
     static inline void gotChannels() {
-        srv::set(0, input::value(0));
-        srv::set(1, input::value(1));
+        for(uint8_t i = 0; i < srv::servoIds().size(); ++i) {
+            srv::set(i, input::value(i));
+        }
     }
     static inline constexpr void updateName(name_t& n) {
         strncpy(&n[0], title, n.size());
@@ -274,7 +282,14 @@ private:
     static inline void addNode(auto& c, const RC::Protokoll::Crsf::V4::Parameter<T>& p) {
         c.push_back(p);
     }
-    using params_t = etl::FixedVector<Param_t, 32>;
+    // template<uint8_t index>
+    // static inline constexpr void addServo(auto& p, const uint8_t parent, const char* const name) {
+    //     const uint8_t parent2 = addParent(p, Param_t{parent, PType::Folder, name});
+    //     addNode(p, Param_t{parent2, PType::U8,  "Torque Limit", nullptr, &eeprom.servos[index].torqueLimit, 1, 100, [](const uint8_t v){srv::torque(index, v * 10); return true;}});
+    //     addNode(p, Param_t{parent2, PType::U8,  "Speed",        nullptr, &eeprom.servos[index].speed,       1, 100, [](const uint8_t v){srv::speed(index, v * 34); return true;}});
+    //     addNode(p, Param_t{parent2, PType::U8,  "Gear", nullptr, &eeprom.servos[index].gear, 1, 50, [](const uint8_t v){srv::gear(index, v * 10); return true;}});
+    // }
+    using params_t = etl::FixedVector<Param_t, 55>;
     static inline params_t params = [] {
         params_t p;
         uint8_t parent = 0;
@@ -295,6 +310,26 @@ private:
                 });
         mPingCommand = p.size() - 1;
 
+        parent = addParent(p, Param_t{0, PType::Folder, "Settings"});
+        uint8_t parent2;
+        ADDSERVO(0, parent, "Servo 0");
+        ADDSERVO(1, parent, "Servo 1");
+        ADDSERVO(2, parent, "Servo 2");
+        ADDSERVO(3, parent, "Servo 3");
+        ADDSERVO(4, parent, "Servo 4");
+        ADDSERVO(5, parent, "Servo 5");
+        ADDSERVO(6, parent, "Servo 6");
+        ADDSERVO(7, parent, "Servo 7");
+        
+        // addServo<0>(p, parent, "Servo 1");
+        // addServo<1>(p, parent, "Servo 2");
+        // addServo<2>(p, parent, "Servo 3");
+        // addServo<3>(p, parent, "Servo 4");
+        // addServo<4>(p, parent, "Servo 5");
+        // addServo<5>(p, parent, "Servo 6");
+        // addServo<6>(p, parent, "Servo 7");
+        // addServo<7>(p, parent, "Servo 8");
+        
         parent = addParent(p, Param_t{0, PType::Folder, "Advanced"});
         addNode(p, Param_t{parent, PType::U8,  "Servo ID to be set", nullptr, &mIdToBeSet, 1, 250, [](const uint8_t){return false;}});
         addNode(p, Param_t{parent, PType::Command, "Set Servo ID", mSetIdTexts[0], nullptr, 

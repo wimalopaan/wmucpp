@@ -161,6 +161,7 @@ namespace External::WaveShare {
             enum class Event : uint8_t {None,
                                         SetPosition,
                                         SetSpeed,
+                                        SetTorque,
                                         StartPing, StopPing,
                                         SetId
                                        };
@@ -173,6 +174,7 @@ namespace External::WaveShare {
                                         SetOperationMode,
                                         SetLimits,
                                         SetSpeed,
+                                        SetTorque,
                                         SetPosition,
                                         WaitResponse,
                                         Run,
@@ -202,6 +204,11 @@ namespace External::WaveShare {
                 IO::outl<debug>("# WS speed[", s, "]: ", speed);
                 mSpeed[s] = std::min(speed, uint16_t{3400});
                 mEvent = Event::SetSpeed;
+            }
+            static inline void torque(const uint8_t s, const uint16_t t) {
+                IO::outl<debug>("# WS torgue[", s, "]: ", t);
+                mTorque[s] = std::min(t, uint16_t{1000});
+                mEvent = Event::SetTorque;
             }
             static inline void gear(const uint8_t s, const uint16_t g) {
                 IO::outl<debug>("# WS gear[", s, "]: ", g);
@@ -345,6 +352,11 @@ namespace External::WaveShare {
                         mState = State::Run;
                     });
                     break;
+                case State::SetTorque:
+                    mStateTick.on(stepTicks, []{
+                        mState = State::Run;
+                    });
+                    break;
                 case State::Run:
                     mEvent.on(Event::StartPing, []{
                         mState = State::StartPing;
@@ -354,6 +366,8 @@ namespace External::WaveShare {
                         mState = State::SetPosition;
                     }).thenOn(Event::SetSpeed, []{
                         mState = State::SetSpeed;
+                    }).thenOn(Event::SetTorque, []{
+                        mState = State::SetTorque;
                     });
                     mStateTick.on(telemTicks, []{
                         mState = State::ReadStatus;
@@ -412,6 +426,10 @@ namespace External::WaveShare {
                     case State::SetSpeed:
                         IO::outl<debug>("# WS speed");
                         setSpeed();
+                        break;
+                    case State::SetTorque:
+                        IO::outl<debug>("# WS torque();");
+                        setTorque();
                         break;
                     case State::StartPing:
                         IO::outl<debug>("# WS startPing");
@@ -496,6 +514,14 @@ namespace External::WaveShare {
                     payload[i][1] = mSpeed[i] >> 8;
                 }
                 writeAllIds(0x2e, payload); 
+            }
+            static inline void setTorque() {
+                static std::array<std::array<uint8_t, 2>, MaxServos> payload; // not on stack
+                for(uint8_t i = 0; i < mServoIDs.size(); ++i) {
+                    payload[i][0] = mTorque[i];
+                    payload[i][1] = mTorque[i] >> 8;
+                }
+                writeAllIds(0x30, payload); 
             }
             static inline void syncReadStatus() {
                 const uint8_t length = 13; // return len
@@ -818,6 +844,7 @@ namespace External::WaveShare {
             static inline auto mGearPercent = etl::make_array_fill<std::array<uint16_t, MaxServos>>(100);
             static inline auto mOffset      = etl::make_array_fill<std::array<int16_t, MaxServos>>(0);
             static inline auto mSpeed       = etl::make_array_fill<std::array<uint16_t, MaxServos>>(3400);
+            static inline auto mTorque      = etl::make_array_fill<std::array<uint16_t, MaxServos>>(1000);
             static inline std::array<bool, MaxServos> mCircularMode{};
 
             static inline std::array<volatile int16_t, MaxServos> mActualPos{};
