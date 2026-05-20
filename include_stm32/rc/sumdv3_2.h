@@ -169,7 +169,7 @@ namespace RC::Protokoll::SumDV3 {
                     uint8_t i = 0;
                     RC::Protokoll::Hott::SumDV3::V2::Crc16 crc;
                     crc += etl::assign(data[i++], RC::Protokoll::Hott::SumDV3::V2::start_code);
-                    crc += etl::assign(data[i++], RC::Protokoll::Hott::SumDV3::V2::version_code3);
+                    crc += etl::assign(data[i++], RC::Protokoll::Hott::SumDV3::V2::version_code3); // Bit7: failsafe, Bit6: range test, Bit5: bind
                     crc += etl::assign(data[i++], 16 + 2);
                     if (fCode == 0x02) {
                         for(uint8_t c = 0; c < 16; c++) {
@@ -368,7 +368,7 @@ namespace RC::Protokoll::SumDV3 {
                     uint8_t i = 0;
                     RC::Protokoll::Hott::SumDV3::V2::Crc16 cs;
                     if ((cs += data[i++]) != 0xa8) return;
-                    const uint8_t version = (cs += data[i++]) & 0x0f;
+                    const uint8_t version = (cs += data[i++]) & 0x0f; // Bit7: failsafe, Bit6: range test, Bit5: bind
                     const uint8_t nChannels = (cs += data[i++]);
                     if (!((nChannels >= 2) && (nChannels <= 32))) return;
                     for(uint8_t k = 0; k < (2 * nChannels); ++k) {
