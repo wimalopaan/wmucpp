@@ -574,6 +574,7 @@ struct Devices<SW01, Config, MCU> {
         using systemTimer = Devices::systemTimer;
         using dmaChComponent = relay1DmaChannelComponent;
         using debug = Devices::debug;
+        using callback = void;
         using tp = void;
     };
     struct Sumdv3OutConfig {

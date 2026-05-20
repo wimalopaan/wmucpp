@@ -212,7 +212,7 @@ namespace RC::Protokoll::SumDV3 {
                         crc += etl::assign(data[i++], mSwitches[6]);
                     }
                     crc += etl::assign(data[i++], fCode);
-                    crc += etl::assign(data[i++], 0); // res
+                    crc += etl::assign(data[i++], 0); // last-valid (distance in frames to the last valid frame, maybe used for failsafe)
                     crc += etl::assign(data[i++], 0); // mode
                     crc += etl::assign(data[i++], 0); // sub
                     data[i++] = crc >> 8;
@@ -233,6 +233,7 @@ namespace RC::Protokoll::SumDV3 {
             using systemTimer = Config::systemTimer;
             using debug = Config::debug;
             using pin = Config::pin;
+            using callback = Config::callback;
             using tp = Config::tp;
 
             struct UartConfig {
@@ -392,7 +393,7 @@ namespace RC::Protokoll::SumDV3 {
                         const uint8_t crcL = data[i++];
 
                         const uint8_t fcode = data[i - 6];
-                        [[maybe_unused]] const uint8_t reserved = data[i - 5];
+                        [[maybe_unused]] const uint8_t last_valid = data[i - 5]; // distance (in frames) to the last valid frame, maybe useful for failsafe
                         [[maybe_unused]] const uint8_t command = data[i - 4];
                         [[maybe_unused]] const uint8_t subcmd = data[i - 3];
 
@@ -465,6 +466,7 @@ namespace RC::Protokoll::SumDV3 {
                 return sb;
             }
             static inline void sumSwitches(const volatile uint8_t* const fptr) {
+                static uint64_t mLastSwitches{};
                 const volatile uint8_t* sptr = fptr + 24;
                 uint64_t sw = *sptr++;
                 sw = (sw << 8) | *sptr++;
@@ -475,8 +477,11 @@ namespace RC::Protokoll::SumDV3 {
                 sw = (sw << 8) | *sptr++;
                 sw = (sw << 8) | *sptr++;
                 mSwitches = sw;
-                // uint64_t diff = lastSwitches ^ sw;
-                // lastSwitches = sw;
+                if constexpr(!std::is_same_v<callback, void>) {
+                    const uint64_t diff = mLastSwitches ^ sw;
+                    callback::onSwitch(diff);
+                }
+                mLastSwitches = sw;
             }
             static inline uint64_t mSwitches;
             static inline volatile bool mActive = false;
