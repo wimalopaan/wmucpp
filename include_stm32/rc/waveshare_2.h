@@ -89,7 +89,7 @@ namespace External::WaveShare {
             using storage = Config::storage;
             using pin = Config::pin;
             using callback = Config::callback;
-            
+
             static inline constexpr uint8_t MaxServos = 16;
             static inline constexpr uint8_t MaxResponseSize = 32;
 
@@ -223,8 +223,16 @@ namespace External::WaveShare {
             // }
             static inline void set(const uint8_t s, const uint16_t sbus) {
                 mCircularMode[s] = false;
+                mLastPhi[s] = mPhi[s];
                 mPhi[s] = sbus2pos(s, sbus);
                 mEvent = Event::SetPosition;
+                const uint16_t d = std::abs(mLastPhi[s] - mPhi[s]);
+                if (d > 0) {
+                    callback::onStart(s, d);
+                }
+                else {
+                    callback::onStop(s);                    
+                }
             }
             static inline void offset(const uint8_t s, const uint16_t o) {
                 mOffset[s] = etl::normalize<4096>(o);
@@ -236,7 +244,11 @@ namespace External::WaveShare {
                 return mTurns[s];
             }
             static inline uint16_t absPhiDiff(const uint8_t s) {
-                return std::abs(mActualPos[s] - etl::normalize<4096>(mPhi[s] + mOffset[s]));
+                uint16_t d = etl::normalize(mActualPos[s] - (mPhi[s] + mOffset[s]));
+                if (d >= 2048) {
+                    d = 4096 - d;
+                }           
+                return d;
             }
             static inline int16_t absPos(const uint8_t s) {
                 return (mTurns[s] * 4096) + mLastPos[s];
@@ -264,7 +276,7 @@ namespace External::WaveShare {
             }
             static inline bool isMoving(const uint8_t s) {
                 return mActualMoving[s];
-            }
+            }   
             static inline uint16_t errorCount() {
                 return mReadErrorCount;
             }
@@ -324,13 +336,14 @@ namespace External::WaveShare {
                     mState = State::Ping;
                     break;
                 case State::Ping:
-                    mEvent.on(Event::StartPing, []{
-                        mState = State::Run;
-                    });
+                    // mEvent.on(Event::StartPing, []{
+                    //     mState = State::Run;
+                    // });
                     if (mActualPingId < mMaxPingID) {
                         (mState = State::WaitResponse) += State::Ping;
                     }
                     else {
+                        callback::onPing();
                         mState = State::ReadFwHw;
                     }
                     break;
@@ -398,6 +411,9 @@ namespace External::WaveShare {
                     break;
                 case State::WaitResponse:
                     mStateTick.on(waitTicks * std::max(mServoIDs.size(), uint8_t{1}), []{
+                        if (mLastServoCommand == ServoCommand::SyncReadStatus) {
+                            callback::onStatus();
+                        }
                         mLastServoCommand = ServoCommand::None;
                         mState = mState.following();
                     });
@@ -416,7 +432,6 @@ namespace External::WaveShare {
                         break;
                     case State::SetOperationMode:
                         IO::outl<debug>("# WS set op mode");
-                        callback::onPing();
                         setAbsoluteMode(broadcastId);
                         break;
                     case State::SetLimits:
@@ -839,6 +854,7 @@ namespace External::WaveShare {
             
             static inline std::array<uint16_t, MaxServos> mLastPos{};
             static inline std::array<int16_t,  MaxServos> mPhi{};
+            static inline std::array<int16_t,  MaxServos> mLastPhi{};
             static inline std::array<int8_t, MaxServos>   mTurns{};
             
             static inline auto mGearPercent = etl::make_array_fill<std::array<uint16_t, MaxServos>>(100);

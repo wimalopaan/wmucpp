@@ -163,7 +163,10 @@ struct CrsfCallback {
         *r.ptr = '\0';
     }
     static inline void makeServoStrings() {
-        IO::outl<debug>("# makeServoStrings");
+        IO::outl<debug>("# makeServoStrings: ", srv::servoIds().size());
+        for(auto& s: mServos) {
+            std::strcpy(&s[0], "---");
+        }
         for(uint8_t i = 0; i < srv::servoIds().size(); ++i) {
             formatServoString(i, mServos[i]);
         }

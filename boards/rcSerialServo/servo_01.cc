@@ -25,7 +25,7 @@
 #define USE_TP
 
 #define HW_VERSION 1
-#define SW_VERSION 2
+#define SW_VERSION 3
 
 #include <cstdint>
 #include <array>

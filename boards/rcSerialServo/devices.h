@@ -50,6 +50,7 @@
 #include "watchdog.h"
 
 #include "crsf_cb.h"
+#include "servo_cb.h"
 
 struct WeAct;
 struct Wmg0b1;
@@ -235,6 +236,10 @@ struct Devices<Wmg0b1, Config, MCU> {
 #endif
     struct CrsfCallbackConfig;
     using crsf_cb = CrsfCallback<CrsfCallbackConfig, debug>;
+    
+    struct ServoCallbackConfig;
+    using servo_cb = ServoCallback<ServoCallbackConfig>;
+    
     struct CrsfConfig {
         using rxpin = inputrx;
         using txpin = inputtx;
@@ -262,17 +267,19 @@ struct Devices<Wmg0b1, Config, MCU> {
         using dmaChComponent = srvDmaChannel1;
         using timer = systemTimer;
         using clk = clock;
-        using callback = struct {
-            static inline void onPing() {
-                crsf_cb::makeServoStrings();
-            }
-        };
+        using callback = servo_cb;
         using tp = Devices::tp;
         using dbg = debug;
         using storage = Devices::storage;
     };
+    struct ServoCallbackConfig {
+        using systemTimer = Devices::systemTimer;
+        using srv = Devices::srv_waveshare;
+        using crsf_cb = Devices::crsf_cb;
+        using debug = Devices::debug;
+    };
 
-    using periodics = StandardComponents<debug, watchDog, crsf, srv_waveshare, ledBlinker, ledBlinker2>;
+    using periodics = StandardComponents<debug, watchDog, crsf, srv_waveshare, servo_cb, ledBlinker, ledBlinker2>;
 
     static inline void periodic() {
         periodics::periodic();
