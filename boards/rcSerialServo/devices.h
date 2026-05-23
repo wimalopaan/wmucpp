@@ -77,8 +77,8 @@ struct Devices<WeAct, Config, MCU> {
     using gpioc = Mcu::Stm::GPIO<Mcu::Stm::C, MCU>;
 
     using dma1 = Mcu::Stm::Dma::Controller<1, MCU>;
-	using servoDmaChannel1 = Mcu::Components::DmaChannel<typename dma1::component_t, 1>;
-	using servoDmaChannel2 = Mcu::Components::DmaChannel<typename dma1::component_t, 2>;
+	using srvDmaChannel1 = Mcu::Components::DmaChannel<typename dma1::component_t, 1>;
+	// using srvDmaChannel2 = Mcu::Components::DmaChannel<typename dma1::component_t, 2>;
     using crsfDmaChannel1 = Mcu::Components::DmaChannel<typename dma1::component_t, 3>;
     using crsfDmaChannel2 = Mcu::Components::DmaChannel<typename dma1::component_t, 4>;
     // using adcDmaChannel  = Mcu::Components::DmaChannel<typename dma1::component_t, 5>;
@@ -87,8 +87,9 @@ struct Devices<WeAct, Config, MCU> {
     using servotx = Mcu::Stm::Pin<gpioa, 9, MCU>;
     using servorx = Mcu::Stm::Pin<gpioa, 10, MCU>;
 
-	using gfsm = Config::gfsm;
-	
+    struct WSConfig;
+    using srv_waveshare = External::WaveShare::V4::Servo<1, WSConfig, MCU>;
+    
     // UART2
     using inputtx = Mcu::Stm::Pin<gpioa, 2, MCU>;
     using inputrx = Mcu::Stm::Pin<gpioa, 3, MCU>;
@@ -108,6 +109,10 @@ struct Devices<WeAct, Config, MCU> {
 	
     struct CrsfCallbackConfig;
     using crsf_cb = CrsfCallback<CrsfCallbackConfig, debug>;
+    
+    struct ServoCallbackConfig;
+    using servo_cb = ServoCallback<ServoCallbackConfig>;
+    
     struct CrsfConfig {
         using rxpin = inputrx;
         using txpin = inputtx;
@@ -118,18 +123,35 @@ struct Devices<WeAct, Config, MCU> {
         using debug = Devices::debug;
         using tp = void;
         using callback = crsf_cb;
-        static inline constexpr uint8_t fifoSize = 32;
+        static inline constexpr uint8_t fifoSize = 16;
     };
     struct CrsfCallbackConfig {
         using src = Devices::crsf;
+        using srv = srv_waveshare;
         using storage = Config::storage;
         using watchdog = Devices::watchDog;
         using timer = systemTimer;
         using tp = void;
         using debug = Devices::debug;
     };
-
-    using periodics = StandardComponents<debug, watchDog, crsf, ledBlinker, btn>;
+    struct WSConfig {
+        using pin = servotx;
+        using polar = void;
+        using dmaChComponent = srvDmaChannel1;
+        using timer = systemTimer;
+        using clk = clock;
+        using callback = servo_cb;
+        using tp = void;
+        using dbg = debug;
+        using storage = Devices::storage;
+    };
+    struct ServoCallbackConfig {
+        using systemTimer = Devices::systemTimer;
+        using srv = Devices::srv_waveshare;
+        using crsf_cb = Devices::crsf_cb;
+        using debug = Devices::debug;
+    };
+    using periodics = StandardComponents<debug, watchDog, crsf, srv_waveshare, ledBlinker, btn>;
 	
 	static inline void periodic() {
         periodics::periodic();
@@ -157,6 +179,11 @@ struct Devices<WeAct, Config, MCU> {
 
         crsf::init();
         crsf::baud(RC::Protokoll::Crsf::V4::baudrate);
+        
+        srv_waveshare::init();
+        
+        watchDog::init();
+        
     }
 };
 
@@ -206,6 +233,8 @@ struct Devices<Wmg0b1, Config, MCU> {
     using tp = Mcu::Stm::Pin<gpiob, 4, MCU>;
     // using tp1 = Mcu::Stm::Pin<gpiob, 6, MCU>;
     // using tp2 = Mcu::Stm::Pin<gpiob, 7, MCU>;
+#else 
+    using tp = void;
 #endif
 
     struct CrsfConfig;

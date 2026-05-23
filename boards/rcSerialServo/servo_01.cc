@@ -16,16 +16,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-// #define USE_WEACT // STM32G031
-#define USE_WMG0B1 // STM32G0B1
+#define USE_WEACT // STM32G031
+// #define USE_WMG0B1 // STM32G0B1
 
 #define SERIAL_DEBUG // only for WMG0B1
 
 #define NDEBUG // do not change: dev option
-#define USE_TP
+// #define USE_TP
 
 #define HW_VERSION 1
-#define SW_VERSION 3
+#define SW_VERSION 4
 
 #include <cstdint>
 #include <array>
@@ -75,6 +75,10 @@ int main() {
 extern "C" {
 #if defined(USE_WEACT)
 void USART1_IRQHandler(){
+    using srv = devs::srv_waveshare;
+    static_assert(srv::uart::number == 1);
+    srv::Isr::onTransferComplete([]{});
+    srv::Isr::onIdle([]{});
 }
 #elif defined(USE_WMG0B1)
 void USART1_IRQHandler(){

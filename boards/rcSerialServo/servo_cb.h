@@ -126,15 +126,20 @@ private:
                 break;
             case State::Idle:
                 IO::outl<debug>("# SrvCB S[", servo, "] Idle");
+                // restore torque
                 break;
             case State::Started:
                 IO::outl<debug>("# SrvCB S[", servo, "] Started");
                 break;
             case State::Slowed:
                 IO::outl<debug>("# SrvCB S[", servo, "] Slowed");
+                // save (stalled) position
+                // save last direction
                 break;
             case State::Stalled:
                 IO::outl<debug>("# SrvCB S[", servo, "] Stalled");
+                // set torque = 0
+                // srv::stop(servo);
                 break;
             }
         }
