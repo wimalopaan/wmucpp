@@ -262,8 +262,7 @@ private:
         }
         return s;
     }();
-    
-    
+        
     static inline bool mEepromMode = false;
     static inline constexpr uint32_t mSerialNumber{1234};
     static inline constexpr uint32_t mHWVersion{HW_VERSION};

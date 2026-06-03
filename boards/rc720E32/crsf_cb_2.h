@@ -56,6 +56,12 @@ struct CrsfCallback {
     using ws2812b_1 = Config::ws2812b_1;
 	using ws2812b_2 = Config::ws2812b_2;
 
+    using waveshare_1 = Config::srv1_waveshare;
+	using waveshare_2 = Config::srv1_waveshare;
+
+    using ws_stated_1 = Config::srv1_waveshare_stated;
+	using ws_stated_2 = Config::srv1_waveshare_stated;
+    
     using messageBuffer = Config::messageBuffer;
 
     using src = Config::src;
@@ -167,6 +173,7 @@ struct CrsfCallback {
     static inline uint8_t numberOfParameters() {
         return params.size() - 1;
     }
+    // refactor to own class
     static inline void command(const auto& data, const uint8_t /*payload*/) {
         // const uint8_t destAddress = data[3];
         const uint8_t srcAddress = data[4];
@@ -360,7 +367,160 @@ struct CrsfCallback {
             *r.ptr = '\0';
         }
     }
+#ifdef WAVESHARE_V4
+    template<typename S, auto L>
+    static inline void formatServoString(const uint8_t i, std::array<char, L>& dst){
+        using srv = S;
+        std::to_chars_result r;
+        r.ptr = etl::char_cpy("Id: ", &dst[0]);
+        r = std::to_chars(r.ptr, std::end(dst), srv::servoIds()[i]);
+        r.ptr = etl::char_cpy(": Hw: ", r.ptr);
+        r = std::to_chars(r.ptr, std::end(dst), srv::hwVersion(i).first);
+        *r.ptr++ = '.';
+        r = std::to_chars(r.ptr, std::end(dst), srv::hwVersion(i).second);
+        r.ptr = etl::char_cpy(": Fw: ", r.ptr);
+        r = std::to_chars(r.ptr, std::end(dst), srv::fwVersion(i).first);
+        *r.ptr++ = '.';
+        r = std::to_chars(r.ptr, std::end(dst), srv::fwVersion(i).second);
+        *r.ptr = '\0';
+    }
+    template<auto S>
+    static inline void makeServoStrings() {
+        using srv = std::conditional_t<(S == 0), waveshare_1, waveshare_2>;
+        IO::outl<debug>("# makeServoStrings: ", srv::servoIds().size());
+        for(auto& s: mServos[S]) {
+            std::strcpy(&s[0], "---");
+        }
+        for(uint8_t i = 0; i < srv::servoIds().size(); ++i) {
+            IO::outl<debug>("# id: ", srv::servoIds()[i], " HW: ", srv::hwVersion(i).first, ":", srv::hwVersion(i).second);
+            formatServoString<srv>(i, mServos[S][i]);
+        }
+    }    
+#endif
 private:
+    static inline std::array<const char*, 5> mWinchStepTexts {
+        "Idle",
+        "Set control to neutral",
+        "Move low (or high)",
+        "Move high (or low to finish)",
+        "To finish move control to low again (or cancel)"
+    };
+    static inline std::array<const char*, 4> mWinchTexts {
+        "Set Servo Id",
+        "Be sure winch is free to run ...",
+        mWinchStepTexts[0],
+        "Finished"
+    };
+    static inline uint8_t mWinchCommand = 0;
+    static inline uint16_t mWinchId = 0;
+    template<auto S>
+    static inline bool winchCb(const uint8_t v) {
+        using srv = std::conditional_t<(S == 0), ws_stated_1, ws_stated_2>;
+        const RC::Protokoll::Crsf::V4::Lua::CmdStep step{v};
+        bool res = false;
+        switch(step) {
+        case RC::Protokoll::Crsf::V4::Lua::CmdStep::Click:
+            params[mWinchCommand].options = mWinchTexts[1];
+            res = true;
+            break;
+        case RC::Protokoll::Crsf::V4::Lua::CmdStep::Confirmed:
+            params[mWinchCommand].options = mWinchTexts[2];
+            srv::reset(mWinchId);
+            break;
+        case RC::Protokoll::Crsf::V4::Lua::CmdStep::Cancel:
+            params[mWinchCommand].options = mWinchTexts[3];
+            break;
+        case RC::Protokoll::Crsf::V4::Lua::CmdStep::Query:
+            params[mWinchCommand].options = mWinchStepTexts[srv::state()];
+            res = !srv::isFinished();
+            break;
+        default:
+            break;
+        }
+        IO::outl<debug>("# winch v: ", v, " r: ", (uint8_t)res);
+        return res;
+    }
+
+    static inline std::array<const char*, 4> mSetIdTexts {
+        "Set Servo Id",
+        "Be sure to connect only one servo ...",
+        "Set ...",
+        "Finished"
+    };
+    static inline uint8_t mSetIdCommand = 0;
+    static inline uint16_t mIdToBeSet = 1;
+    template<auto S>
+    static inline bool setIdCb(const uint8_t v) {
+        using srv = std::conditional_t<(S == 0), waveshare_1, waveshare_2>;
+        const RC::Protokoll::Crsf::V4::Lua::CmdStep step{v};
+        bool res = false;
+        switch(step) {
+        case RC::Protokoll::Crsf::V4::Lua::CmdStep::Click:
+            params[mSetIdCommand].options = mSetIdTexts[1];
+            res = true;
+            break;
+        case RC::Protokoll::Crsf::V4::Lua::CmdStep::Confirmed:
+            params[mSetIdCommand].options = mSetIdTexts[2];
+            srv::setId(mIdToBeSet);
+            break;
+        case RC::Protokoll::Crsf::V4::Lua::CmdStep::Cancel:
+            params[mSetIdCommand].options = mSetIdTexts[3];
+            break;
+        case RC::Protokoll::Crsf::V4::Lua::CmdStep::Query:
+            params[mSetIdCommand].options = mSetIdTexts[2];
+            res = false;
+            break;
+        default:
+            break;
+        }
+        IO::outl<debug>("# setId v: ", v, " r: ", (uint8_t)res);
+        return res;
+    }
+    static inline std::array<const char*, 4> mPingTexts {
+        "Ping Servo Bus",
+        "Start ...",
+        "Pinging ...",
+        "Finished pinging"
+    };
+    static inline uint8_t mPingCommand = 0;
+    template<auto S>    
+    static inline bool pingCb(const uint8_t v) {
+        using srv = std::conditional_t<(S == 0), waveshare_1, waveshare_2>;
+        const RC::Protokoll::Crsf::V4::Lua::CmdStep step{v};
+        bool res = false;
+        switch(step) {
+        case RC::Protokoll::Crsf::V4::Lua::CmdStep::Click:
+            params[mPingCommand].options = mPingTexts[1];
+            res = true;
+            break;
+        case RC::Protokoll::Crsf::V4::Lua::CmdStep::Confirmed:
+            params[mPingCommand].options = mPingTexts[2];
+            srv::startPing();
+            break;
+        case RC::Protokoll::Crsf::V4::Lua::CmdStep::Cancel:
+            params[mPingCommand].options = mPingTexts[3];
+            srv::stopPing();
+            break;
+        case RC::Protokoll::Crsf::V4::Lua::CmdStep::Query:
+            params[mPingCommand].options = mPingTexts[2];
+            res = srv::isPinging();
+            break;
+        default:
+            break;
+        }
+        IO::outl<debug>("# ping v: ", v, " r: ", (uint8_t)res);
+        return res;
+    }
+    using srv_strings_t = std::array<std::array<std::array<char, 24>, 8>, 2>;
+    static inline auto mServos = []{
+        srv_strings_t ss;
+        for(auto& s : ss) {
+            for(auto& d : s) {
+                strcpy(&d[0], "---");
+            }
+        }
+        return ss;
+    }();
     static inline name_t mName = []{
         name_t name{};
         updateName(name);
@@ -613,21 +773,46 @@ private:
         addNode(p, Param_t{parent, PType::Sel, "Esc2 Slaves (Tlm2,Fb2)", "Off;On", &eeprom.esc_slave[1], 0, 1, [](const store_t v){if (v == 0) {esc2_slave::reset();} else {esc2_slave::init();} return true;}});
 
         parent = addParent(p, Param_t{0, PType::Folder, "Settings"});
+#ifdef WAVESHARE_V4
+        uint8_t parent2 = addParent(p, Param_t{parent, PType::Folder, "Servo 0@1"});
+        addNode(p, Param_t{.parent = parent2, .type = PType::U8, .name = "Torque Limit", .value_ptr = &eeprom.servoSettings[0][0].torqueLimit, .min = 1, .max = 100, .cb = [](const store_t v){waveshare_1::torque(0, (10 * v)); return true;}});
+        addNode(p, Param_t{.parent = parent2, .type = PType::U8, .name = "Servo Speed", .value_ptr = &eeprom.servoSettings[0][0].speed, .min = 1, .max = 100, .cb = [](const store_t v){waveshare_1::speed(0, 34 * v); return true;}});
+        addNode(p, Param_t{.parent = parent2, .type = PType::U8, .name = "Servo Gear", .value_ptr = &eeprom.servoSettings[0][0].gear, .min = 10, .max = 500, .cb = [](const store_t v){waveshare_1::gear(0, v); return true;}});
+        addNode(p, Param_t{.parent = parent2, .type = PType::Sel, .name= "Servo Mode", .options = "Normal;Calib/Start", .value_ptr = &eeprom.servoSettings[0][0].mode, .min = 0, .max = 1, .cb = [](const store_t v){waveshare_1::enable(0, v == 0); return true;}});
+
+        parent2 = addParent(p, Param_t{parent, PType::Folder, "Servo 1@1"});
+        addNode(p, Param_t{.parent = parent2, .type = PType::U8, .name = "Torque Limit", .value_ptr = &eeprom.servoSettings[0][1].torqueLimit, .min = 1, .max = 100, .cb = [](const store_t v){waveshare_1::torque(1, (10 * v)); return true;}});
+        addNode(p, Param_t{.parent = parent2, .type = PType::U8, .name = "Servo Speed", .value_ptr = &eeprom.servoSettings[0][1].speed, .min = 1, .max = 100, .cb = [](const store_t v){waveshare_1::speed(1, 34 * v); return true;}});
+        addNode(p, Param_t{.parent = parent2, .type = PType::U8, .name = "Servo Gear", .value_ptr = &eeprom.servoSettings[0][1].gear, .min = 10, .max = 500, .cb = [](const store_t v){waveshare_1::gear(1, v); return true;}});
+        addNode(p, Param_t{.parent = parent2, .type = PType::Sel, .name= "Servo Mode", .options = "Normal;Calib/Start", .value_ptr = &eeprom.servoSettings[0][1].mode, .min = 0, .max = 1, .cb = [](const store_t v){waveshare_1::enable(1, v == 0); return true;}});
+
+        addNode(p, Param_t{parent, PType::U8,  "Servo # for winch settings", nullptr, &mWinchId, 0, 8, [](const store_t){return false;}});
+        addNode(p, Param_t{parent, PType::Command, "Set Winch", mWinchTexts[0], nullptr, 
+                           10, // timeout
+                           0, [](const store_t v){
+                               return winchCb<0>(v);
+                           }
+                });
+        mWinchCommand = p.size() - 1;
+#else
         addNode(p, Param_t{.parent = parent, .type = PType::U8, .name = "Sch1 ESC Deadband", .value_ptr = &eeprom.deadbands[0], .min = 1, .max = 20, .cb = [](const store_t){return true;}, .unitString = "%"});
         addNode(p, Param_t{.parent = parent, .type = PType::I8, .name = "Sch1 ESC PWM Mid", .value_ptr = &eeprom.esc_mid[0], .min = (store_t)-100, .max = 100, .cb = [](const store_t){return true;}, .unitString ="us"});
         addNode(p, Param_t{.parent = parent, .type = PType::I8, .name = "Sch1 Servo zPosition", .value_ptr = &eeprom.offset1, .min = (store_t)-90, .max = 90, .cb = [](const store_t v){servos::template offset<0>((uint32_t{v} * 4096) / 360); return true;}, .unitString ="°"});
+        addNode(p, Param_t{.parent = parent, .type = PType::U8, .name = "Sch1 Torque Limit", .value_ptr = &eeprom.torqueLimit1, .min = 1, .max = 100, .cb = [](const store_t v){servos::template torque<0>(10 * v); return true;}});
         addNode(p, Param_t{.parent = parent, .type = PType::U8, .name = "Sch1 Servo Speed", .value_ptr = &eeprom.speed1, .min = 1, .max = 100, .cb = [](const store_t v){servos::template speed<0>(34 * v); return true;}});
         addNode(p, Param_t{.parent = parent, .type = PType::U16, .name = "Sch1 Servo Gear", .value_ptr = &eeprom.gear1, .min = 10, .max = 500, .cb = [](const store_t v){servos::template gear<0>(v); return true;}});
 
         addNode(p, Param_t{.parent = parent, .type = PType::U8, .name = "Sch2 ESC Deadband", .value_ptr = &eeprom.deadbands[1], .min = 1, .max = 20, .cb = [](const store_t){return true;}, .unitString = "%"});
         addNode(p, Param_t{.parent = parent, .type = PType::I8, .name = "Sch2 ESC PWM Mid", .value_ptr = &eeprom.esc_mid[1], .min = (store_t)-100, .max = 100, .cb = [](const store_t){return true;}, .unitString ="us"});
         addNode(p, Param_t{.parent = parent, .type = PType::I8, .name = "Sch2 Servo zPosition", .value_ptr = &eeprom.offset2, .min = (store_t)-90, .max = 90, .cb = [](const store_t v){servos::template offset<1>((uint32_t{v} * 4096) / 360); return true;}, .unitString ="°"});
+        addNode(p, Param_t{.parent = parent, .type = PType::U8, .name = "Sch2 Torque Limit", .value_ptr = &eeprom.torqueLimit2, .min = 1, .max = 100, .cb = [](const store_t v){servos::template torque<1>(10 * v); return true;}});
         addNode(p, Param_t{.parent = parent, .type = PType::U8, .name = "Sch2 Servo Speed", .value_ptr = &eeprom.speed2, .min = 1, .max = 100, .cb = [](const store_t v){servos::template speed<1>(34 * v); return true;}});
         addNode(p, Param_t{.parent = parent, .type = PType::U16, .name = "Sch2 Servo Gear", .value_ptr = &eeprom.gear2, .min = 10, .max = 500, .cb = [](const store_t v){servos::template gear<1>(v); return true;}});
 
         addNode(p, Param_t{parent, PType::Command, "Act. Pos. as zPos 1", setServoZeroPosText, nullptr, 200 /*timeout*/, 0, [](const store_t v){return setZeroPosition(v);}});
         addNode(p, Param_t{parent, PType::Command, "Act. Pos. as zPos 2", setServoZeroPosText, nullptr, 200 /*timeout*/, 0, [](const store_t v){return setZeroPosition(v);}});
-
+#endif
+        
 #ifdef ESCAPE32_ASCII
         parent = addParent(p, Param_t{0, PType(PType::Folder | PType::Hidden), "ESCape32 1"});
         mESCape321Folder = parent;
@@ -674,6 +859,25 @@ private:
         addNode(p, Param_t{parent, PType::U8,  "Contiguous Switch Addresses", nullptr, &eeprom.switchAddressContiguous, 0, 1, [](const store_t){return true;}});
 		addNode(p, Param_t{parent, PType::Sel, "MPX-Switch Mode", "8(tri);16(bi)", &eeprom.mpx_mode, 0, 1, [](const store_t v){mpx1::modeTriState(v == 0); mpx2::modeTriState(v == 0); return true;}});
 
+        addNode(p, Param_t{parent, PType::Command, "Ping", mPingTexts[0], nullptr, 
+                           // 10, // timeout = 10 * 100ms 
+                           250, // timeout = 250ms
+                           0, [](const store_t v){
+                               return pingCb<0>(v);
+                           }
+                });
+        mPingCommand = p.size() - 1;
+
+        addNode(p, Param_t{parent, PType::U8,  "Servo ID to be set", nullptr, &mIdToBeSet, 1, 250, [](const store_t){return false;}});
+        addNode(p, Param_t{parent, PType::Command, "Set Servo ID", mSetIdTexts[0], nullptr, 
+                           // 10, // timeout = 10 * 100ms 
+                           250, // timeout = 250ms
+                           0, [](const store_t v){
+                               return setIdCb<0>(v);
+                           }
+                });
+        mSetIdCommand = p.size() - 1;
+        
         parent = addParent(p, Param_t{0, PType::Folder, "S.Port"});
         addNode(p, Param_t{parent, PType::U8,  "Physical-ID", nullptr, &eeprom.sport_physicalId_switch, 0, 0x1b, [](const store_t a){sport_aux::setPhysID0(a); return true;}});
         addNode(p, Param_t{parent, PType::U8,  "App-ID Switch", nullptr, &eeprom.sport_appId_switch, 0x00, 0xff, [](const store_t a){sport_aux::setAppID0(a); return true;}});
@@ -705,6 +909,27 @@ private:
 
         parent = addParent(p, Param_t{0, PType::Folder, "Telemetry"});
         addNode(p, Param_t{parent, PType::Sel, "Mode", "Simple;Full", &eeprom.telemetry_mode, 0, 1, [](const store_t v){ telemetry::mode(v); return true;}});
+        
+#ifdef WAVESHARE_V4
+        parent = addParent(p, Param_t{0, PType::Folder, "Serial Servos 1"});
+        addNode(p, Param_t{parent, PType::Info, "Servo 0:", &mServos[0][0][0]});
+        addNode(p, Param_t{parent, PType::Info, "Servo 1:", &mServos[0][1][0]});
+        addNode(p, Param_t{parent, PType::Info, "Servo 2:", &mServos[0][2][0]});
+        addNode(p, Param_t{parent, PType::Info, "Servo 3:", &mServos[0][3][0]});
+        addNode(p, Param_t{parent, PType::Info, "Servo 4:", &mServos[0][4][0]});
+        addNode(p, Param_t{parent, PType::Info, "Servo 5:", &mServos[0][5][0]});
+        addNode(p, Param_t{parent, PType::Info, "Servo 6:", &mServos[0][6][0]});
+        addNode(p, Param_t{parent, PType::Info, "Servo 7:", &mServos[0][7][0]});
+        parent = addParent(p, Param_t{0, PType::Folder, "Serial Servos 2"});
+        addNode(p, Param_t{parent, PType::Info, "Servo 0:", &mServos[1][0][0]});
+        addNode(p, Param_t{parent, PType::Info, "Servo 1:", &mServos[1][1][0]});
+        addNode(p, Param_t{parent, PType::Info, "Servo 2:", &mServos[1][2][0]});
+        addNode(p, Param_t{parent, PType::Info, "Servo 3:", &mServos[1][3][0]});
+        addNode(p, Param_t{parent, PType::Info, "Servo 4:", &mServos[1][4][0]});
+        addNode(p, Param_t{parent, PType::Info, "Servo 5:", &mServos[1][5][0]});
+        addNode(p, Param_t{parent, PType::Info, "Servo 6:", &mServos[1][6][0]});
+        addNode(p, Param_t{parent, PType::Info, "Servo 7:", &mServos[1][7][0]});
+#endif
         
         return p;
     }();

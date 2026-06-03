@@ -105,6 +105,8 @@ boards/rc720E32/rc720E32_02.cc
 boards/rc720E32/ressources.h
 boards/rc720E32/sbus.h
 boards/rc720E32/sbus_2.h
+boards/rc720E32/servo_cb.h
+boards/rc720E32/servo_stated.h
 boards/rc720E32/sport_cb.h
 boards/rc720E32/startup_g0b1.s
 boards/rc720E32/sumdv3.h
@@ -762,6 +764,7 @@ include_stm32/etl/fixedvector.h
 include_stm32/etl/ranged.h
 include_stm32/etl/stackstring.h
 include_stm32/etl/state.h
+include_stm32/etl/util.h
 include_stm32/exti.h
 include_stm32/fifo.h
 include_stm32/fixedvector.h

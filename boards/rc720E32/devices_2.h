@@ -82,6 +82,8 @@
 #include "output_relay.h"
 #include "output_servo.h"
 #include "compass.h"
+#include "servo_cb.h"
+#include "servo_stated.h"
 
 #include "stdapp/stdcomp.h"
 
@@ -238,9 +240,16 @@ struct Devices<SW01, Config, MCU> {
 
     struct WS2812B_Config_1;
     using ws2812b_1 = External::WS2812B<3, WS2812B_Config_1, MCU>;
-
+    
+#ifdef WAVESHARE_V4
+    struct WS1Config;
+    using srv1_waveshare = External::WaveShare::V4::Servo<5, WS1Config, MCU>;
+    
+    using srv1_waveshare_stated = ServoStated<srv1_waveshare, crsf_in, systemTimer, debug>;
+#else
     struct WS1Config;
     using srv1_waveshare = External::WaveShare::V2::Servo<5, WS1Config, MCU>;
+#endif
 
     struct Srv1SPortConfig;
     using srv1_sport = RC::Protokoll::SPort::V2::Master::Serial<5, Srv1SPortConfig, MCU>;
@@ -338,9 +347,15 @@ struct Devices<SW01, Config, MCU> {
     using pwm14 = Mcu::Stm::V2::Pwm::Servo<14, clock, debug>;
     using srv2_pwm = PwmAdapter<pwm14, srv2_pin, 1, storage, void, debug>;
 
+#ifdef WAVESHARE_V4
+    struct WS2Config;
+    using srv2_waveshare = External::WaveShare::V4::Servo<6, WS2Config, MCU>;
+    
+    using srv2_waveshare_stated = ServoStated<srv2_waveshare, crsf_in, systemTimer, debug>;
+#else
     struct WS2Config;
     using srv2_waveshare = External::WaveShare::V2::Servo<6, WS2Config, MCU>;
-
+#endif
     struct WS2812B_Config_2;
     using ws2812b_2 = External::WS2812B<14, WS2812B_Config_2, MCU>;
 
@@ -644,9 +659,13 @@ struct Devices<SW01, Config, MCU> {
         using esc2_slave = Devices::esc2_slave;
         using ws2812b_1 = Devices::ws2812b_1;
 		using ws2812b_2 = Devices::ws2812b_2;
+        using srv1_waveshare = Devices::srv1_waveshare;
+        using srv2_waveshare = Devices::srv2_waveshare;
+        using srv1_waveshare_stated = Devices::srv1_waveshare_stated;
+        using srv2_waveshare_stated = Devices::srv2_waveshare_stated;
         using tp = void;
     };
-
+    using crsf_cb = CrsfCallback<CrsfCallbackConfig, Devices::debug>;
     struct CrsfConfig {
         using rxpin = crsfrx;
         using txpin = crsftx;
@@ -656,7 +675,7 @@ struct Devices<SW01, Config, MCU> {
         using dmaChWrite = csrfInDmaChannelComponent2;
         using debug = void;
         using tp = void;
-        using callback = CrsfCallback<CrsfCallbackConfig, Devices::debug>;
+        using callback = crsf_cb;
         static inline constexpr uint8_t fifoSize = 4;
     };
     struct SBus1Config {
@@ -668,14 +687,24 @@ struct Devices<SW01, Config, MCU> {
         using pin = sbus_crsf_pin;
         using tp = void;
     };
+    struct ServoCallbackConfig1;
+    using servo1_cb = ServoCallback<0, ServoCallbackConfig1>;    
+    struct ServoCallbackConfig1 {
+        using systemTimer = Devices::systemTimer;
+        using srv = Devices::srv1_waveshare;
+        using crsf_cb = Devices::crsf_cb;
+        // using debug = Devices::debug;
+        using debug = void;
+    };
     struct WS1Config {
         using pin = srv1_pin;
         using polar = polar1;
         using dmaChComponent = srv1DmaChannelComponent;
         using timer = systemTimer;
         using clk = clock;
+        using callback = servo1_cb;
         using tp = void;
-        using dbg = void;
+        using dbg = Devices::debug;
         using storage = Devices::storage;
     };
     struct WS2812B_Config_1 {
@@ -708,12 +737,22 @@ struct Devices<SW01, Config, MCU> {
         using tp = void;
         using callback = SPortTelemetryCallback<Srv1SPortCallbackConfig>;
     };
+    struct ServoCallbackConfig2;
+    using servo2_cb = ServoCallback<1, ServoCallbackConfig2>;    
+    struct ServoCallbackConfig2 {
+        using systemTimer = Devices::systemTimer;
+        using srv = Devices::srv2_waveshare;
+        using crsf_cb = Devices::crsf_cb;
+        // using debug = Devices::debug;
+        using debug = void;
+    };
     struct WS2Config {
         using pin = srv2_pin;
         using polar = polar2;
         using dmaChComponent = srv2DmaChannelComponent;
         using timer = systemTimer;
         using clk = clock;
+        using callback = servo2_cb;
         using tp = void;
         using dbg = void;
         using storage = Devices::storage;
@@ -858,9 +897,14 @@ struct Devices<SW01, Config, MCU> {
         using tp = void;
         using debug = Devices::debug;
     };
-    
+
+#ifdef WAVESHARE_V4
+    using stdComponents = StandardComponents<watchDog, debug, crsf_in, 
+                                                    servo1_cb, servo2_cb, srv1_waveshare_stated, srv2_waveshare_stated, 
+                                                    ledBlinker1, ledBlinker2, i2c, compass, servooutputs, escoutputs, relayoutputs, auxoutputs>;
+#else    
     using stdComponents = StandardComponents<watchDog, debug, crsf_in, ledBlinker1, ledBlinker2, i2c, compass, servooutputs, escoutputs, relayoutputs, auxoutputs>;
-    
+#endif
     static inline void periodic() {
         stdComponents::periodic();
     }

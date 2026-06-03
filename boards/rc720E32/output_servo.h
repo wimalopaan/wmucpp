@@ -55,6 +55,13 @@ struct ServoOutputs {
         }
     }
     template<uint8_t N>
+    static inline void torque(const uint16_t t) {
+        static_assert(N <= 1);
+        if (servos[N]) {
+            servos[N]->torque(t);
+        }
+    }
+    template<uint8_t N>
     static inline void gear(const uint16_t s) {
         static_assert(N <= 1);
         if (servos[N]) {
@@ -97,7 +104,11 @@ struct ServoOutputs {
             servos[n]->set(v);
         }
     }
-
+    static inline void setChannel(const uint8_t n, const uint8_t ch, const uint16_t v) {
+        if ((n < servos.size()) && servos[n]) {
+            servos[n]->setChannel(ch, v);
+        }
+    }
     template<uint8_t N>
     static inline void servo(const uint8_t s) {
         IO::outl<debug>("# servo", N, ": ", s);

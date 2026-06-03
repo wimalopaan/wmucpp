@@ -64,6 +64,10 @@ struct ChannelCallback {
                 relays::setChannel(i, pa::value(i));
                 escs::setChannel(0, i, pa::value(i));
                 escs::setChannel(1, i, pa::value(i));
+#ifdef WAVESHARE_V4
+                servos::setChannel(0, i, pa::value(i));
+                servos::setChannel(1, i, pa::value(i));
+#endif
             }
 
             auxes::update();

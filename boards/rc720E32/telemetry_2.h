@@ -122,22 +122,39 @@ struct Telemetry {
             }
         }
         else if (storage::eeprom.mode == 1) { // CC
-            switch(mFrameCounter) {
-            case 0:
-				sendRmp();
-				++mFrameCounter;
-                break;
-            case 1:
-				sendBattery();
-				++mFrameCounter;
-                break;
-            case 2:
-				sendTemp();
-				++mFrameCounter;
-                break;
-			default:
-				mFrameCounter = 0;
-				break;
+            if (mMode == 0) { // simple
+                switch(mFrameCounter) {
+                case 0:
+                    sendRmp();
+                    ++mFrameCounter;
+                    break;
+                case 1:
+                    sendTemp();
+                    ++mFrameCounter;
+                    break;
+                default:
+                    mFrameCounter = 0;
+                    break;
+                }                
+            }
+            else {
+                switch(mFrameCounter) {
+                case 0:
+                    sendRmp();
+                    ++mFrameCounter;
+                    break;
+                case 1:
+                    sendBattery();
+                    ++mFrameCounter;
+                    break;
+                case 2:
+                    sendTemp();
+                    ++mFrameCounter;
+                    break;
+                default:
+                    mFrameCounter = 0;
+                    break;
+                }
             }
         }
     }

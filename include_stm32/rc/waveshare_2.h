@@ -119,7 +119,7 @@ namespace External::WaveShare {
 
             static inline void init() {
                 static constexpr uint8_t af = Mcu::Stm::AlternateFunctions::mapper_v<pin, uart, Mcu::Stm::AlternateFunctions::TX>;
-                IO::outl<debug>("# WS init");
+                IO::outl<debug>("# WS init V4");
                 mReadErrorCount = 0;
                 mReceivedPackets = 0;
                 etl::fill(mLastError, 0);
@@ -167,6 +167,7 @@ namespace External::WaveShare {
                                        };
             enum class State : uint8_t {None,
                                         Init,
+                                        Reset,
                                         SetReplayMode,
                                         StartPing, Ping,
                                         ReadStatus,
@@ -176,6 +177,8 @@ namespace External::WaveShare {
                                         SetSpeed,
                                         SetTorque,
                                         SetPosition,
+                                        Prepare, PrepareWait,
+                                        // SetBoundsStartWait,
                                         WaitResponse,
                                         Run,
                                         SetId, 
@@ -214,17 +217,43 @@ namespace External::WaveShare {
                 IO::outl<debug>("# WS gear[", s, "]: ", g);
                 mGearPercent[s] = std::min(g, uint16_t{600});
             }
+            static inline void gearLowHigh(const uint8_t s, const int32_t low, const int32_t high) {
+                mOffset[s] = (high + low) / 2;
+                mGearPercent[s] = ((high - low) * 100) / (2 * 4096);
+                IO::outl<debug>("# WS gear[", s, "] h: ", high, " l: ", low, " o: ", mOffset[s], " g: ", mGearPercent[s]);
+            }
             static inline void zero() {
-                mEvent = Event::ResetServo;
+                // mEvent = Event::ResetServo;
             }
             // static inline void update() {
             //     mCircularMode = true;
             //     mPhi = polar::phi();
             // }
-            static inline void set(const uint8_t s, const uint16_t sbus) {
+            static inline void enable(const uint8_t s, const bool on) {
+                IO::outl<debug>("# WS enable[", s, "]: ", (uint8_t) on);
+                const uint32_t mask = (uint32_t{1} << s);
+                if (on) {
+                    mEnabled |= mask;
+                }
+                else {
+                    mEnabled &= ~mask;
+                }
+            }
+            static inline bool isEnabled(const uint8_t s) {
+                return mEnabled & (uint32_t{1} << s);
+            }
+            static inline void setRaw(const uint8_t s, const int16_t raw) {
+                mRawPos[s] = raw;
+            }
+            static inline void set(const uint8_t s, const uint16_t sbus, const bool force = false) {
                 mCircularMode[s] = false;
                 mLastPhi[s] = mPhi[s];
-                mPhi[s] = sbus2pos(s, sbus);
+                if (force || isEnabled(s)) {
+                    mPhi[s] = sbus2pos(s, sbus) + mOffset[s];
+                }
+                else {
+                    mPhi[s] = mRawPos[s];
+                }
                 mEvent = Event::SetPosition;
                 const uint16_t d = std::abs(mLastPhi[s] - mPhi[s]);
                 if (d > 0) {
@@ -244,7 +273,7 @@ namespace External::WaveShare {
                 return mTurns[s];
             }
             static inline uint16_t absPhiDiff(const uint8_t s) {
-                uint16_t d = etl::normalize(mActualPos[s] - (mPhi[s] + mOffset[s]));
+                uint16_t d = etl::normalize(mActualPos[s] - mPhi[s]);
                 if (d >= 2048) {
                     d = 4096 - d;
                 }           
@@ -324,6 +353,11 @@ namespace External::WaveShare {
                     break;
                 case State::Init:
                     mStateTick.on(initTicks, []{
+                        mState = State::Reset;
+                    });
+                    break;
+                case State::Reset:
+                    mStateTick.on(stepTicks, []{
                         mState = State::SetReplayMode;
                     });
                     break;
@@ -357,17 +391,41 @@ namespace External::WaveShare {
                     break;
                 case State::SetLimits:
                     mStateTick.on(stepTicks, []{
-                        mState = State::SetSpeed;
+                        if (mState.previous() == State::Run) {
+                            mState = State::Run;
+                        }
+                        else {
+                            mState = State::SetSpeed;
+                        }
                     });
                     break;
                 case State::SetSpeed:
                     mStateTick.on(stepTicks, []{
-                        mState = State::Run;
+                        if (mState.previous() == State::Run) {
+                            mState = State::Run;
+                        }
+                        else {
+                            mState = State::SetTorque;
+                        }
                     });
                     break;
                 case State::SetTorque:
                     mStateTick.on(stepTicks, []{
+                        if (mState.previous() == State::Run) {
+                            mState = State::Run;
+                        }
+                        else {  
+                            mState = State::Prepare;
+                        }
+                    });
+                    break;
+                case State::Prepare:
+                    (mState = State::WaitResponse) += State::PrepareWait;
+                    break;
+                case State::PrepareWait:
+                    mStateTick.on(stepTicks, []{
                         mState = State::Run;
+                        mEvent.clear();
                     });
                     break;
                 case State::Run:
@@ -426,12 +484,17 @@ namespace External::WaveShare {
                     case State::Init:
                         IO::outl<debug>("# WS init");
                         break;
+                    case State::Reset:
+                        IO::outl<debug>("# WS reset");
+                        resetServos();
+                        break;
                     case State::SetReplayMode:
                         IO::outl<debug>("# WS set reply");
                         disableAutoReply(broadcastId);
                         break;
                     case State::SetOperationMode:
                         IO::outl<debug>("# WS set op mode");
+                        callback::onPing();
                         setAbsoluteMode(broadcastId);
                         break;
                     case State::SetLimits:
@@ -443,7 +506,7 @@ namespace External::WaveShare {
                         setSpeed();
                         break;
                     case State::SetTorque:
-                        IO::outl<debug>("# WS torque();");
+                        IO::outl<debug>("# WS torque");
                         setTorque();
                         break;
                     case State::StartPing:
@@ -466,6 +529,28 @@ namespace External::WaveShare {
                     case State::SetId:
                         IO::outl<debug>("# WS setid");
                         setServoId(broadcastId, mIdToBeSet);
+                        break;
+                    case State::Prepare:
+                        // IO::outl<debug>("# WS pre pos[0]: ", mActualPos[0], " pos[1]: ", mActualPos[1]);
+                        syncReadStatus();
+                        break;
+                    case State::PrepareWait:
+                        IO::outl<debug>("# WS prewait pos[0]: ", mActualPos[0], " pos[1]: ", mActualPos[1]);
+                        IO::outl<debug>("# WS prewait o[0]: ", mOffset[0], " o[1]: ", mOffset[1]);
+                        for(uint8_t i = 0; i < mServoIDs.size(); ++i) {
+                            mRawPos[i] = mActualPos[i];
+                            mOffset[i] = 0;
+                            if (mActualPos[i] >= 2048) {
+                                mActualPos[i] -= 4096;
+                                mOffset[i] += 4096;
+                            }
+                            else if (mActualPos[i] <= -2048) {
+                                mActualPos[i] += 4096;
+                                mOffset[i] -= 4096;
+                            }
+                        }
+                        IO::outl<debug>("# WS prewait2 pos[0]: ", mActualPos[0], " pos[1]: ", mActualPos[1]);
+                        IO::outl<debug>("# WS prewait2 o[0]: ", mOffset[0], " o[1]: ", mOffset[1]);
                         break;
                     case State::Run:
                         break;
@@ -686,19 +771,19 @@ namespace External::WaveShare {
                     return i;
                 });
             }
-            // static inline void resetServo() {
-            //     uart::fillSendBuffer([](auto& data){
-            //         uint8_t csum = 0;
-            //         uint8_t i = 0;
-            //         etl::assign(data[i++], 0xff);
-            //         etl::assign(data[i++], 0xff);
-            //         csum += etl::assign(data[i++], mId);
-            //         csum += etl::assign(data[i++], 2); // len = 1(cmd) + 1(cs)
-            //         csum += etl::assign(data[i++], CmdReset);
-            //         etl::assign(data[i++], ~csum);
-            //         return i;
-            //     });
-            // }
+            static inline void resetServos() {
+                uart::fillSendBuffer([](auto& data){
+                    uint8_t csum = 0;
+                    uint8_t i = 0;
+                    etl::assign(data[i++], 0xff);
+                    etl::assign(data[i++], 0xff);
+                    csum += etl::assign(data[i++], broadcastId);
+                    csum += etl::assign(data[i++], 2); // len = 1(cmd) + 1(cs)
+                    csum += etl::assign(data[i++], CmdReset);
+                    etl::assign(data[i++], ~csum);
+                    return i;
+                });
+            }
             static inline bool validityCheck(const volatile uint8_t* const data, const uint16_t size) {
                 if (data[0] != 0xff) {
                     return false;
@@ -836,6 +921,9 @@ namespace External::WaveShare {
             static inline etl::SlotEvent<Event> mEvent;
             static inline etl::State<volatile State> mState;
 
+            static inline uint32_t mEnabled = -1;
+            static_assert((sizeof(mEnabled) * 8) >= MaxServos);
+            
             static inline uint8_t mActualPingId = 0;
             static inline uint8_t mMinPingID = 1;
             static inline uint8_t mMaxPingID = 16;
@@ -864,6 +952,7 @@ namespace External::WaveShare {
             static inline std::array<bool, MaxServos> mCircularMode{};
 
             static inline std::array<volatile int16_t, MaxServos> mActualPos{};
+            static inline std::array<volatile int16_t, MaxServos> mRawPos{};
             static inline std::array<volatile int16_t, MaxServos> mActualSpeed{};
             static inline std::array<volatile int16_t, MaxServos> mActualLoad{};
             static inline std::array<volatile int16_t, MaxServos> mActualCurrent{};

@@ -28,12 +28,14 @@ struct IServo : IDevice {
     virtual std::pair<uint8_t, uint8_t> hwVersion() = 0;
     virtual int8_t turns() = 0;
     virtual uint16_t actualPos() = 0;
+    virtual void torque(uint16_t) = 0;
     virtual void speed(uint16_t) = 0;
     virtual void offset(uint16_t) = 0;
     virtual void gear(uint16_t) = 0;
     virtual void zero() = 0;
     virtual void update() = 0;
     virtual void set(uint16_t) = 0;
+    virtual void setChannel(const uint8_t, const uint16_t) = 0;
     virtual ~IServo(){}
 };
 struct IEsc : IDevice {
@@ -192,6 +194,11 @@ struct Servo : IServo {
         }
         return 0;
     }
+    virtual void torque( const uint16_t t) {
+        if constexpr(requires(){S::torque(t);}) {
+            S::torque(t);
+        }
+    }
     virtual void speed( const uint16_t s) {
         if constexpr(requires(){S::speed(s);}) {
             S::speed(s);
@@ -215,6 +222,11 @@ struct Servo : IServo {
     virtual void set(const uint16_t s) {
         if constexpr(requires(){S::set(s);}) {
             S::set(s);
+        }
+    }
+    virtual void setChannel(const uint8_t ch, const uint16_t v) {
+        if constexpr(requires(){S::set(ch, v);}) {
+            S::set(ch, v);
         }
     }
     virtual void update() {
@@ -300,7 +312,6 @@ struct Esc: IEsc {
             E::setChannel(ch, v);
         }
     }
-
     virtual void update() {
         E::update();
     }

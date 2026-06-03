@@ -90,13 +90,27 @@ struct EEProm {
     std::array<eeprom_value_t, 2> deadbands{10, 10};
 
     // servos
+
+#ifdef WAVESHARE_V4    
+    struct ServoSetting {
+        eeprom_value_t offset = 0;
+        eeprom_value_t torqueLimit = 100;
+        eeprom_value_t speed       = 100;
+        eeprom_value_t gear        = 10;
+        eeprom_value_t mode        = 0;
+    };
+    std::array<std::array<ServoSetting, 8>, 2> servoSettings{};
+#else
     eeprom_value_t offset1  = 0; // 0...360
+    eeprom_value_t torqueLimit1 = 100;
     eeprom_value_t speed1 = 100;
     eeprom_value_t gear1 = 12;
     eeprom_value_t offset2  = 0;
+    eeprom_value_t torqueLimit2 = 100;
     eeprom_value_t speed2 = 100;
     eeprom_value_t gear2 = 12;
-
+#endif
+    
     // (s)bus out
     // phi1/2, amp1/2 are injected in these channels
     eeprom_value_t inject  = 1;

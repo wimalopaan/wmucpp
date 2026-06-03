@@ -27,8 +27,10 @@
 #define SERIAL_DEBUG // enable debug on esc-tlm-1
 // #define TEST_EEPROM // fill eeprom with test setup
 
-#define SW_VERSION 33
+#define SW_VERSION 35
 #define HW_VERSION 2
+
+#define WAVESHARE_V4
 
 #define NDEBUG
 

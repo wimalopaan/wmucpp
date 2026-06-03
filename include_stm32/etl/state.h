@@ -50,6 +50,9 @@ namespace etl {
         S following() const {
             return mFollowing;
         }
+        S previous() const {
+            return mPrevious;
+        }
         template<typename... SS>
         requires((std::is_same_v<std::remove_cv_t<S>, SS> && ...))
         bool contains(SS... s) {
@@ -57,6 +60,9 @@ namespace etl {
                 return ((s == mActual) || ...) || ((s == mFollowing) || ...);
             });
         } 
+        uint8_t toInt() const {
+            return (uint8_t)mActual;
+        }
     private:
         S mActual = S::None;
         S mPrevious = S::None;
