@@ -23,6 +23,7 @@
 // #define INPUT_SBUS // input via SBUS (optional for ELRS, mandatory for other rc-link) on channel 16
 // ATTENTION: in case of S.Port input is via PA0 (TX UART0 half-duplex)
 // #define INPUT_SPORT // input via SPort (Phy-ID / App-ID see below)
+// #define INPUT_SUMDV3 // input va SumDV3
 
 #define DEFAULT_ADDRESS 0 // values: 0 ... 3 (must match value in widget)
 
@@ -37,6 +38,7 @@
 
 #define CRSF_BAUDRATE 420'000
 #define IBUS_BAUDRATE 115'200
+#define SUMD_BAUDRATE 115'200
 #define SBUS_BAUDRATE 100'000
 #define SPORT_BAUDRATE 57'600
 

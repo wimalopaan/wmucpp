@@ -47,6 +47,10 @@ int main() {
     using devsConfig = DevsConfig<Protocoll::SPort>;
     using devices = Devices<SSMSW01, devsConfig>;
     using gfsm = Gfsm::NoTelemetry<devices>;
+#elif defined(INPUT_SUMDV3)
+    using devsConfig = DevsConfig<Protocoll::SumDV3>;
+    using devices = Devices<SSMSW01, devsConfig>;
+    using gfsm = Gfsm::NoTelemetry<devices>;
 #else
 #error "wrong input selection"
 #endif

@@ -456,6 +456,7 @@ boards/rcsupersimplemultiswitch/sport_cb.h
 boards/rcsupersimplemultiswitch/ssmsw01.cc
 boards/rcsupersimplemultiswitch/ssmsw02.cc
 boards/rcsupersimplemultiswitch/stdcomp.h
+boards/rcsupersimplemultiswitch/sumdv3_cb.h
 boards/rcsupersimplemultiswitch/telemetry.h
 boards/rcsupersimplemultiswitch/todo.txt
 host/Makefile

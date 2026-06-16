@@ -509,8 +509,7 @@ namespace IBus2 {
                 }
                 return true;
             }
-            inline static void ratePeriodic() {
-            }
+            inline static void ratePeriodic() {}
             inline static void resetStats() {
                 mPackagesCounter = 0;
             }

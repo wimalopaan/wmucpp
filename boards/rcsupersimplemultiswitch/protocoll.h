@@ -33,6 +33,7 @@
 #include <external/sbus/sbus.h>
 #include <external/sbus/sport.h>
 #include <external/ibus/ibus2.h>
+#include <external/hott/sumdprotocolladapter.h>
 
 #include <external/hal/adccontroller.h>
 
@@ -44,6 +45,7 @@
 #include "ibus_cb.h"
 #include "sbus_cb.h"
 #include "sport_cb.h"
+#include "sumdv3_cb.h"
 #include "telemetry.h"
 #include "link.h"
 
@@ -52,11 +54,11 @@ namespace Protocoll {
     struct IBus;
     struct SBus;
     struct SPort;
+    struct SumDV3;
 };
 
 template<typename Proto, typename Config>
 struct Serial;
-
 
 template<typename Config>
 struct Serial<Protocoll::Crsf, Config> {
@@ -193,5 +195,30 @@ struct Serial<Protocoll::SPort, Config> {
     };
     static inline void init() {
         sensor::init();
+    }
+};
+template<typename Config>
+struct Serial<Protocoll::SumDV3, Config> {
+    using uartPosition = Config::uartPosition;
+    using ledGroups = Config::ledGroups;
+
+    struct CallbackConfig;
+    using commandDecoder = SumDV3CommandCallback<CallbackConfig>;
+    using protocoll_adapter = Hott::V4::ProtocollAdapter<0, void, commandDecoder>;
+    using serial = AVR::Usart<uartPosition, protocoll_adapter, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<0>>;
+
+#ifdef DEBUG_OUTPUT
+    using terminalDevice = serial;
+#else
+    using terminalDevice = void;
+#endif
+    using terminal = etl::basic_ostream<terminalDevice>;
+
+    struct CallbackConfig {
+        using debug = terminal;
+        using ledGroups = Serial::ledGroups;
+    };
+    static inline void init() {
+        serial::template init<AVR::BaudRate<IBUS_BAUDRATE>>();
     }
 };

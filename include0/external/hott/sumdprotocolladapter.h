@@ -24,6 +24,87 @@
 #include "sumdprotocoll.h"
 
 namespace Hott {
+    namespace V4 {
+        template<auto N = 0, typename Dbg = void, typename Callback = void>
+        struct ProtocollAdapter {
+
+            enum class State : uint8_t {Undefined, Start, Length, Data, CheckL, CheckH};
+            
+            inline static void ratePeriodic() {}
+            
+            inline static bool process(const std::byte  c) { 
+                static uint16_t csum;
+                static uint16_t package_crc;
+                switch (mState) {
+                case State::Undefined:
+                    if (c == SumDMsgV3::start_code) {
+                        csum = 0;
+                        etl::crc16(csum, std::to_integer(c));
+                        mState = State::Start;
+                    }                    
+                    break;
+                case State::Start:
+                    etl::crc16(csum, std::to_integer(c));
+                    if ((c & 0x0f_B) == SumDMsgV3::version_code) {
+                        mState = State::Length;
+                    }
+                    else {
+                        mState = State::Undefined;
+                    }
+                    break;
+                case State::Length:
+                    etl::crc16(csum, std::to_integer(c));
+                    mLength = 2 * uint8_t(c);
+                    if (mLength <= 36) {
+                        mIndex = 0;
+                        mState = State::Data;
+                    } 
+                    else {
+                        mState = State::Undefined;
+                    }
+                    break;
+                case State::Data:
+                    etl::crc16(csum, std::to_integer(c));
+                    (*active)[mIndex++] = c;
+                    if (mIndex >= mLength) {
+                        mState = State::CheckH;
+                    }
+                    break;
+                case State::CheckH:
+                    package_crc = uint8_t(c) << 8;
+                    mState = State::CheckL;
+                    break;
+                case State::CheckL:
+                    package_crc |= uint8_t(c);                    
+                    if (csum == package_crc) {
+                        ++mPackagesCounter;
+                        if constexpr(!std::is_same_v<Callback, void>) {
+                            Callback::decode(*active);
+                        }
+                        using std::swap;
+                        swap(active, inactive);
+                    }
+                    mState = State::Undefined;
+                    break;
+                }
+                return true;
+            }
+            inline static uint16_t packages() {
+                return mPackagesCounter;
+            }            
+        private:
+            using MesgType = std::array<std::byte, 36>; // 18 words in total
+            inline static uint8_t mLength;
+            inline static State mState{State::Undefined};
+            inline static MesgType mData0;
+            inline static MesgType mData1;
+            inline static MesgType* active   = &mData0;
+            inline static MesgType* inactive = &mData1;
+            inline static uint8_t mIndex;
+            inline static uint16_t mPackagesCounter{};
+        };
+    }
+    
     struct MultiChannel final {
         inline static constexpr uint8_t size = 8;
         enum class State {Off = 0, Up, Down};
@@ -49,11 +130,8 @@ namespace Hott {
     };
 
     namespace V3_1 { // using FSM StateProcessor "etl/fsm.h"
-        
     }
-
     namespace V3_2 { // using switch
-        
     }
     
     template<uint8_t M, etl::Concepts::NamedFlag UseInts = AVR::UseInterrupts<true>>
