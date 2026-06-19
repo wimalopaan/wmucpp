@@ -55,7 +55,7 @@ namespace Protocoll {
     struct SBus;
     struct SPort;
     struct SumDV3;
-};
+}
 
 template<typename Proto, typename Config>
 struct Serial;
@@ -205,7 +205,7 @@ struct Serial<Protocoll::SumDV3, Config> {
     struct CallbackConfig;
     using commandDecoder = SumDV3CommandCallback<CallbackConfig>;
     using protocoll_adapter = Hott::V4::ProtocollAdapter<0, void, commandDecoder>;
-    using serial = AVR::Usart<uartPosition, protocoll_adapter, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<0>>;
+    using serial = AVR::Usart<uartPosition, protocoll_adapter, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<256>>;
 
 #ifdef DEBUG_OUTPUT
     using terminalDevice = serial;
@@ -219,6 +219,6 @@ struct Serial<Protocoll::SumDV3, Config> {
         using ledGroups = Serial::ledGroups;
     };
     static inline void init() {
-        serial::template init<AVR::BaudRate<IBUS_BAUDRATE>>();
+        serial::template init<AVR::BaudRate<SUMD_BAUDRATE>>();
     }
 };

@@ -22,7 +22,8 @@ template<typename Config>
 struct SumDV3CommandCallback {
     using debug = Config::debug;
     using ledGroups = Config::ledGroups;
-    using leds = Meta::nth_element<0, ledGroups>;
+    using leds0 = Meta::nth_element<0, ledGroups>;
+    using leds1 = Meta::nth_element<1, ledGroups>;
 
     static inline void decode(const std::array<std::byte, 36>& data) {
         const std::byte fcode = data[32];
@@ -32,9 +33,17 @@ struct SumDV3CommandCallback {
             const uint16_t state = (uint16_t)data[offset] | ((uint16_t)data[offset + 1] << 8);
             const uint16_t changed = (state ^ mLastState);
             for(uint8_t i = 0; i < 16; ++i) {
-                const uint16_t mask = (0x01 << i);
+                const uint16_t mask = (uint16_t(0x01) << i);
                 if (changed & mask) {
-                    leds::set(i, (state & mask));
+                    const bool on = (state & mask);
+                    etl::outl<debug>("dec: "_pgm, ", "_pgm, mGroup, ", "_pgm, state, ", "_pgm, mLastState, ", "_pgm, changed);
+                    etl::outl<debug>("ch: "_pgm, i, ": "_pgm, (uint8_t)on);
+                    if (i < 8) {
+                        leds0::set(i, on);
+                    }
+                    else {
+                        leds1::set(i - 8, on);
+                    }
                 }
             }
             mLastState = state;

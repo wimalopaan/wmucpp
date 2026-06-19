@@ -1,5 +1,6 @@
 bugs:
 -----
+* morse: can't stop pattern (bug in blink-fsm, slotted-event?)
 * with USE_IRDA auto-baud does not work
 
 hardware:
@@ -13,6 +14,7 @@ to test:
 
 todo:
 -----
+* input-auto-detect: CRSF, SumDV3, PWM, PPM
 * if g0b1: select 1-of-N morse texts via menu
 * add command to transfer morse-text (e.g. from widget)
 * compile-time option to swap rx/tx for input

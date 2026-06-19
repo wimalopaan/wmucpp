@@ -23,7 +23,7 @@
 // #define INPUT_SBUS // input via SBUS (optional for ELRS, mandatory for other rc-link) on channel 16
 // ATTENTION: in case of S.Port input is via PA0 (TX UART0 half-duplex)
 // #define INPUT_SPORT // input via SPort (Phy-ID / App-ID see below)
-// #define INPUT_SUMDV3 // input va SumDV3
+// #define INPUT_SUMDV3 // input via SumDV3
 
 #define DEFAULT_ADDRESS 0 // values: 0 ... 3 (must match value in widget)
 
@@ -34,7 +34,7 @@
 // #define USE_AFHDS2A // SBus input only (see above) (using 4in1 MPM RF-module)
 // #define USE_ACCST // SBus input only (see above) (using 4in1 MPM RF-module)
 
-//#define DEBUG_OUTPUT
+// #define DEBUG_OUTPUT // use TX of same input uart (if possible)
 
 #define CRSF_BAUDRATE 420'000
 #define IBUS_BAUDRATE 115'200
