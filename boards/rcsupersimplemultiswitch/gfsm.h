@@ -43,13 +43,14 @@ namespace Gfsm {
         }
         static inline void periodic() {
             devs::periodic();
-        }
+        }   
         static inline void ratePeriodic() {
             devs::ratePeriodic();
             ++mStateTicks;
             (++mDebugTicks).on(debugTicks, [] static {
                                    if constexpr(!std::is_same_v<adc, void>) {
-                                       etl::outl<terminal>("adc0: "_pgm, adc::value(adc_i_t{0}),
+                                       etl::outl<terminal>("adc0: "_pgm, 
+                                       adc::value(adc_i_t{0}),
                                        "adc1: "_pgm, adc::value(adc_i_t{1}));
                                    }
                                });
@@ -66,7 +67,9 @@ namespace Gfsm {
             const auto oldState = mState;
             switch(mState) {
             case State::Undefined:
-                mState = State::Init;
+                mStateTicks.on(initTicks, []{
+                    mState = State::Init;
+                });
                 break;
             case State::Init:
                 mEvent.on(Event::Connect, []{
@@ -102,7 +105,7 @@ namespace Gfsm {
                     blinker::steady();
                 {
                     const uint8_t a0 = adr0::isActive();
-                    const uint8_t a1 = adr0::isActive();
+                    const uint8_t a1 = adr1::isActive();
                     const uint8_t address = DEFAULT_ADDRESS + (2 * a1 + a0) * 2;
                     decoder::address(address);
                     telemetry::address(address);
@@ -121,6 +124,7 @@ namespace Gfsm {
             }
         }
         private:
+        static constexpr External::Tick<systemTimer> initTicks{100_ms};
         static constexpr External::Tick<systemTimer> debugTicks{500_ms};
         static constexpr External::Tick<systemTimer> telemetryTicks{100_ms};
         static constexpr External::Tick<systemTimer> checkTicks{3000_ms};
@@ -169,7 +173,9 @@ namespace Gfsm {
             const auto oldState = mState;
             switch(mState) {
             case State::Undefined:
-                mState = State::Init;
+                mStateTicks.on(initTicks, []{
+                    mState = State::Init;
+                });
                 break;
             case State::Init:
                 mEvent.on(Event::Connect, []{
@@ -199,7 +205,7 @@ namespace Gfsm {
                     blinker::steady();
                 {
                     const uint8_t a0 = adr0::isActive();
-                    const uint8_t a1 = adr0::isActive();
+                    const uint8_t a1 = adr1::isActive();
                     const uint8_t address = DEFAULT_ADDRESS + (2 * a1 + a0) * 2;
                     decoder::address(address);
                     etl::outl<terminal>("Adr: "_pgm, decoder::address());
@@ -217,6 +223,7 @@ namespace Gfsm {
             }
         }
         private:
+        static constexpr External::Tick<systemTimer> initTicks{100_ms};
         static constexpr External::Tick<systemTimer> debugTicks{500_ms};
         static constexpr External::Tick<systemTimer> checkTicks{3000_ms};
         inline static External::Tick<systemTimer> mStateTicks;
