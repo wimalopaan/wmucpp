@@ -216,7 +216,7 @@ struct Serial<Protocoll::SumDV3, Config> {
 
     struct CallbackConfig {
         using debug = terminal;
-        using ledGroups = Serial::ledGroups;
+        using allLeds = Config::allLeds;
     };
     static inline void init() {
         serial::template init<AVR::BaudRate<SUMD_BAUDRATE>>();

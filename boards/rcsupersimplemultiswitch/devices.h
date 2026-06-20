@@ -109,9 +109,13 @@ struct Devices<SSMSW01, Config> {
     using ledOutput = ActiveHigh<L, Output>;
 #endif
 
-    using leds  = Leds<Meta::transform<ledOutput, Meta::List<led0, led1, led2, led3, led4, led5, led6, led7>>>;
-    using leds2 = Leds<Meta::transform<ledOutput, Meta::List<led8, led9, led10, led11, led12, led13, led14, led15>>>;
-
+    using outs1 = Meta::List<led0, led1, led2, led3, led4, led5, led6, led7>;
+    using outs2 = Meta::List<led8, led9, led10, led11, led12, led13, led14, led15>;
+    using outs = Meta::concat<outs1, outs2>;
+    using leds  = Leds<Meta::transform<ledOutput, outs1>>;
+    using leds2 = Leds<Meta::transform<ledOutput, outs2>>;
+    using allLeds = Leds<Meta::transform<ledOutput, outs>>;
+    
     struct InputConfig;
     using input = Serial<protocoll, InputConfig>;
 
@@ -119,6 +123,7 @@ struct Devices<SSMSW01, Config> {
         using systemTimer = Devices::systemTimer;
         using uartPosition = Devices::usart1Position;
         using ledGroups = Meta::List<Devices::leds, Devices::leds2>;
+        using allLeds = Devices::allLeds;
     };
 
     using serial = input::serial;
