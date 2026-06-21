@@ -272,7 +272,7 @@ namespace Mcu::Stm {
                         return r;
                 }();
 
-                mcuAdc->CHSELR = []<auto... CC>(std::integer_sequence<auto, CC...>) consteval {
+                mcuAdc->CHSELR = []<typename T, auto... CC>(std::integer_sequence<T, CC...>) consteval {
                         if constexpr(false) {
                         // if constexpr(sizeof...(CC) <= 8) {
                             uint32_t r = 0;
