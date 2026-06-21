@@ -28,8 +28,8 @@
     parent2 = addParent(p, Param_t{parent, PType::Folder, name});\
     addNode(p, Param_t{parent2, PType::U8,  "Torque Limit", nullptr, &eeprom.servos[index].torqueLimit, 1, 100, [](const uint8_t v){srv::torque(index, v * 10); return true;}});\
     addNode(p, Param_t{parent2, PType::U8,  "Speed",        nullptr, &eeprom.servos[index].speed,       1, 100, [](const uint8_t v){srv::speed(index, v * 34); return true;}});\
-    addNode(p, Param_t{parent2, PType::U8,  "Gear", nullptr,         &eeprom.servos[index].gear,        1, 50,  [](const uint8_t v){srv::gear(index, v * 10); return true;}});
-
+    addNode(p, Param_t{parent2, PType::U8,  "Gear", nullptr,         &eeprom.servos[index].gear,        1, 50,  [](const uint8_t v){srv::gear(index, v * 10); return true;}}); \
+    addNode(p, Param_t{parent2, PType::Sel, "Mode", "Normal;Calib/Start", &eeprom.servos[index].mode,   0, 1,   [](const uint8_t v){srv::enable(0, v == 0); return true;}});
 
 template<typename Config, typename Debug = void>
 struct CrsfCallback {
@@ -43,6 +43,7 @@ struct CrsfCallback {
     using src = Config::src;
     using input = src::input;
     using srv = Config::srv;
+    using srv_stated = Config::srv_stated;
 
     static inline constexpr auto& eeprom = storage::eeprom;
     static inline constexpr auto& eeprom_flash = storage::eeprom_flash;
@@ -172,6 +173,48 @@ struct CrsfCallback {
         }
     }    
 private:
+    static inline std::array<const char*, 5> mWinchStepTexts {
+        "Idle",
+        "Set control to neutral",
+        "Move low (or high)",
+        "Move high (or low to finish)",
+        "To finish move control to low again (or cancel)"
+    };
+    static inline std::array<const char*, 4> mWinchTexts {
+        "Set Servo Id",
+        "Be sure winch is free to run ...",
+        mWinchStepTexts[0],
+        "Finished"
+    };
+    static inline uint8_t mWinchCommand = 0;
+    static inline uint8_t mWinchId = 0;
+    static inline bool winchCb(const uint8_t v) {
+        using srv = srv_stated;
+        const RC::Protokoll::Crsf::V4::Lua::CmdStep step{v};
+        bool res = false;
+        switch(step) {
+        case RC::Protokoll::Crsf::V4::Lua::CmdStep::Click:
+            params[mWinchCommand].options = mWinchTexts[1];
+            res = true;
+            break;
+        case RC::Protokoll::Crsf::V4::Lua::CmdStep::Confirmed:
+            params[mWinchCommand].options = mWinchTexts[2];
+            srv::reset(mWinchId);
+            break;
+        case RC::Protokoll::Crsf::V4::Lua::CmdStep::Cancel:
+            params[mWinchCommand].options = mWinchTexts[3];
+            break;
+        case RC::Protokoll::Crsf::V4::Lua::CmdStep::Query:
+            params[mWinchCommand].options = mWinchStepTexts[srv::state()];
+            res = !srv::isFinished();
+            break;
+        default:
+            break;
+        }
+        IO::outl<debug>("# winch v: ", v, " r: ", (uint8_t)res);
+        return res;
+    }
+
     static inline std::array<const char*, 4> mSetIdTexts {
         "Set Servo Id",
         "Be sure to connect only one servo ...",
@@ -291,7 +334,7 @@ private:
     //     addNode(p, Param_t{parent2, PType::U8,  "Speed",        nullptr, &eeprom.servos[index].speed,       1, 100, [](const uint8_t v){srv::speed(index, v * 34); return true;}});
     //     addNode(p, Param_t{parent2, PType::U8,  "Gear", nullptr, &eeprom.servos[index].gear, 1, 50, [](const uint8_t v){srv::gear(index, v * 10); return true;}});
     // }
-    using params_t = etl::FixedVector<Param_t, 55>;
+    using params_t = etl::FixedVector<Param_t, 65>;
     static inline params_t params = [] {
         params_t p;
         uint8_t parent = 0;
@@ -322,6 +365,15 @@ private:
         ADDSERVO(5, parent, "Servo 5");
         ADDSERVO(6, parent, "Servo 6");
         ADDSERVO(7, parent, "Servo 7");
+
+        addNode(p, Param_t{parent, PType::U8,  "Servo # for winch settings", nullptr, &mWinchId, 0, 8, [](const uint8_t){return false;}});
+        addNode(p, Param_t{parent, PType::Command, "Set Winch", mWinchTexts[0], nullptr, 
+                           10, // timeout
+                           0, [](const uint8_t v){
+                               return winchCb(v);
+                           }
+                });
+        mWinchCommand = p.size() - 1;
         
         // addServo<0>(p, parent, "Servo 1");
         // addServo<1>(p, parent, "Servo 2");
@@ -352,7 +404,6 @@ private:
         addNode(p, Param_t{parent, PType::Info, "Servo 5:", &mServos[5][0]});
         addNode(p, Param_t{parent, PType::Info, "Servo 6:", &mServos[6][0]});
         addNode(p, Param_t{parent, PType::Info, "Servo 7:", &mServos[7][0]});
-        
         
         // detects overflow by calling undefined function f();
         if (p.size() >= p.capacity()) {

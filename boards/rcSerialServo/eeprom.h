@@ -34,6 +34,7 @@ struct EEProm {
         uint8_t torqueLimit = 100;
         uint8_t speed       = 100;
         uint8_t gear        = 10;
+        uint8_t mode        = 0;
     };
     std::array<ServoSetting, 8> servos{};
 };

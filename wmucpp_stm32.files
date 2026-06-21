@@ -359,6 +359,7 @@ boards/rcSerialServo/gfsm.h
 boards/rcSerialServo/link_g031.ld
 boards/rcSerialServo/servo_01.cc
 boards/rcSerialServo/servo_cb.h
+boards/rcSerialServo/servo_stated.h
 boards/rcSerialServo/startup_g031.s
 boards/rcSerialServo/storage.h
 boards/rcSerialServo/system_g0.cc
@@ -438,6 +439,7 @@ boards/rcmultiswitchG030/switch_cb.h
 boards/rcmultiswitchG030/system_g0.cc
 boards/rcmultiswitchG030/telemetry.h
 boards/rcmultiswitchG030/todo.txt
+boards/rcsupersimplemultiswitch/Makefile
 boards/rcsupersimplemultiswitch/command.h
 boards/rcsupersimplemultiswitch/crc.h
 boards/rcsupersimplemultiswitch/crsf.h

@@ -51,6 +51,7 @@
 
 #include "crsf_cb.h"
 #include "servo_cb.h"
+#include "servo_stated.h"
 
 struct WeAct;
 struct Wmg0b1;
@@ -89,7 +90,7 @@ struct Devices<WeAct, Config, MCU> {
 
     struct WSConfig;
     using srv_waveshare = External::WaveShare::V4::Servo<1, WSConfig, MCU>;
-    
+
     // UART2
     using inputtx = Mcu::Stm::Pin<gpioa, 2, MCU>;
     using inputrx = Mcu::Stm::Pin<gpioa, 3, MCU>;
@@ -98,7 +99,9 @@ struct Devices<WeAct, Config, MCU> {
     using crsf = RC::Protokoll::Crsf::V4::Master<2, CrsfConfig, MCU>;
     using crsf_in = crsf::input;
 
-	using debug = void;
+    using debug = void;
+    
+    using srv_waveshare_stated = ServoStated<srv_waveshare, crsf_in, systemTimer, debug>;
 	
 	// Led
     using led = Mcu::Stm::Pin<gpioa, 4, MCU>;
@@ -128,6 +131,7 @@ struct Devices<WeAct, Config, MCU> {
     struct CrsfCallbackConfig {
         using src = Devices::crsf;
         using srv = srv_waveshare;
+        using srv_stated = Devices::srv_waveshare_stated;
         using storage = Config::storage;
         using watchdog = Devices::watchDog;
         using timer = systemTimer;
@@ -250,6 +254,8 @@ struct Devices<Wmg0b1, Config, MCU> {
     using debug = void;
 #endif
 
+    using srv_waveshare_stated = ServoStated<srv_waveshare, crsf, systemTimer, debug>;
+    
     // Led
     using led = Mcu::Stm::Pin<gpiob, 2, MCU>;
     using ledBlinker = External::Blinker<led, systemTimer>;
@@ -284,6 +290,7 @@ struct Devices<Wmg0b1, Config, MCU> {
     struct CrsfCallbackConfig {
         using src = Devices::crsf;
         using srv = srv_waveshare;
+        using srv_stated = Devices::srv_waveshare_stated;
         using storage = Config::storage;
         using watchdog = Devices::watchDog;
         using timer = systemTimer;
@@ -308,7 +315,7 @@ struct Devices<Wmg0b1, Config, MCU> {
         using debug = Devices::debug;
     };
 
-    using periodics = StandardComponents<debug, watchDog, crsf, srv_waveshare, servo_cb, ledBlinker, ledBlinker2>;
+    using periodics = StandardComponents<debug, watchDog, crsf, srv_waveshare_stated, srv_waveshare, servo_cb, ledBlinker, ledBlinker2>;
 
     static inline void periodic() {
         periodics::periodic();

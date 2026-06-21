@@ -35,7 +35,7 @@ struct GFSM {
     using crsf_in = devs::crsf_in;
     using crsf_cb = devs::crsf_cb;
     
-    using srv = devs:: srv_waveshare;
+    using srv = devs::srv_waveshare;
 
     enum class State : uint8_t {Undefined, Init, Run, UnConnected};
     enum class Event : uint8_t {None, ConnectionLost, DirectConnected, ReceiverConnected};
