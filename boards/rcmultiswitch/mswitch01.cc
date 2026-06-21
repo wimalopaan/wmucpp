@@ -27,6 +27,7 @@
 // #define INPUT_SBUS // input via SBUS (optional for ELRS, mandatory for other rc-link) on channel 16
 // ATTENTION: in case of S.Port input is via PA0 (TX UART0 half-duplex)
 // #define INPUT_SPORT // input via SPort (Phy-ID / App-ID see below)
+// #define INPUT_SUMDV3 // input via SumDV3
 
 #define DEFAULT_ADDRESS 0 // values: 0 ... 3 (must match value in widget)
 
@@ -42,6 +43,7 @@
 
 #define CRSF_BAUDRATE 420'000
 #define IBUS_BAUDRATE 115'200
+#define SUMD_BAUDRATE 115'200
 #define SBUS_BAUDRATE 100'000
 #define SPORT_BAUDRATE 57'600
 
@@ -72,6 +74,7 @@
 #include <external/sbus/sbus.h>
 #include <external/sbus/sport.h>
 #include <external/ibus/ibus2.h>
+#include <external/hott/sumdprotocolladapter.h>
 
 #include <etl/output.h>
 #include <etl/meta.h>
@@ -81,6 +84,7 @@
 #include "sbus_cb.h"
 #include "sport_cb.h"
 #include "ibus_cb.h"
+#include "sumdv3_cb.h"
 #include "leds.h"
 
 using namespace AVR;
@@ -380,6 +384,65 @@ namespace SPort {
         inline static External::Tick<systemTimer> mStateTicks;
     };
 }
+
+namespace SumDV3 {
+    template<typename Config>
+    struct Devices {
+        using leds = Leds<ledList>;
+
+        struct CallbackConfig;
+        using commandDecoder = SumDV3CommandCallback<CallbackConfig>;
+        using sumd_pa = Hott::V4::ProtocollAdapter<0, void, commandDecoder>;
+        using sumd = AVR::Usart<usart0Position, sumd_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<0>>;
+
+#ifdef DEBUG_OUTPUT
+#if defined(__AVR_AVR128DA32__) or defined(__AVR_AVR128DA28__)
+        using terminalDevice = AVR::Usart<usart1Position, External::Hal::NullProtocollAdapter<>, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<1>, AVR::SendQueueLength<256>>;
+#else
+        using terminalDevice = ibus;
+#endif
+#else
+        using terminalDevice = void;
+#endif
+        using terminal = etl::basic_ostream<terminalDevice>;
+
+        struct CallbackConfig {
+            using debug = terminal;
+            using allLeds = Devices::leds;
+        };
+
+        static inline void init() {
+            portmux::init();
+            leds::init();
+            tp::dir<Output>();
+            sumd::template init<BaudRate<SUMD_BAUDRATE>>();
+#if defined(__AVR_AVR128DA32__) or defined(__AVR_AVR128DA28__)
+#ifdef DEBUG_OUTPUT
+            terminalDevice::template init<BaudRate<DEBUG_BAUDRATE>>();
+#endif
+#endif
+        }
+        static inline void periodic() {
+            // tp::toggle();
+            sumd::periodic();
+#if defined(__AVR_AVR128DA32__) or defined(__AVR_AVR128DA28__)
+#ifdef DEBUG_OUTPUT
+            terminalDevice::periodic();
+#endif
+#endif
+        }
+        static inline void ratePeriodic() {
+            sumd_pa::ratePeriodic();
+            (++mStateTicks).on(debugTicks, [] static {
+                etl::outl<terminal>("sumd p: "_pgm, sumd_pa::packages());
+            });
+        }
+        private:
+        static constexpr External::Tick<systemTimer> debugTicks{500_ms};
+        inline static External::Tick<systemTimer> mStateTicks;
+    };
+}
+
 struct DevsConfig {};
 #ifdef INPUT_CRSF
 using devices = Crsf::Devices<DevsConfig>;
@@ -392,6 +455,9 @@ using devices = Sbus::Devices<DevsConfig>;
 #endif
 #ifdef INPUT_SPORT
 using devices = SPort::Devices<DevsConfig>;
+#endif
+#ifdef INPUT_SUMDV3
+using devices = SumDV3::Devices<DevsConfig>;
 #endif
 
 int main() {
