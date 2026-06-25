@@ -22,12 +22,12 @@
 
 // use one(!) of the following options exclusively
 // ATTENTION: in case of CRSF / SBUS / IBUS input is via PA1 (RX UART0)
-#define INPUT_CRSF // input via CRSF (ELRS only) (no rc-channel needed)
+// #define INPUT_CRSF // input via CRSF (ELRS only) (no rc-channel needed)
 // #define INPUT_IBUS // input via IBUS (use subprotocol IBUS16 in 4in1-MPM) on channel 16
 // #define INPUT_SBUS // input via SBUS (optional for ELRS, mandatory for other rc-link) on channel 16
 // ATTENTION: in case of S.Port input is via PA0 (TX UART0 half-duplex)
 // #define INPUT_SPORT // input via SPort (Phy-ID / App-ID see below)
-// #define INPUT_SUMDV3 // input via SumDV3
+#define INPUT_SUMDV3 // input via SumDV3
 
 #define DEFAULT_ADDRESS 0 // values: 0 ... 3 (must match value in widget)
 
@@ -40,6 +40,8 @@
 
 // #define DEBUG_OUTPUT // on attiny1614: CRSF/SBUS only: debug output via same uart as receiving data (same baudrate), S.Port is half-duplex -> no debug possible
                      // on avr128da28: uses USART1
+
+#define ATTINY_10MHz // useful for 3.3V
 
 #define CRSF_BAUDRATE 420'000
 #define IBUS_BAUDRATE 115'200
@@ -466,7 +468,11 @@ int main() {
 #if defined(__AVR_AVR128DA32__)
         clock::template init<Project::Config::fMcuMhz>();
 #elif defined(__AVR_ATtiny1614__)
+# ifdef ATTINY_10MHz
         clock::prescale<2>();
+# else
+        clock::prescale<1>();
+# endif
 #else
 #error "wrong MCU"
 #endif

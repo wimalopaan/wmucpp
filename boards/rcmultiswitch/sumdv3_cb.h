@@ -28,10 +28,10 @@ struct SumDV3CommandCallback {
         if (fcode == 0x05_B) {
             ++mCommandPackagesCounter;
             const uint8_t offset = 24 + mGroup; // 24: start of switches
-            const uint16_t state = (uint16_t)data[offset] | ((uint16_t)data[offset + 1] << 8);
-            const uint16_t changed = (state ^ mLastState);
-            for(uint8_t i = 0; i < 16; ++i) {
-                const uint16_t mask = (uint16_t(0x01) << i);
+            const uint8_t state = (uint16_t)data[offset];
+            const uint8_t changed = (state ^ mLastState);
+            for(uint8_t i = 0; i < 8; ++i) {
+                const uint8_t mask = (uint8_t(0x01) << i);
                 if (changed & mask) {
                     const bool on = (state & mask);
                     etl::outl<debug>("ch: "_pgm, i, ": "_pgm, (uint8_t)on);
@@ -50,7 +50,7 @@ struct SumDV3CommandCallback {
         return mGroup;
     }
     private:
-    static inline uint16_t mLastState = 0;
+    static inline uint8_t mLastState = 0;
     static inline uint16_t mCommandPackagesCounter = 0;
     static inline uint8_t mGroup = DEFAULT_ADDRESS;
 };
