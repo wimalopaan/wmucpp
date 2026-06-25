@@ -1,7 +1,7 @@
 
 todo
 =======
-
+* refactor servo-command to own state-machine
 * servo serial output
 * menu
 * pwm input

@@ -36,7 +36,6 @@ struct ServoStated {
     
     static inline constexpr uint16_t threshLow  = RC::Protokoll::Crsf::V4::min + 100;
     static inline constexpr uint16_t threshHigh = RC::Protokoll::Crsf::V4::max - 100;
-
     static inline constexpr uint16_t neutralLow = RC::Protokoll::Crsf::V4::mid - 100;
     static inline constexpr uint16_t neutralHigh= RC::Protokoll::Crsf::V4::mid + 100;
     
