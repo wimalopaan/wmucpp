@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-# ~/Projekte/updi/pyupdi/pyupdi.py -d tiny1614 -c /dev/ttyUSB1  -f test00.hex
+# pymcuprog write --erase -d avr128da28 -t uart -u /dev/ttyUSB0 -f sbus01.hex
 
 MCU = attiny1614
 F_OSC = 20000000
