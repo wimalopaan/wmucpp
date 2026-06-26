@@ -22,12 +22,12 @@
 
 // use one(!) of the following options exclusively
 // ATTENTION: in case of CRSF / SBUS / IBUS input is via PA1 (RX UART0)
-// #define INPUT_CRSF // input via CRSF (ELRS only) (no rc-channel needed)
+#define INPUT_CRSF // input via CRSF (ELRS only) (no rc-channel needed)
 // #define INPUT_IBUS // input via IBUS (use subprotocol IBUS16 in 4in1-MPM) on channel 16
 // #define INPUT_SBUS // input via SBUS (optional for ELRS, mandatory for other rc-link) on channel 16
 // ATTENTION: in case of S.Port input is via PA0 (TX UART0 half-duplex)
 // #define INPUT_SPORT // input via SPort (Phy-ID / App-ID see below)
-#define INPUT_SUMDV3 // input via SumDV3
+// #define INPUT_SUMDV3 // input via SumDV3
 
 #define DEFAULT_ADDRESS 0 // values: 0 ... 3 (must match value in widget)
 
@@ -41,7 +41,7 @@
 // #define DEBUG_OUTPUT // on attiny1614: CRSF/SBUS only: debug output via same uart as receiving data (same baudrate), S.Port is half-duplex -> no debug possible
                      // on avr128da28: uses USART1
 
-#define ATTINY_10MHz // useful for 3.3V
+// #define ATTINY_10MHz // useful for 3.3V (only baudrates < 100k)
 
 #define CRSF_BAUDRATE 420'000
 #define IBUS_BAUDRATE 115'200
@@ -134,8 +134,8 @@ using led2 = Pin<Port<A>, 2>;
 using led1 = Pin<Port<B>, 1>;
 using led0 = Pin<Port<B>, 0>;
 
-using tp = NoPin;
-// using tp   = Pin<Port<A>, 3>; // enables toggling this pin on every loop run
+// using tp = NoPin;
+using tp   = Pin<Port<A>, 3>; // enables toggling this pin on every loop run
 #endif
 
 using ledList = Meta::List<led0, led1, led2, led3, led4, led5, led6, led7>;
@@ -398,11 +398,11 @@ namespace SumDV3 {
         using sumd = AVR::Usart<usart0Position, sumd_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<0>>;
 
 #ifdef DEBUG_OUTPUT
-#if defined(__AVR_AVR128DA32__) or defined(__AVR_AVR128DA28__)
+# if defined(__AVR_AVR128DA32__) or defined(__AVR_AVR128DA28__)
         using terminalDevice = AVR::Usart<usart1Position, External::Hal::NullProtocollAdapter<>, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<1>, AVR::SendQueueLength<256>>;
-#else
-        using terminalDevice = ibus;
-#endif
+# else
+        using terminalDevice = sumd;
+# endif
 #else
         using terminalDevice = void;
 #endif
@@ -411,6 +411,7 @@ namespace SumDV3 {
         struct CallbackConfig {
             using debug = terminal;
             using allLeds = Devices::leds;
+            using tp = ::tp;
         };
 
         static inline void init() {

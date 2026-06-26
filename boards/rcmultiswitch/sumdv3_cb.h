@@ -22,12 +22,16 @@ template<typename Config>
 struct SumDV3CommandCallback {
     using debug = Config::debug;
     using allLeds = Config::allLeds;
+    using tp = Config::tp;
+    
+    static inline constexpr std::array<uint8_t, 8> index2offset{1, 0, 3, 2, 5, 4, 7, 6};
 
     static inline void decode(const std::array<std::byte, 36>& data) {
         const std::byte fcode = data[32];
         if (fcode == 0x05_B) {
+            tp::toggle();
             ++mCommandPackagesCounter;
-            const uint8_t offset = 24 + mGroup; // 24: start of switches
+            const uint8_t offset = 24 + index2offset[mGroup]; // 24: start of switches
             const uint8_t state = (uint16_t)data[offset];
             const uint8_t changed = (state ^ mLastState);
             for(uint8_t i = 0; i < 8; ++i) {
