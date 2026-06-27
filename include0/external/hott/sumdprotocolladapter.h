@@ -32,7 +32,8 @@ namespace Hott {
             
             inline static void ratePeriodic() {}
             
-            inline static bool process(const std::byte  c) { 
+            inline static bool process(const std::byte c) { 
+                Dbg::toggle();
                 static uint16_t csum;
                 static uint16_t package_crc;
                 switch (mState) {

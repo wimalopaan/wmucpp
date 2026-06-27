@@ -119,7 +119,7 @@ namespace AVR {
         private:
             inline static void isr_impl() {
                 const auto c = *mcu_usart()->udr;
-                if constexpr (RecvQLength::value > 0) {
+                if constexpr(RecvQLength::value > 0) {
                     static_assert(std::is_same_v<PA, External::Hal::NullProtocollAdapter<>>, "recvQueue is used, no need for PA");
                     mRecvQueue.push_back(c);
                 }
@@ -308,7 +308,7 @@ namespace AVR {
         private:
             inline static void isr_impl() {
                 const auto c = *mcu_usart()->rxd;
-                if constexpr (RecvQLength::value > 0) {
+                if constexpr(RecvQLength::value > 0) {
                     static_assert(std::is_same_v<PA, External::Hal::NullProtocollAdapter<>>, "recvQueue is used, no need for PA");
                     mRecvQueue.push_back(c);
                 }
