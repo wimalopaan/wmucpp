@@ -272,6 +272,8 @@ struct Devices<WeAct_SFrog, Config, MCU> {
         using storage = Devices::storage;
         using debug = Devices::debug;
         using tp = void;
+        using tp1 = void;
+        using tp2 = void;
         static inline constexpr uint8_t fifoSize = 16;
     };
     struct AdcAdapterConfig {
@@ -551,6 +553,8 @@ struct Devices<WeAct, Config, MCU> {
         using storage = Devices::storage;
         using debug = Devices::debug;
         using tp = void;
+        using tp1 = void;
+        using tp2 = void;
         static inline constexpr uint8_t fifoSize = 16;
     };
 	struct AdcAdapterConfig {
