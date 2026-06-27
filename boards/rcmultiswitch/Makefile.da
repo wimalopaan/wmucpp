@@ -20,12 +20,10 @@
 # pymcuprog write --erase -d avr128da32 -t uart -u /dev/ttyUSB0 -f mswitch01.hex
 
 #MCU = avr128da32
-#F_OSC = 32000000
 
 # pymcuprog write --erase -d attiny1614 -t uart -u /dev/ttyUSB0 -f mswitch01.hex
 
 MCU = attiny1614
-F_OSC = 20000000
 
 subdirs =
 

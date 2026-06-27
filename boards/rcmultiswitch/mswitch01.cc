@@ -43,6 +43,25 @@
 
 // #define ATTINY_10MHz // useful for 3.3V (only baudrates < 100k)
 
+#if !defined(F_CPU) || ((F_CPU + 1) == 1)
+# if defined(__AVR_ATtiny1614__)
+#  ifdef ATTINY_10MHz
+#   undef F_CPU
+#   define F_CPU 10000000
+#  else 
+#   undef F_CPU
+#   define F_CPU 20000000
+#  endif
+# endif
+# if defined(__AVR_AVR128DA32__) or defined(__AVR_AVR128DA28__)
+#  undef F_CPU
+#  define F_CPU 32000000
+# endif
+#endif
+#if !defined(F_CPU) || ((F_CPU + 1) == 1)
+# error "Wrong configuration"
+#endif
+
 #define CRSF_BAUDRATE 420'000
 #define IBUS_BAUDRATE 115'200
 #define SUMD_BAUDRATE 115'200
@@ -394,14 +413,14 @@ namespace SumDV3 {
 
         struct CallbackConfig;
         using commandDecoder = SumDV3CommandCallback<CallbackConfig>;
-        using sumd_pa = Hott::V4::ProtocollAdapter<0, void, commandDecoder>;
+        using sumd_pa = Hott::V4::ProtocollAdapter<0, tp, commandDecoder>;
         using sumd = AVR::Usart<usart0Position, sumd_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<0>>;
 
 #ifdef DEBUG_OUTPUT
 # if defined(__AVR_AVR128DA32__) or defined(__AVR_AVR128DA28__)
         using terminalDevice = AVR::Usart<usart1Position, External::Hal::NullProtocollAdapter<>, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<1>, AVR::SendQueueLength<256>>;
 # else
-        using terminalDevice = sumd;
+        using terminalDevice = void;
 # endif
 #else
         using terminalDevice = void;
@@ -429,9 +448,9 @@ namespace SumDV3 {
             // tp::toggle();
             sumd::periodic();
 #if defined(__AVR_AVR128DA32__) or defined(__AVR_AVR128DA28__)
-#ifdef DEBUG_OUTPUT
+# ifdef DEBUG_OUTPUT
             terminalDevice::periodic();
-#endif
+# endif
 #endif
         }
         static inline void ratePeriodic() {
@@ -475,8 +494,9 @@ int main() {
         clock::prescale<1>();
 # endif
 #else
-#error "wrong MCU"
+# error "wrong MCU"
 #endif
+        // std::integral_constant<uint32_t, F_CPU>::_;
     });
     systemTimer::init();
 
