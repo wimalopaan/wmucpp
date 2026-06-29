@@ -24,6 +24,8 @@
 
 using namespace std::literals::chrono_literals;
 
+// ToDo: slotted event
+
 namespace RC::Protokoll::Crsf {
     namespace V4 {
         namespace Reflection {
@@ -225,12 +227,15 @@ namespace RC::Protokoll::Crsf {
                 mRewriteRxAddress = adr;
             }
 			static inline void activateLinkStats(const bool on) {
+                IO::outl<debug>("# act LS: ", N);
 				mSendLinkStats = on;
 			}
 			static inline void activateChannels(const bool on) {
+                IO::outl<debug>("# act CH: ", N);
 				mSendRCChannels = on;
 			}
 			static inline void activateBroadcast(const bool on) {
+                IO::outl<debug>("# act BC: ", N);
 				mSendBCast = on;
 			}
             static inline void telemetryRate(const uint8_t r) {

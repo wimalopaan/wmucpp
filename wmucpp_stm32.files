@@ -121,6 +121,15 @@ boards/rc720E32/uuid.h
 boards/rc720E32/waveshare.h
 boards/rc720E32/waveshare_2.h
 boards/rc720E32/ws2812b.h
+boards/rc720E32_CC/Makefile
+boards/rc720E32_CC/cc01.cc
+boards/rc720E32_CC/crsfcb.h
+boards/rc720E32_CC/devices.h
+boards/rc720E32_CC/eeprom.h
+boards/rc720E32_CC/gfsm.h
+boards/rc720E32_CC/link_g0b1.ld
+boards/rc720E32_CC/startup_g0b1.s
+boards/rc720E32_CC/system_g0.cc
 boards/rcBdc/G431Drv8245_01/Makefile
 boards/rcBdc/G431Drv8245_01/cmsis.h
 boards/rcBdc/G431Drv8245_01/comparator.h
