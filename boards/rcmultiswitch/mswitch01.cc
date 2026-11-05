@@ -22,12 +22,12 @@
 
 // use one(!) of the following options exclusively
 // ATTENTION: in case of CRSF / SBUS / IBUS input is via PA1 (RX UART0)
-#define INPUT_CRSF // input via CRSF (ELRS only) (no rc-channel needed)
+// #define INPUT_CRSF // input via CRSF (ELRS only) (no rc-channel needed)
 // #define INPUT_IBUS // input via IBUS (use subprotocol IBUS16 in 4in1-MPM) on channel 16
 // #define INPUT_SBUS // input via SBUS (optional for ELRS, mandatory for other rc-link) on channel 16
 // ATTENTION: in case of S.Port input is via PA0 (TX UART0 half-duplex)
 // #define INPUT_SPORT // input via SPort (Phy-ID / App-ID see below)
-// #define INPUT_SUMDV3 // input via SumDV3
+#define INPUT_SUMDV3 // input via SumDV3
 
 #define DEFAULT_ADDRESS 0 // values: 0 ... 3 (must match value in widget)
 
@@ -38,12 +38,12 @@
 // #define USE_AFHDS2A // SBus input only (see above) (using 4in1 MPM RF-module)
 // #define USE_ACCST // SBus input only (see above) (using 4in1 MPM RF-module)
 
-// #define DEBUG_OUTPUT // on attiny1614: CRSF/SBUS only: debug output via same uart as receiving data (same baudrate), S.Port is half-duplex -> no debug possible
+#define DEBUG_OUTPUT // on attiny1614: CRSF/SBUS only: debug output via same uart as receiving data (same baudrate), S.Port is half-duplex -> no debug possible
                      // on avr128da28: uses USART1
 
 // #define ATTINY_10MHz // useful for 3.3V (only baudrates < 100k)
 
-// #define ALT_PINOUT // pinout as in board.h (serial input via PA2)
+#define ALT_PINOUT // pinout as in board.h (serial input via PA2) (makes it possible to use DEBUG_OUTPUT on PA1)
 
 #if !defined(F_CPU) || ((F_CPU + 1) == 1)
 # if defined(__AVR_ATtiny1614__)
@@ -122,16 +122,17 @@ using ccp = Cpu::Ccp<>;
 using clock = Clock<>;
 using sigrow = SigRow<>;
 using systemTimer = SystemTimer<Component::Rtc<0>, fRtc>;
-using usart0Position = Portmux::Position<Component::Usart<0>, Portmux::Default>;
 #if defined(__AVR_AVR128DA32__) or defined(__AVR_AVR128DA28__)
+using usart0Position = Portmux::Position<Component::Usart<0>, Portmux::Default>;
 using usart1Position = Portmux::Position<Component::Usart<1>, Portmux::Default>;
 using portmux = Portmux::StaticMapper<Meta::List<usart0Position, usart1Position>>;
 #else
 # ifdef ALT_PINOUT
-using portmux = Portmux::StaticMapper<Meta::List<usart0Position, Portmux::Alt1>>;
+using usart0Position = Portmux::Position<Component::Usart<0>, Portmux::Alt1>;
 # else
-using portmux = Portmux::StaticMapper<Meta::List<usart0Position>>;
+using usart0Position = Portmux::Position<Component::Usart<0>, Portmux::Default>;
 # endif
+using portmux = Portmux::StaticMapper<Meta::List<usart0Position>>;
 #endif
 
 #if defined(__AVR_AVR128DA32__) or defined(__AVR_AVR128DA28__)
@@ -440,7 +441,11 @@ namespace SumDV3 {
 # if defined(__AVR_AVR128DA32__) or defined(__AVR_AVR128DA28__)
         using terminalDevice = AVR::Usart<usart1Position, External::Hal::NullProtocollAdapter<>, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<1>, AVR::SendQueueLength<256>>;
 # else
+#  ifdef ALT_PINOUT
+        using terminalDevice = sumd; // attiny1614
+#  else
         using terminalDevice = void;
+#  endif
 # endif
 #else
         using terminalDevice = void;
@@ -459,9 +464,9 @@ namespace SumDV3 {
             tp::dir<Output>();
             sumd::template init<BaudRate<SUMD_BAUDRATE>>();
 #if defined(__AVR_AVR128DA32__) or defined(__AVR_AVR128DA28__)
-#ifdef DEBUG_OUTPUT
+# ifdef DEBUG_OUTPUT
             terminalDevice::template init<BaudRate<DEBUG_BAUDRATE>>();
-#endif
+# endif
 #endif
         }
         static inline void periodic() {
