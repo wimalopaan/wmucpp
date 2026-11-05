@@ -27,7 +27,14 @@ CPPFLAGS += -I../../../STM32CubeG0/Drivers/CMSIS/Device/ST/STM32G0xx/Include
 CPPFLAGS += -I../../../STM32CubeG0/Drivers/STM32G0xx_HAL_Driver/Inc
 CPPFLAGS += -DSTM32G0B1xx
 
-OPTFLAGS = -Os
+TOOLCHAIN ?= gcc
+ifeq ($(TOOLCHAIN),gcc)
+OPTFLAGS = -Os -flto
+else ifeq ($(TOOLCHAIN),clang)
+OPTFLAGS = -Oz -flto
+else
+$(error Unsupported TOOLCHAIN '$(TOOLCHAIN)'; use gcc or clang)
+endif
 
 CPPFLAGS += -DHW_MSW12
 
@@ -44,3 +51,26 @@ system0b1: system_g0.o startup_g0b1.o
 g0b1: clean system0b1 msw30.bin
 
 -include ../../Makefile.arm.include
+
+ifeq ($(TOOLCHAIN),clang)
+CXX = clang++
+CXXFLAGS := $(filter-out -funsigned-bitfields -Wstrict-aliasing=1,$(CXXFLAGS))
+GCC_SYSROOT := $(shell arm-none-eabi-g++ -print-sysroot)
+GCC_VERSION := $(shell arm-none-eabi-g++ -dumpfullversion)
+GCC_MULTILIB := $(shell arm-none-eabi-g++ $(MCUFLAGS) -print-multi-directory)
+CXXFLAGS += --target=arm-none-eabi --gcc-toolchain=$(dir $(GCC_SYSROOT)) -stdlib=libstdc++
+CXXFLAGS += -isystem $(GCC_SYSROOT)/include/c++/$(GCC_VERSION)/arm-none-eabi/$(GCC_MULTILIB)
+GCC_LIBDIR := $(dir $(shell arm-none-eabi-g++ $(MCUFLAGS) -print-libgcc-file-name))
+NEWLIB_LIBDIR := $(dir $(shell arm-none-eabi-g++ $(MCUFLAGS) -print-file-name=libc_nano.a))
+GNU_LDFLAGS := -specs=nano.specs -Wl,--no-warn-rwx-segments
+LDFLAGS := $(filter-out $(GNU_LDFLAGS),$(LDFLAGS))
+
+# Use LLVM LTO with the same GNU startup and newlib-nano runtime.
+msw30.elf: msw30.o $(LOADLIBES)
+	$(CXX) $(filter-out -stdlib=libstdc++,$(CXXFLAGS)) $(LDFLAGS) -fuse-ld=lld -nostdlib \
+		$(GCC_LIBDIR)crti.o $(GCC_LIBDIR)crtbegin.o $(NEWLIB_LIBDIR)crt0.o \
+		msw30.o $(LOADLIBES) \
+		-L$(GCC_LIBDIR) -L$(NEWLIB_LIBDIR) \
+		-Wl,--start-group -lstdc++_nano -lm -lgcc -lc_nano -Wl,--end-group \
+		$(GCC_LIBDIR)crtend.o $(GCC_LIBDIR)crtn.o --output $@
+endif

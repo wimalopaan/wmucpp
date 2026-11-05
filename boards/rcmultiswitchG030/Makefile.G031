@@ -31,7 +31,7 @@ g031: CPPFLAGS += -DHW_MSW11
 
 weact : CPPFLAGS += -DHW_WEACT
 
-OPTFLAGS = -Os
+OPTFLAGS = -Os -flto
 
 LDSCRIPT = link_g031.ld
 LOADLIBES += startup_g031.o system_g0.o

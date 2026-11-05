@@ -30,7 +30,7 @@ CPPFLAGS += -DSTM32G051xx
 CPPFLAGS += -DHW_MSW12
 CPPFLAGS += -DHW_MSW12_G051
 
-OPTFLAGS = -Os
+OPTFLAGS = -Os -flto
 
 LDSCRIPT = link_g051.ld
 LOADLIBES += startup_g051.o system_g0.o
