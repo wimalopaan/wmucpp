@@ -140,7 +140,7 @@ namespace Meta {
         };
         
         template<typename L> struct front_impl;
-        template<template<typename, typename...> typename L, typename F, typename... I>
+        template<template<typename...> typename L, typename F, typename... I>
         struct front_impl<L<F, I...>> {
             typedef F type;  
         };
@@ -154,17 +154,17 @@ namespace Meta {
         };
         
         template<typename L> struct rest_impl;
-        template<template<typename, typename...> typename L, typename F, typename... I>
+        template<template<typename...> typename L, typename F, typename... I>
         struct rest_impl<L<F, I...>> {
             typedef L<I...> type;  
         };
    
         template<typename L> struct back_impl;
-        template<template<typename, typename...> typename L, typename F, typename... I>
+        template<template<typename...> typename L, typename F, typename... I>
         struct back_impl<L<F, I...>> {
             typedef typename back_impl<L<I...>>::type type;
         };
-        template<template<typename> typename L, typename B>
+        template<template<typename...> typename L, typename B>
         struct back_impl<L<B>> {
             typedef B type;
         };
@@ -210,7 +210,7 @@ namespace Meta {
         struct filter_impl<P, L<>> {
             typedef L<> type;  
         };
-        template<template<typename> typename P, template<typename, typename...> typename L, typename F, typename... I> 
+        template<template<typename> typename P, template<typename...> typename L, typename F, typename... I>
         struct filter_impl<P, L<F, I...>> {
             typedef typename std::conditional<P<F>::value, 
                                     typename push_front_impl<typename filter_impl<P, L<I...>>::type, F>::type, 
@@ -219,11 +219,11 @@ namespace Meta {
         };
         template<size_t, typename L> struct nth_element_impl;
 
-        template<template<typename F, typename...> typename L, typename F, typename... I>
+        template<template<typename...> typename L, typename F, typename... I>
         struct nth_element_impl<0, L<F, I...>> {
             typedef F type;  
         };
-        template<size_t N, template<typename F, typename...> typename L, typename F, typename... I>
+        template<size_t N, template<typename...> typename L, typename F, typename... I>
         struct nth_element_impl<N, L<F, I...>> {
             typedef typename nth_element_impl<N-1, L<I...>>::type type;  
         };
@@ -304,13 +304,13 @@ namespace Meta {
         };
         
         template<typename> struct is_set_impl;
-        template<template<typename, typename...> typename L, typename F, typename... I>
+        template<template<typename...> typename L, typename F, typename... I>
         struct is_set_impl<L<F, I...>> {
             using type = typename std::conditional<contains_impl<L<I...>, F>::value, 
                                                   std::integral_constant<bool, false>, 
                                                   typename is_set_impl<L<I...>>::type>::type;
         };
-        template<template<typename> typename L, typename I>
+        template<template<typename...> typename L, typename I>
         struct is_set_impl<L<I>> {
             using type = std::integral_constant<bool, true>;
         };
@@ -345,7 +345,7 @@ namespace Meta {
             static inline constexpr size_t V = F::value + N;
             typedef typename concat_impl<Meta::List<std::integral_constant<size_t, V>>, typename partial_sum_impl<L<C...>, V>::type>::type  type;
         };
-        template<template<typename>typename L, typename F, auto N>
+        template<template<typename...>typename L, typename F, auto N>
         struct partial_sum_impl<L<F>, N> {
             typedef Meta::List<std::integral_constant<size_t, F::value + N>> type;
         };

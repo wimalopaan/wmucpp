@@ -244,8 +244,9 @@ namespace etl {
     }
 
 
-    template<>
-    constexpr inline std::byte nth_byte<0, int>(const int v) {
+    template<uint8_t Number, typename T>
+        requires (Number == 0 && std::is_same_v<T, int> && !std::is_same_v<T, int32_t>)
+    constexpr inline std::byte nth_byte(const T v) {
         return std::byte(v);
     }
     template<typename C>
@@ -265,4 +266,3 @@ namespace etl {
         }(std::make_index_sequence<sizeof(T)>{});
     }
 }
-

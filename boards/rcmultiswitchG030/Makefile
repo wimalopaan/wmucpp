@@ -29,7 +29,7 @@ CPPFLAGS += -DSTM32G030xx
 
 g030 : CPPFLAGS += -DHW_MSW10
 
-OPTFLAGS = -Os
+OPTFLAGS = -Os -flto
 
 LDSCRIPT = link_g030.ld
 LOADLIBES += startup_g030.o system_g0.o

@@ -184,7 +184,7 @@ struct Storage {
             IO::outl<debug>("# EEPROM NOK: ", err);
         }
     }
-    __attribute__((__section__(".eeprom"))) static inline const EEProm eeprom_flash{};
+    __attribute__((__section__(".eeprom"), used)) static inline const EEProm eeprom_flash{};
     __attribute__((aligned (8))) static inline EEProm eeprom;
 };
 
