@@ -435,7 +435,12 @@ namespace SumDV3 {
         struct CallbackConfig;
         using commandDecoder = SumDV3CommandCallback<CallbackConfig>;
         using sumd_pa = Hott::V4::ProtocollAdapter<0, tp, commandDecoder>;
-        using sumd = AVR::Usart<usart0Position, sumd_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<0>>;
+#if defined(__AVR_ATtiny1614__) && defined(ALT_PINOUT) && defined(DEBUG_OUTPUT)
+        using sumdSendQueue = AVR::SendQueueLength<256>;
+#else
+        using sumdSendQueue = AVR::SendQueueLength<0>;
+#endif
+        using sumd = AVR::Usart<usart0Position, sumd_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, sumdSendQueue>;
 
 #ifdef DEBUG_OUTPUT
 # if defined(__AVR_AVR128DA32__) or defined(__AVR_AVR128DA28__)
