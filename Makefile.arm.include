@@ -80,7 +80,7 @@ CXXFLAGS += $(OPTFLAGS) -std=c++26 # -pedantic
 CXXFLAGS += -fno-exceptions -fno-unwind-tables -fno-rtti -fno-threadsafe-statics #-Wgnu-string-literal-operator-template
 CXXFLAGS += -funsigned-char -funsigned-bitfields -fshort-enums 
 CXXFLAGS += -ffunction-sections  -fdata-sections # seperate sections -> see --gc-sections 
-CXXFLAGS += -fconcepts
+#CXXFLAGS += -fconcepts
 CXXFLAGS += -ftemplate-depth=2048
 CXXFLAGS += -fstrict-aliasing -Wstrict-aliasing=1 
 CXXFLAGS += -Wall -Wextra
