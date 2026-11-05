@@ -307,16 +307,7 @@ private:
 #endif
         addNode(p, Param_t{parent2, PType::Sel, "Test", "Off;On", nullptr, 0, 1, [](const uint8_t v){Meta::nth_element<index, bsws>::on(v); return false;}});
     }
-    static inline auto params = []{
-#ifdef HW_MSW12
-# ifdef HW_MSW12_G051
-        etl::FixedVector<Param_t, 225> p;
-# else
-        etl::FixedVector<Param_t, 255> p;
-# endif
-#else
-        etl::FixedVector<Param_t, 132> p;
-#endif
+    static inline constexpr void fillParameters(auto& p) {
         addNode(p, Param_t{0, PType::Folder, ""}); // unvisible top folder
         addNode(p, Param_t{0, PType::Info, "Version(HW/SW)", &mVersionString[0]});
         addNode(p, Param_t{0, PType::Info, "Watchdog", &mWdgString[0]});
@@ -489,6 +480,27 @@ private:
         }
 #endif
 #endif
+    }
+    struct ParameterCounter {
+        constexpr void push_back(const Param_t&) {
+            ++mSize;
+        }
+        constexpr uint16_t size() const {
+            return mSize;
+        }
+    private:
+        uint16_t mSize{};
+    };
+    static inline constexpr auto parameterCount = []{
+        ParameterCounter p;
+        fillParameters(p);
+        return p.size();
+    }();
+    static_assert(parameterCount < 255, "CRSF parameter table exceeds capacity including reserve entry");
+
+    static inline auto params = []() consteval {
+        etl::FixedVector<Param_t, parameterCount + 1> p;
+        fillParameters(p);
         if (p.size() >= p.capacity()) {
             void fp();
             fp(); // compile-time check (call to undefined function)

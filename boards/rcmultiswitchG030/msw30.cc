@@ -28,7 +28,7 @@
 #endif
 
 // feature selection
-// if you get an error (undefined symbol fp()), deselect features to free memory
+// if parameter capacity or flash/RAM limits are exceeded, deselect features
 
 #define USE_MORSE // enable morse feature
 #define USE_OPERATE_MENU // enable operate menu
