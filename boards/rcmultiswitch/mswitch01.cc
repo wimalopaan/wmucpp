@@ -515,7 +515,7 @@ using devices = SumDV3::Devices<DevsConfig>;
 int main() {
     portmux::init();
     ccp::unlock([]{
-#if defined(__AVR_AVR128DA32__)
+#if defined(__AVR_AVR128DA32__) or defined(__AVR_AVR128DA28__)
         clock::template init<Project::Config::fMcuMhz>();
 #elif defined(__AVR_ATtiny1614__)
 # ifdef ATTINY_10MHz

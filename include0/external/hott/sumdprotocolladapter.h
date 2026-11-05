@@ -25,6 +25,11 @@
 
 namespace Hott {
     namespace V4 {
+        template<typename Callback, typename Data>
+        concept LengthAwareCallback = requires(const Data& data, uint8_t length) {
+            Callback::decode(data, length);
+        };
+
         template<auto N = 0, typename Dbg = void, typename Callback = void>
         struct ProtocollAdapter {
 
@@ -80,7 +85,12 @@ namespace Hott {
                     if (csum == package_crc) {
                         ++mPackagesCounter;
                         if constexpr(!std::is_same_v<Callback, void>) {
-                            Callback::decode(*active);
+                            if constexpr(LengthAwareCallback<Callback, MesgType>) {
+                                Callback::decode(*active, mLength);
+                            }
+                            else {
+                                Callback::decode(*active);
+                            }
                         }
                         using std::swap;
                         swap(active, inactive);

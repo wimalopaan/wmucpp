@@ -26,7 +26,11 @@ struct SumDV3CommandCallback {
     
     static inline constexpr std::array<uint8_t, 8> index2offset{1, 0, 3, 2, 5, 4, 7, 6};
 
-    static inline void decode(const std::array<std::byte, 36>& data) {
+    static inline void decode(const std::array<std::byte, 36>& data, const uint8_t length) {
+        if (length != data.size()) {
+            etl::outl<debug>("sumd length: "_pgm, length);
+            return;
+        }
         const std::byte fcode = data[32];
         if (fcode == 0x05_B) {
             tp::toggle();
@@ -58,4 +62,3 @@ struct SumDV3CommandCallback {
     static inline uint16_t mCommandPackagesCounter = 0;
     static inline uint8_t mGroup = DEFAULT_ADDRESS;
 };
-
