@@ -419,6 +419,8 @@ namespace RC {
                         Confirmed = 4,   // user has confirmed
                         Cancel = 5,      // user has requested cancel
                         Query = 6,       // UI is requesting status update
+                        
+                        Is_Immediate = 9 // command needs no polling
                     };
                 }
                 template<typename T = uint8_t>
@@ -544,6 +546,9 @@ namespace RC {
                         else if (typ == Type::Command) {
                             switch(step) {
                             case Lua::CmdStep::Idle:
+                                if (cb) {
+                                    cb((value_type)Lua::CmdStep::Idle);
+                                }
                                 c.push_back((uint8_t)Lua::CmdStep::Idle);
                                 c.push_back((uint8_t)def); // timeout
                                 etl::push_back_ntbs_or_emptyString(options, c);
@@ -553,7 +558,12 @@ namespace RC {
                                     c.push_back((uint8_t)Lua::CmdStep::AskConfirm);
                                 }
                                 else {
-                                    c.push_back((uint8_t)Lua::CmdStep::Executing);
+                                    if (cb && cb((value_type)Lua::CmdStep::Is_Immediate)) {
+                                        c.push_back((uint8_t)Lua::CmdStep::Idle);
+                                    }
+                                    else {
+                                        c.push_back((uint8_t)Lua::CmdStep::Executing);
+                                    }
                                 }
                                 c.push_back((uint8_t)def); // timeout
                                 etl::push_back_ntbs_or_emptyString(options, c);
@@ -566,7 +576,12 @@ namespace RC {
                                 if (cb) {
                                     cb((value_type)Lua::CmdStep::Confirmed);
                                 }
-                                c.push_back((uint8_t)Lua::CmdStep::Executing);
+                                if (cb && cb((value_type)Lua::CmdStep::Is_Immediate)) {
+                                    c.push_back((uint8_t)Lua::CmdStep::Idle);
+                                }
+                                else {
+                                    c.push_back((uint8_t)Lua::CmdStep::Executing);
+                                }
                                 c.push_back((uint8_t)def); // timeout
                                 etl::push_back_ntbs_or_emptyString(options, c);
                                 break;
@@ -574,6 +589,9 @@ namespace RC {
                                 if (cb) {
                                     cb((value_type)Lua::CmdStep::Cancel);
                                 }
+                                c.push_back((uint8_t)Lua::CmdStep::Idle);
+                                c.push_back((uint8_t)def); // timeout
+                                etl::push_back_ntbs_or_emptyString(options, c);
                                 break;
                             case Lua::CmdStep::Query:
                                 if (cb && cb((value_type)Lua::CmdStep::Query)) {
@@ -584,6 +602,8 @@ namespace RC {
                                 }
                                 c.push_back((uint8_t)def); // timeout
                                 etl::push_back_ntbs_or_emptyString(options, c);
+                                break;
+                            case Lua::CmdStep::Is_Immediate:
                                 break;
                             }
                         }
