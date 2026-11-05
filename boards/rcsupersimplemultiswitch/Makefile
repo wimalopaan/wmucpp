@@ -29,7 +29,7 @@ F_OSC = 32000000
 
 subdirs =
 
-targets += ssmsw01.hex
+#targets += ssmsw01.hex
 targets += ssmsw02.hex
 
 -include ../../Makefile.avr0.include
