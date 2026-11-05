@@ -118,6 +118,12 @@ using portmux = Portmux::StaticMapper<Meta::List<usart0Position, usart1Position>
 using portmux = Portmux::StaticMapper<Meta::List<usart0Position>>;
 #endif
 
+#ifdef USE_SSMSW01
+using inputUsartPosition = usart1Position;
+#else
+using inputUsartPosition = usart0Position;
+#endif
+
 #if defined(__AVR_AVR128DA32__) or defined(__AVR_AVR128DA28__)
 // output-to-pin
 using led7 = Pin<Port<D>, 7>;
@@ -206,9 +212,9 @@ namespace Crsf {
         using crsf_pa = Crsf::Adapter<CrsfAdapterConfig>;
 
 #ifdef USE_SSMSW01
-        using crsf = AVR::Usart<usart1Position, crsf_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<256>>;
+        using crsf = AVR::Usart<inputUsartPosition, crsf_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<256>>;
 #else
-        using crsf = AVR::Usart<usart0Position, crsf_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<0>>;
+        using crsf = AVR::Usart<inputUsartPosition, crsf_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<0>>;
 #endif
 
 
@@ -391,10 +397,17 @@ namespace Ibus {
         struct CallbackConfig;
         using cb = IBusCommandCallback<CallbackConfig>;
         using ibus_pa = IBus2::Servo::ProtocollAdapter<0, void, cb>;
-        using ibus = AVR::Usart<usart0Position, ibus_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<0>>;
+#if defined(USE_SSMSW01) && defined(DEBUG_OUTPUT)
+        using ibusSendQueue = AVR::SendQueueLength<256>;
+#else
+        using ibusSendQueue = AVR::SendQueueLength<0>;
+#endif
+        using ibus = AVR::Usart<inputUsartPosition, ibus_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, ibusSendQueue>;
 
 #ifdef DEBUG_OUTPUT
-#if defined(__AVR_AVR128DA32__) or defined(__AVR_AVR128DA28__)
+#if defined(USE_SSMSW01)
+        using terminalDevice = ibus;
+#elif defined(__AVR_AVR128DA32__) or defined(__AVR_AVR128DA28__)
         using terminalDevice = AVR::Usart<usart1Position, External::Hal::NullProtocollAdapter<>, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<1>, AVR::SendQueueLength<256>>;
 #else
         using terminalDevice = ibus;
@@ -406,7 +419,7 @@ namespace Ibus {
 
         struct CallbackConfig {
             using debug = terminal;
-            using leds = Devices::leds;
+            using ledGroups = Meta::List<Devices::leds>;
         };
 
         static inline void init() {
@@ -416,7 +429,9 @@ namespace Ibus {
             ibus::template init<BaudRate<IBUS_BAUDRATE>>();
 #if defined(__AVR_AVR128DA32__) or defined(__AVR_AVR128DA28__)
 #ifdef DEBUG_OUTPUT
-            terminalDevice::template init<BaudRate<DEBUG_BAUDRATE>>();
+            if constexpr (!std::is_same_v<terminalDevice, ibus> && !std::is_same_v<terminalDevice, void>) {
+                terminalDevice::template init<BaudRate<DEBUG_BAUDRATE>>();
+            }
 #endif
 #endif
         }
@@ -425,7 +440,9 @@ namespace Ibus {
             ibus::periodic();
 #if defined(__AVR_AVR128DA32__) or defined(__AVR_AVR128DA28__)
 #ifdef DEBUG_OUTPUT
-            terminalDevice::periodic();
+            if constexpr (!std::is_same_v<terminalDevice, ibus> && !std::is_same_v<terminalDevice, void>) {
+                terminalDevice::periodic();
+            }
 #endif
 #endif
         }
@@ -448,10 +465,12 @@ namespace Sbus {
         struct CallbackConfig;
         using cb = SBusCommandCallback<CallbackConfig>;
         using servo_pa = External::SBus::Servo::ProtocollAdapter<0, systemTimer, void, cb>;
-        using servo = AVR::Usart<usart0Position, servo_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<256>>;
+        using servo = AVR::Usart<inputUsartPosition, servo_pa, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<256>>;
 
 #ifdef DEBUG_OUTPUT
-#if defined(__AVR_AVR128DA32__) or defined(__AVR_AVR128DA28__)
+#if defined(USE_SSMSW01)
+        using terminalDevice = servo;
+#elif defined(__AVR_AVR128DA32__) or defined(__AVR_AVR128DA28__)
         using terminalDevice = AVR::Usart<usart1Position, External::Hal::NullProtocollAdapter<>, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<1>, AVR::SendQueueLength<256>>;
 #else
         using terminalDevice = servo;
@@ -463,7 +482,7 @@ namespace Sbus {
 
         struct CallbackConfig {
             using debug = terminal;
-            using leds = Devices::leds;
+            using ledGroups = Meta::List<Devices::leds>;
         };
         static inline void init() {
             leds::init();
@@ -474,7 +493,9 @@ namespace Sbus {
 #endif
 #if defined(__AVR_AVR128DA32__) or defined(__AVR_AVR128DA28__)
 #ifdef DEBUG_OUTPUT
-            terminalDevice::template init<BaudRate<DEBUG_BAUDRATE>>();
+            if constexpr (!std::is_same_v<terminalDevice, servo> && !std::is_same_v<terminalDevice, void>) {
+                terminalDevice::template init<BaudRate<DEBUG_BAUDRATE>>();
+            }
 #endif
 #endif
         }
@@ -483,7 +504,9 @@ namespace Sbus {
             servo::periodic();
 #if defined(__AVR_AVR128DA32__) or defined(__AVR_AVR128DA28__)
 #ifdef DEBUG_OUTPUT
-            terminalDevice::periodic();
+            if constexpr (!std::is_same_v<terminalDevice, servo> && !std::is_same_v<terminalDevice, void>) {
+                terminalDevice::periodic();
+            }
 #endif
 #endif
         }
@@ -516,7 +539,7 @@ namespace SPort {
         using cb = SPortCommandCallback<CallbackConfig>;
 
         template<typename PA>
-        using sensorUsart = AVR::Usart<usart0Position, PA, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<16>>;
+        using sensorUsart = AVR::Usart<inputUsartPosition, PA, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<16>>;
         struct Provider {
             inline static constexpr auto valueId = External::SPort::ValueId::DIY;
             inline static uint32_t value() {
@@ -526,7 +549,9 @@ namespace SPort {
         using sensor = External::SPort2::Sensor<SPORT_PHY, sensorUsart, systemTimer, Meta::List<Provider>, cb>;
 
 #ifdef DEBUG_OUTPUT
-#if defined(__AVR_AVR128DA32__) or defined(__AVR_AVR128DA28__)
+#if defined(USE_SSMSW01)
+        using terminalDevice = void;
+#elif defined(__AVR_AVR128DA32__) or defined(__AVR_AVR128DA28__)
         using terminalDevice = AVR::Usart<usart1Position, External::Hal::NullProtocollAdapter<>, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<1>, AVR::SendQueueLength<256>>;
 #else
         using terminalDevice = void;
@@ -538,7 +563,7 @@ namespace SPort {
 
         struct CallbackConfig {
             using debug = terminal;
-            using leds = Devices::leds;
+            using ledGroups = Meta::List<Devices::leds>;
         };
 
         static inline void init() {
@@ -546,7 +571,7 @@ namespace SPort {
             tp::template dir<Output>();
             sensor::init();
 #if defined(__AVR_AVR128DA32__) or defined(__AVR_AVR128DA28__)
-#ifdef DEBUG_OUTPUT
+#if defined(DEBUG_OUTPUT) && !defined(USE_SSMSW01)
             terminalDevice::template init<BaudRate<DEBUG_BAUDRATE>>();
 #endif
 #endif
@@ -555,7 +580,7 @@ namespace SPort {
             tp::toggle();
             sensor::periodic();
 #if defined(__AVR_AVR128DA32__) or defined(__AVR_AVR128DA28__)
-#ifdef DEBUG_OUTPUT
+#if defined(DEBUG_OUTPUT) && !defined(USE_SSMSW01)
             terminalDevice::periodic();
 #endif
 #endif
