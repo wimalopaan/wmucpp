@@ -19,6 +19,7 @@
 #pragma once
 
 #include <tick.h>
+#include <limits>
 
 using namespace std::literals::chrono_literals;
 
@@ -137,10 +138,16 @@ struct GFSM {
             if constexpr(!std::is_same_v<telemetry, void>) {
                 mStateTick.on(debugTicks, []{
                     if constexpr(!std::is_same_v<adc, void>) {
-                        const int16_t t = Mcu::Stm::V4::adc2Temp((adc::values()[0] * devs::Vref_n) / devs::Vcal_n);
+                        const auto t = Mcu::Stm::V4::adc2TempInt((adc::values()[0] * devs::Vref_n) / devs::Vcal_n);
                         const uint16_t v = adc::values()[1] * (devs::r1 + devs::r2) * devs::Vref_n / (devs::Vref_d * 4096 * devs::r1 / 10); // 100mV
                         telemetry::voltage(v * 100);
-                        telemetry::temp(t * 10);
+                        if (t && (*t >= std::numeric_limits<int16_t>::min() / 10)
+                              && (*t <= std::numeric_limits<int16_t>::max() / 10)) {
+                            telemetry::temp(static_cast<int16_t>(*t * 10));
+                        }
+                        else {
+                            IO::outl<debug>("# Temperature invalid");
+                        }
                     }
                     uint8_t s = 0;
                     if constexpr(!std::is_same_v<in0, void>) {

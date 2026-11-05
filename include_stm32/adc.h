@@ -29,6 +29,8 @@
 
 #include <type_traits>
 #include <concepts>
+#include <limits>
+#include <optional>
 
 #define TEMPSENSOR_CAL1_ADDR               ((uint16_t*) (0x1FFF75A8UL))
 #define TEMPSENSOR_CAL2_ADDR               ((uint16_t*) (0x1FFF75CAUL))
@@ -79,6 +81,24 @@ namespace Mcu::Stm {
     namespace V4 {
         static inline float adc2Temp(const uint16_t v) {
             return ((float)(TEMPSENSOR_CAL2_TEMP - TEMPSENSOR_CAL1_TEMP) / (*TEMPSENSOR_CAL2_ADDR - *TEMPSENSOR_CAL1_ADDR)) * (v - *TEMPSENSOR_CAL1_ADDR) + TEMPSENSOR_CAL1_TEMP;
+        }
+
+        static inline constexpr std::optional<int16_t> adc2TempInt(
+            const uint16_t v, const uint16_t cal1 = *TEMPSENSOR_CAL1_ADDR,
+            const uint16_t cal2 = *TEMPSENSOR_CAL2_ADDR) {
+            const int32_t denominator = int32_t{cal2} - cal1;
+            if (denominator == 0) {
+                return std::nullopt;
+            }
+            constexpr int32_t t1 = TEMPSENSOR_CAL1_TEMP;
+            constexpr int32_t t2 = TEMPSENSOR_CAL2_TEMP;
+            // Truncate the complete temperature, not just the interpolation offset.
+            const int32_t numerator = t1 * denominator + (t2 - t1) * (int32_t{v} - cal1);
+            const int32_t t = numerator / denominator;
+            if ((t < std::numeric_limits<int16_t>::min()) || (t > std::numeric_limits<int16_t>::max())) {
+                return std::nullopt;
+            }
+            return static_cast<int16_t>(t);
         }
 
         template<uint8_t N, typename Config, typename MCU = DefaultMcu> struct Adc;
