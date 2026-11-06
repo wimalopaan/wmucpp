@@ -34,8 +34,8 @@
 
 // use one(!) of the following protocol selection exclusively
 // #define USE_HWEXT // otherwise SBUS-output is used
-#define USE_SBUS // according SBUS inversion see below
-// #define USE_CRSF
+// #define USE_SBUS // according SBUS inversion see below
+#define USE_CRSF
 // #define USE_SUMDV1
 // #define USE_SUMDV3
 
