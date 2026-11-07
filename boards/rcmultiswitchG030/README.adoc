@@ -1,0 +1,354 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+
+= MultiSwitch-E8 (STM32G0)
+:toc:
+:toclevels: 3
+:sectnums:
+:lang: de
+
+Der MultiSwitch-E8 schaltet acht Ausgänge über CRSF, beispielsweise für Beleuchtung, Soundmodule oder geeignete Lasttreiber im RC-Modell.
+Je nach Hardware und Firmware stehen PWM, Blinkfolgen, Morse, virtuelle Ausgangsgruppen, Lauflicht und Master-/Slave-Betrieb zur Verfügung.
+Die Schaltbefehle werden als zusätzliche CRSF-Kommandos übertragen und belegen keinen der normalen RC-Proportionalkanäle.
+
+Dieses Verzeichnis enthält die STM32-Firmware. Der aktuelle gemeinsame Einstiegspunkt ist link:msw30.cc[`msw30.cc`], die Hardwarezuordnung steht in link:devices_3.h[`devices_3.h`].
+Die älteren Dateien `msw01.cc` bis `msw21.cc` sind nicht die Grundlage der nachfolgenden Beschreibung.
+Der tatsächliche Funktionsumfang hängt von den beim Übersetzen aktivierten Optionen ab.
+
+== Dokumentation und Hardware
+
+[cols="1,3",options="header"]
+|===
+| Quelle | Inhalt
+| https://github.com/wimalopaan/Electronics/blob/main/docs/multiswitch.adoc[Electronics: MultiSwitch]
+| Hardwarevarianten, Schaltpläne, Platinen, Gehäuse und alternative Senderbedienung.
+| https://github.com/wimalopaan/LUA/tree/main/WIDGETS/lvglMultiSwNG[MultiSwitch NG]
+| Aktuelles LVGL-Widget für EdgeTX; https://github.com/wimalopaan/LUA/blob/main/WIDGETS/lvglMultiSwNG/README.adoc[Bedienungsanleitung].
+| https://github.com/wimalopaan/Electronics/blob/main/docs/protocols.adoc#crsf_sw[CRSF-MultiSwitch-Protokoll]
+| Kommandos im Realm `0xa1`, Adressen und Telegrammformate.
+| https://github.com/wimalopaan/Electronics/blob/main/docs/elrs.adoc[Electronics: ExpressLRS]
+| Routing, mehrere CRSF-Geräte und Unterschiede zwischen ELRS V3 und V4.
+| https://github.com/wimalopaan/Electronics/blob/main/docs/crsf-devices.adoc#crsf-switch[CRSF-Switch / Router]
+| Anschluss mehrerer Geräte an einen Empfänger.
+| https://oshwlab.com/wilhelm.wm.meier/works[OSHWLab]
+| Aktuelle Hardwareentwürfe; die alte Small10-Platine ist in Electronics als überholt gekennzeichnet.
+|===
+
+=== Unterstützte Varianten
+
+[cols="1,2,2",options="header"]
+|===
+| Firmwareauswahl | Hardware | Hinweise
+| `HW_MSW10` | RCMultiSwitchSmall10, STM32G030 | Ältere Platine; keine virtuellen Gruppen oder Lauflichtgeneratoren in der aktuellen Auswahl.
+| `HW_MSW11` | RCMultiSwitchSmall11, STM32G031 | Spannungsmessung; optional Taster statt Statuseingang.
+| `HW_MSW12` | RCMultiSwitchSmall12, STM32G0B1 | Umfangreiche Standardausstattung einschließlich virtueller Gruppen, Lauflicht und Slave-Kommandos; zwei Statuseingänge.
+| `HW_MSW12` + `HW_MSW12_G051` | Small12 mit STM32G051 | Eigene Build-Auswahl und abweichende Feature-Vorgaben.
+| `HW_NUCLEO` | Nucleo-G031K8 | Entwicklungsboard mit ST-Link; externe Laststufen erforderlich.
+| `HW_WEACT` | WeAct STM32G031F8 | Kompaktes Entwicklungsboard; externer SWD-Programmer und Laststufen erforderlich.
+|===
+
+Eine WeAct-basierte THT-Platine einschließlich Schaltplan und Gerberdaten ist in
+https://github.com/wimalopaan/Electronics/blob/main/docs/multiswitch.adoc#msw_tht[Electronics] beschrieben.
+Pinbelegung und elektrische Grenzwerte immer anhand der tatsächlich verwendeten Platine prüfen.
+
+[WARNING]
+====
+GPIOs eines Entwicklungsboards sind keine Leistungsausgänge. Lasten nur über geeignete Treiber anschließen.
+Versorgungsspannung, Strombelastbarkeit, Polarität, Schutzbeschaltung und Steckerbelegung ergeben sich aus dem jeweiligen Schaltplan, nicht aus dieser Firmwarebeschreibung.
+PWM-Dimmen eignet sich nicht für jede Last; insbesondere Relais, Soundmodule und induktive Lasten entsprechend ihrer Beschaltung betreiben.
+====
+
+== Anschluss und Adressen
+
+Ein typischer Aufbau ist:
+
+[source,text]
+----
+EdgeTX-Sender + ELRS-HF-Modul
+             |
+          Funkstrecke
+             |
+       ELRS-Empfänger
+             |
+       CRSF-Schnittstelle
+             |
+       MultiSwitch-E8
+             |
+      acht Lastausgänge
+----
+
+Bei einer normalen UART-Verbindung werden Empfänger-TX und MultiSwitch-RX sowie Empfänger-RX und MultiSwitch-TX gekreuzt verbunden; eine gemeinsame Masse ist erforderlich.
+Ein Ein-Draht-/Half-Duplex-Aufbau benötigt die passende Hardware und Firmwarekonfiguration.
+Die Firmware sucht beim Start nach einer passenden CRSF-Baudrate und, soweit vom Hardwaretreiber unterstützt, nach dem Duplexmodus.
+
+[IMPORTANT]
+====
+Standard-CRSF ist eine Punkt-zu-Punkt-Verbindung, kein beliebig parallel schaltbarer Bus.
+Mehrere aktiv sendende Push-Pull-TX-Ausgänge dürfen nicht zusammengeschaltet werden.
+Für mehrere Module vorzugsweise getrennte Empfänger-Schnittstellen oder einen CRSF-Switch/Router verwenden.
+Open-Drain, Half-Duplex und Antwortslots sind spezielle Aufbauvarianten und ersetzen keine Prüfung der elektrischen und zeitlichen Busbedingungen.
+====
+
+=== Drei verschiedene Adressen
+
+[cols="1,1,3",options="header"]
+|===
+| Einstellung | Vorgabe | Bedeutung
+| `Switch Addr` | `0` | Logische Schaltadresse von 0 bis 255 für die acht realen Ausgänge. Diese Adresse wird im Widget als Tab-/Elementadresse eingetragen.
+| `Virtual Addr` | `1` | Zusätzliche logische Adresse für virtuelle Gruppen und Lauflicht, sofern einkompiliert.
+| `CRSF Addr` | `200` (`0xc8`) | Geräteadresse für CRSF-Erkennung, Konfigurationsmenü und Telemetrie; im Menü von `192` bis `207` (`0xc0` bis `0xcf`) einstellbar.
+|===
+
+Die logische Schaltadresse ist nicht die CRSF-Geräteadresse.
+Das Gerät erscheint im Konfigurationsmenü als `MultiSwitch-E@<Switch Addr>:<CRSF Addr>`.
+Firmware und Menü zählen reale Ausgänge von `Output 0` bis `Output 7`; MultiSwitch NG zeigt dieselben Ausgänge als `1` bis `8`.
+
+Bei mehreren Modulen logische Schaltadressen und gegebenenfalls virtuelle Adressen so vergeben, dass keine unbeabsichtigte gemeinsame Ansteuerung entsteht.
+Für unabhängig erkennbare CRSF-Geräte außerdem eindeutige CRSF-Adressen vergeben.
+256 logische Schaltadressen bedeuten nicht, dass 256 Geräte elektrisch an einer UART oder gleichzeitig unter den 16 hier angebotenen CRSF-Geräteadressen betrieben werden können.
+
+ELRS V3 leitet standardmäßig nur die erweiterte Geräteadresse `0xc8` weiter; andere Geräteadressen benötigen die in Electronics beschriebene Routing-Erweiterung.
+ELRS V4 unterstützt vollständiges CRSF-Routing. Auch dort bleibt pro normaler serieller Schnittstelle ohne Router nur ein externes Gerät vorgesehen.
+
+== Bedienungsmöglichkeiten
+
+[cols="1,2,3",options="header"]
+|===
+| Bedienung | Voraussetzung | Verwendung
+| MultiSwitch NG | EdgeTX ab 2.11.3 mit LVGL auf einem Farbsender | Touch-Bedienung, physische Schalter, Quellen und PWM-Schieberegler; mehrere Tabs und Module.
+| Bisheriges `lvglMultiSw` | Passender EdgeTX-Farbsender | Weiter verfügbare Alternative; unter anderem Statusbits und Telemetrieaktionen laut eigener Dokumentation.
+| B&W-Telemetrieskript | Geeigneter Sender mit Schwarzweißdisplay | `mulsw2.lua` und Verzeichnis `MULSW2` aus dem LUA-Repository; Bedienung ohne LVGL-Touch-Widget.
+| CRSF-Gerätemenü | Bidirektionale Verbindung und aktivierte Konfigurationsantworten | Einstellungen, Ausgangstests und optional `Operate`; bei ELRS über `elrsv3.lua` unter `Other devices`.
+| Eigene CRSF-Steuerung | Sender/Software mit passenden MultiSwitch-Kommandos | Direkte Ansteuerung über `Set`, `Set4`, `Set4M` und `Prop`.
+| Master-/Slave- und Lauflichtverkettung | Entsprechende Firmwareoptionen und geeigneter CRSF-Übertragungsweg | Ansteuerung durch andere Module statt ausschließlich durch den Sender.
+|===
+
+Die B&W-Variante ist in https://github.com/wimalopaan/LUA[LUA] und
+https://github.com/wimalopaan/Electronics/blob/main/docs/multiswitch.adoc#msw_bw[Electronics] beschrieben.
+Electronics nennt 192 kB Sender-RAM für den Betrieb neben dem ELRS-Skript; kleinere Sender nicht als kompatibel voraussetzen.
+
+=== MultiSwitch NG installieren und einrichten
+
+. Das vollständige Widget-Verzeichnis nach `/WIDGETS/lvglMultiSwNG/` auf die Sender-SD-Karte kopieren, einschließlich der Module, `lang/` und Logos.
+. Im Modell das Widget `MultiSw NG` hinzufügen und zur Bedienung ins Vollbild wechseln.
+. Unter `Einstellungen` -> `Global` das Protokoll `CRSF` verwenden. Das interne oder externe HF-Modul des Senders muss für CRSF/ELRS eingerichtet sein.
+. Unter `Tab Einstellungen` die Standardadresse passend zu `Switch Addr` setzen. Die erste Konfiguration hat Adresse `0` und acht rastende Buttons für Ausgänge `1` bis `8`.
+. Elemente benennen und bei Bedarf ihre Art, Ausgangsnummer und physische Zuordnung ändern; mit `Anwenden` übernehmen und speichern.
+. Zunächst ohne gefährliche Lasten jeden Ausgang einzeln prüfen; anschließend Lastfunktionen und Verhalten bei Verbindungsunterbrechung prüfen.
+
+Das NG-Widget hat keine funktionalen Widget-Options: Die Konfiguration erfolgt im Vollbild.
+Die Oberfläche folgt der EdgeTX-Menüsprache Deutsch oder Englisch.
+Ein Element mit Adresse `-1` erbt die Standardadresse seines Tabs; eine explizite Adresse kann auf ein anderes Modul zeigen.
+Die Kombination aus Adresse und Ausgang muss über alle Tabs eindeutig sein.
+
+Die unter `Global` eingestellte CRSF-Zieladresse ist wiederum keine logische Schaltadresse.
+NG verwendet standardmäßig Ziel `0` (Broadcast); die Zustellung muss zur eingesetzten CRSF-/ELRS-Topologie passen.
+Das Wiederholintervall wird in Einheiten von 10 ms angegeben; Vorgabe `100` entspricht einer Sekunde.
+Änderungen werden unabhängig davon zeitnah gesendet.
+
+=== Touch, Schalter und proportionale Bedienung
+
+[cols="1,3",options="header"]
+|===
+| NG-Element | Verhalten mit diesem MultiSwitch
+| `Button` | Rastendes Ein/Aus durch Antippen.
+| `Schalter` | Ein/Aus-Schaltelement.
+| `Taster` | Aktiv während der Betätigung; Touch-Taster werden beim Tab-/Seitenwechsel und Verlassen des Vollbilds zurückgesetzt.
+| `3-Positionen` | Mitte sendet `0`, rechts `1`, links `2`. Diese Firmware behandelt beide Nichtnullzustände als Ein; keine Richtungsumschaltung oder zwei unterschiedlichen Lastfunktionen.
+| `Schieberegler` | Sendet 0 bis 100 % per `Prop`; am betreffenden Firmwareausgang `PWM Mode = Remote` einstellen.
+|===
+
+Eine physische Schalterzuordnung deaktiviert die Touch-Bedienung des zugehörigen Schaltelements.
+Bei `3-Positionen` hat der erste zugeordnete Schalter Vorrang, der zweite aktiviert Zustand 2.
+Ein Schieberegler kann einer Senderquelle zugeordnet werden: Werte `0` bis `1024` ergeben `0` bis `100 %`, negative Werte ergeben `0 %`.
+Für einen Knüppel mit symmetrischem Wertebereich daher eine passende Quelle/Mischung vorbereiten.
+Bei zugeordneter Quelle ist der Touch-Schieberegler deaktiviert.
+
+Ein Aktivierungsschalter kann die Bedienung sperren und den Ausgang zurücksetzen.
+Exklusivgruppen erlauben nur ein aktives Schaltelement pro Gruppe und gelten tabübergreifend; Schieberegler gehören nicht dazu.
+Physische Eingänge werden auch in inaktiven Tabs verarbeitet.
+Mehrere NG-Widget-Instanzen desselben Modells teilen Konfiguration, Schaltzustände und Übertragung.
+
+Angewendete Konfigurationen werden standardmäßig automatisch gespeichert, Schaltzustände hingegen nicht.
+Nach einem Neustart beginnen Touch-Elemente ausgeschaltet; das ersetzt keine modellseitige Sicherheitsabschaltung.
+NG lädt oder migriert die Konfiguration des bisherigen Widgets nicht.
+
+=== Abgrenzung zu anderen Widget-Funktionen
+
+[NOTE]
+====
+NG bietet auch `S.Port WM` sowie `S.Port ACW 1.5/1.4` an. Die hier beschriebene STM32-Firmware verwendet jedoch CRSF als Eingang.
+S.Port, SBus, IBus und SumDV3 aus der übergreifenden Electronics-Dokumentation betreffen andere MultiSwitch-Firmwarevarianten bzw. Transportwege; sie sind nicht automatisch Eingänge dieses Projekts.
+
+Die optionale NG-LED-Farbübertragung (`SetRGB`) macht aus den acht Schaltausgängen keine adressierbaren RGB-LED-Ausgänge: Der Decoder dieser Firmware verarbeitet `SetRGB` nicht.
+NG enthält derzeit außerdem keine SHM-Anbindung, Telemetrieaktionen oder das Setzen virtueller Sender-Eingänge/-Schalter.
+Virtuelle _Firmware-Ausgangsgruppen_ sind davon unabhängig.
+====
+
+== Firmware konfigurieren
+
+Das CRSF-Gerätemenü konfiguriert den MultiSwitch, das Widget-Menü die Senderbedienung.
+Beides sind getrennte Einstellungen: Ein im Widget benannter Button konfiguriert beispielsweise nicht automatisch den PWM-Modus im Gerät.
+Dauerhafte Parameteränderungen werden von der Firmware im Flash gespeichert; `Test` und `Operate` sind Laufzeitbedienung und keine gespeicherten Einschaltzustände.
+Regelmäßig wiederholte Widget-Befehle können Menütests wieder überschreiben.
+
+=== Globale Einstellungen und Ausgangsfunktionen
+
+[cols="1,3",options="header"]
+|===
+| Menü | Bedeutung
+| `Global` -> `Switch Addr`, `Virtual Addr`, `CRSF Addr`
+| Adressierung wie oben beschrieben; `Virtual Addr` nur bei aktivierter virtueller Funktion.
+| `Global` -> `PWM f G...`
+| Gemeinsame PWM-Frequenz einer Hardware-Timergruppe: Wert 1 bis 200 in Schritten von 100 Hz, also 100 Hz bis 20 kHz. Die Menübeschriftung nennt die zugehörigen Ausgänge.
+| `Output n` -> `PWM Mode`
+| `Off`: ohne PWM; `On`: PWM mit eingestelltem Tastgrad; `Remote`: proportional per CRSF; `Global/Indiv`: individueller Tastgrad mit globaler Skalierung, sofern diese Funktion genutzt wird.
+| `Output n` -> `PWM Duty`
+| Lokaler Tastgrad von 1 bis 99 %. Für `Remote` kommt der Wert von den `Prop`-Kommandos, einschließlich 0 und 100 %.
+| `Output n` -> `Intervall Mode`
+| `Off`: stetiges Schalten; `On`: Blinkfolge; `Morse`: gemeinsamer Morse-Text bei einkompilierter Morse-Funktion. Die zusätzlich sichtbare Bezeichnung `Pattern` ist hier kein eigenständig auswählbarer Lauflichtmodus.
+| `Output n` -> `Intervall(on/off)`
+| Zeitwerte von 1 bis 255 in Einheiten von 50 ms.
+| `Output n` -> `Intervall(count)`
+| Anzahl der Blitze einer Folge, 1 bis 4.
+| `Output n` -> `Test`
+| Einzelnen Ausgang probeweise aus-/einschalten.
+| `Operate`
+| Optionales Menü zum direkten Schalten aller acht Ausgänge.
+|===
+
+Bei Small11/Small12 teilen sich `Output 0` bis `3` sowie `Output 4` bis `7` jeweils eine PWM-Frequenz.
+Andere Boards haben andere Timergruppen.
+`PWM Expo` ist als Parameter vorhanden, wird vom aktuell verwendeten Blinker jedoch nicht umgesetzt.
+
+=== Morse, virtuelle Gruppen und Lauflicht
+
+`Morse` enthält den Text und die Zeiten für Dit, Dah, Zeichen- und Wortpausen in Einheiten von 100 ms.
+Auf Small12 stehen mehrere Textfelder zur Verfügung; nichtleere Teiltexte werden zu einem gemeinsamen Text zusammengefügt.
+Am gewünschten Ausgang `Intervall Mode = Morse` wählen und den Ausgang einschalten.
+
+Mit `USE_VIRTUALS` lassen sich unter `Virtuals` vier Gruppen (`Virtual 0` bis `3`) mit jeweils bis zu vier realen Ausgängen definieren.
+`Enable Virtuals` aktiviert die Gruppennutzung; angesteuert wird die zusätzliche `Virtual Addr`.
+Gruppenmitglieder werden dann nicht mehr durch normale Einzel-Schaltbefehle an `Switch Addr` bedient.
+Im NG-Widget entsprechen die vier Gruppen den Ausgängen `1` bis `4` an der virtuellen Adresse.
+
+Mit `USE_PWM_GLOBAL_MODULATION` kann der proportionale Kanal `4` (NG-Ausgang `5`) an der virtuellen Adresse die globale Helligkeit steuern.
+Dafür `Virtual 4 = Global Dimming` aktivieren und die betreffenden realen Ausgänge auf `PWM Mode = Global/Indiv` setzen.
+
+Mit `USE_PATTERNS` stehen Lauflichtgeneratoren mit kontinuierlicher oder einmaliger Laufrichtung links/rechts bzw. hin und zurück zur Verfügung.
+Mitgliederreihenfolge, Ein-/Auszeiten in Einheiten von 10 ms, Folgeadresse und Gruppe werden im Pattern-Menü eingestellt.
+Auf Small12 heißen die Einträge `Pattern Virt. 5` bis `8`.
+Die Schaltansteuerung der vier Generatoren erfolgt über die verbleibenden vier Bits der virtuellen Adresse, also NG-Ausgänge `5` bis `8`.
+Als Lauflichtmitglieder verwendete Ausgänge werden nicht parallel über normale Einzel-Schaltbefehle bedient.
+
+[IMPORTANT]
+====
+Globale Dimmung und der erste Lauflichtgenerator überlagern sich bei der Bediennummer NG-Ausgang `5` an der virtuellen Adresse: Dimmung verwendet `Prop`, der Generator den Schaltzustand.
+NG sendet bei einem Schieberegler zusätzlich einen Einschaltzustand für Werte größer 0.
+Für dieses Bedienkonzept daher nicht gleichzeitig den ersten Generator und globale Dimmung verwenden.
+====
+
+Die Parameter `Next Address` und `Group` sowie Intermodul-Kommandos ermöglichen modulübergreifende Lauflichtketten.
+Dafür muss der CRSF-Übertragungsweg auch Nachrichten zwischen Geräten transportieren; ein bloß parallel angeschlossener UART-Aufbau garantiert das nicht.
+
+=== Master-/Slave-Betrieb
+
+Mit `USE_SLAVE_COMMAND` kann ein Master über `Global` -> `Slave Cmd` Ausgangszustände senden.
+Am Slave unter `Global` -> `Master` die logische Adresse des gewünschten Masters einstellen und bei den betreffenden Ausgängen `Slave = On` setzen.
+Diese Ausgänge reagieren dann auf Slave-Kommandos statt auf normale Einzel-Schaltbefehle.
+Der Transport zwischen den Modulen benötigt ebenfalls eine passende Routing-/Buslösung.
+
+=== Telemetrie, LED und Failsafe
+
+Small11/Small12 liefern Spannungs- und interne MCU-Temperaturdaten mit den einstellbaren IDs `Cells Id` und `Temp Id`.
+Die Temperatur ist keine externe Last- oder Umgebungstemperaturmessung.
+Die Firmware überträgt außerdem vorhandene digitale Eingänge als Statusbits; ein nach Masse gezogener Eingang setzt sein Bit.
+Die Anzeige dieser Statusbits ist eine Funktion geeigneter Senderprogramme, nicht der allgemeinen NG-Betriebsstatusanzeige.
+
+Bei einkompiliertem `USE_RESPONSE_SLOT` stehen `Response Slot` und `Config resp.` zur Verfügung.
+Unterschiedliche Slots dienen der zeitlichen Trennung von Antworten in geeigneten gemeinsamen Busaufbauten.
+`Config resp. = Button` erfordert einen tatsächlich vorhandenen und einkompilierten Taster; ein langer Tastendruck aktiviert die Antworten.
+Small12 besitzt in der aktuellen Hardwaredefinition keinen solchen Taster.
+
+[cols="1,3",options="header"]
+|===
+| Status-LED | Bedeutung der Firmwarezustände
+| Mittleres Blinken | Suche nach CRSF-Verbindung/Baudrate.
+| Langsam, einmal | Betrieb ohne Telemetrie-/Konfigurationsantworten.
+| Langsam, zweimal | Betrieb mit dauerhaft aktivierten Antworten.
+| Langsam, dreimal | Dauerhafte Antworten im erkannten Half-Duplex-Betrieb, sofern der Treiber diese Erkennung bereitstellt.
+| Dauerlicht | Vorübergehend per Taster aktivierte Antworten.
+| Schnelles Blinken | Zustand `NotConnected`.
+|===
+
+Mit `USE_FAILSAFE` bietet `Failsafe` die Modi `Hold`, `All-Off` und `Set` mit einem Ein/Aus-Muster für acht Ausgänge.
+Die Vorgabe ist `Hold`.
+
+[WARNING]
+====
+Die angebotenen Failsafe-Parameter sind keine Sicherheitsgarantie: Im aktuellen `gfsm.h` ist die regelmäßige Paketprüfung im Laufbetrieb auskommentiert.
+Außerdem laufen die Failsafe-Schaltbefehle durch die normale Ausgangszuordnung, wodurch virtuelle, Pattern- oder Slave-Mitglieder betroffen sein können.
+Das Verhalten bei Ausfall von Sender, Funkstrecke und serieller Verbindung deshalb am tatsächlichen Aufbau prüfen und für sicherheitsrelevante Lasten eine unabhängige Abschaltung vorsehen.
+====
+
+== Firmware bauen und übertragen
+
+Die Makefiles bauen `msw30.elf` und `msw30.bin`.
+Erforderlich sind die ARM-C++-Toolchain und die STM32CubeG0/CMSIS-Dateien gemäß den Include-Pfaden der Makefiles.
+Das gesamte wmucpp-Repository wird benötigt; dieses Board-Verzeichnis allein genügt nicht.
+
+Aus diesem Verzeichnis genau den zur Bestückung passenden Build ausführen:
+
+[cols="1,2",options="header"]
+|===
+| Hardware | Kommando
+| Small10 / STM32G030 | `make g030`
+| Small11 / STM32G031 | `make g031`
+| Small12 / STM32G051 | `make g051`
+| Small12 / STM32G0B1 | `make g0b1`
+| WeAct / STM32G031 | `make weact`
+|===
+
+Die Targets setzen die Hardwareauswahl überwiegend per Compilerdefine.
+Für Nucleo ist eine gesonderte Auswahl von `HW_NUCLEO` statt `HW_MSW11` im G031-Build nötig; das normale Target `g031` wählt Small11.
+Hardwareauswahl, MCU, Linkerskript und Bestückung müssen zusammenpassen.
+Weitere Features werden am Anfang von `msw30.cc` gewählt; Small12 ergänzt dort abhängig vom MCU Standardfunktionen automatisch.
+`NO_DEFAULTS_MSW12` verhindert diese automatische Ergänzung.
+Die Targets verwenden gemeinsame Ausgabedateien und Bereinigungsschritte, daher unterschiedliche Hardware-Builds nicht parallel ausführen.
+
+Übertragung mit ST-Link/SWD, beispielsweise für die zuvor passend gebaute Binärdatei:
+
+[source,console]
+----
+st-flash --reset --connect-under-reset write msw30.bin 0x08000000
+----
+
+Beim WeAct-Board kann die Nutzung von PA14 für Taster oder Debugausgabe mit SWD kollidieren; die Hinweise in `msw30.cc` beachten und gegebenenfalls NRST beim Programmierstart verwenden.
+Vor einem Firmwarewechsel die bisherige Konfiguration dokumentieren und danach Parameter sowie Ausgangsverhalten erneut prüfen.
+
+== Fehlersuche und Grenzen
+
+[cols="1,3",options="header"]
+|===
+| Symptom | Prüfen
+| Widget bedient den falschen oder keinen Ausgang
+| `Switch Addr`, geerbte Tab-Adresse, explizite Elementadresse und Nummerierung 0–7 gegenüber 1–8.
+| Schieberegler schaltet nur Ein/Aus
+| CRSF als NG-Protokoll, `PWM Mode = Remote`, geeignete Last und richtige Senderquelle.
+| Einzelner Ausgang reagiert nicht auf den normalen Schalter
+| Zuordnung zu virtueller Gruppe, aktivem Pattern oder Slave; Aktivierungsschalter und Exklusivgruppe im Widget.
+| Gerät fehlt unter `Other devices`
+| Rückkanal, Konfigurationsantworten, CRSF-Geräteadresse, ELRS-Routing und gegebenenfalls Antwortslots.
+| NG meldet `CRSF inaktiv`
+| Internes/externes HF-Modul auf CRSF/ELRS einstellen. Im Simulator wird stattdessen eine separat eingerichtete serielle Ausgabe benötigt.
+| NG zeigt Übertragungs-/Speicherfehler
+| Statusmeldung beachten; die Annahme eines Telegramms durch EdgeTX bestätigt nicht dessen Empfang am MultiSwitch.
+|===
+
+Offene Punkte stehen in link:todo.txt[`todo.txt`], darunter Hinweise zu Morse und optionalem IrDA.
+Diese Datei enthält auch historische Einträge; für die konkrete Implementierung sind `msw30.cc`, `crsf_cb.h`, `switch_cb.h` und `gfsm.h` maßgeblich.
+Eine automatische Erkennung von SBus, IBus, SumDV3, PWM oder PPM ist kein implementiertes Eingangsfeature dieser Firmware.
+
+== Lizenz
+
+Die Firmware ist Teil von WMuCpp und steht unter GPL-3.0-or-later.
+Hardwareunterlagen und Senderprogramme liegen in den oben verlinkten Projekten; deren jeweilige Lizenzangaben beachten.
