@@ -20,6 +20,7 @@
 
 #include "mcu/eeprom.h"
 #include "meta.h"
+#include "etl/staticstring.h"
 #include "eeprom.h"
 #include "rc/rc_2.h"
 #include "rc/crsf_2.h"
@@ -32,6 +33,8 @@ struct CrsfCallback {
     using PType = Param_t::Type;
     using src = Config::src;
 
+    using cmdFsm = Config::cmdFsm;
+    
     using crsf_ifaces = Config::crsf_ifaces;
 
     using storage = Config::storage;
@@ -124,14 +127,206 @@ struct CrsfCallback {
             params[index].serialize(buffer, params, step, index);
         }
     }
-
     private:
+    
+    // 1) immediate: 
+    //    timeout=0
+    //    LUA: write state: 0x01 (start) (click)
+    //    dev:       state: 0x00 (ready) (idle), info: "done"
+    //
+    // bug: new LUA does not display "done"
+    
+    static inline std::array<const char*, 2> mTexts_1 {
+        "Ready",
+        "done"
+    };
+    static inline uint8_t mCommand_1 = 0;
+    static inline bool cb1(const uint8_t v) {
+        const RC::Protokoll::Crsf::V4::Lua::CmdStep step{v};
+        bool res = false;
+        switch(step) {
+        case RC::Protokoll::Crsf::V4::Lua::CmdStep::Idle:
+            params[mCommand_1].options = mTexts_1[0];
+            break;
+        case RC::Protokoll::Crsf::V4::Lua::CmdStep::Click:
+            params[mCommand_1].options = mTexts_1[1];
+            IO::outl<debug>("# command 1 Action");
+            res = false; // answer: no confirm
+            break;
+        case RC::Protokoll::Crsf::V4::Lua::CmdStep::Is_Immediate:
+            res = true; // ready
+            break;
+        default: 
+            params[mCommand_1].options = mTexts_1[0];
+            break;
+        }
+        IO::outl<debug>("# command 1 v: ", v, " r: ", (uint8_t)res);
+        return res;
+    }
+
+    // 2) immediate-long:
+    //    timeout=1
+    //    LUA: write state: 0x01 (start) (click)
+    //    dev:       state: 0x02 (progess) (executing), info: "phase1"
+    //    LUA: write state: 0x06 (poll) (query)
+    //    dev:       state: 0x02 (progess) (executing), info: "phase2"
+    //    LUA: write state: 0x06 (poll) (query)
+    //    dev:       state: 0x02 (progess) (executing), info: "phase3"
+    //    LUA: write state: 0x06 (poll) (query)
+    //    dev:       state: 0x00 (ready) (idle), info: "done"
+
+    // bug: LUA does not display "done" 
+    
+    static inline std::array<const char*, 5> mTexts_2 {
+        "Ready",
+        "phase1",
+        "phase2",
+        "phase3",
+        "done"
+    };
+    static inline uint8_t mCommand_2 = 0;
+    static inline bool cb2(const uint8_t v) {
+        const RC::Protokoll::Crsf::V4::Lua::CmdStep step{v};
+        bool res = false;
+        switch(step) {
+        case RC::Protokoll::Crsf::V4::Lua::CmdStep::Idle:
+            cmdFsm::reset();
+            params[mCommand_2].options = mTexts_2[0];
+            break;
+        case RC::Protokoll::Crsf::V4::Lua::CmdStep::Click:
+            params[mCommand_2].options = mTexts_2[1];
+            IO::outl<debug>("# command 2 Action");
+            cmdFsm::start();
+            res = false; // no confirm
+            break;
+        case RC::Protokoll::Crsf::V4::Lua::CmdStep::Query:
+            params[mCommand_2].options = mTexts_2[cmdFsm::stateIndex() + 1];
+            res = cmdFsm::status(); 
+            break;
+        case RC::Protokoll::Crsf::V4::Lua::CmdStep::Is_Immediate:
+            res = false; // polling needed
+            break;
+        default:
+            break;
+        }
+        IO::outl<debug>("# command 2 v: ", v, " r: ", (uint8_t)res);
+        return res;
+    }
+    
+    //
+    // 3a) confirm:
+    //    timeout=0
+    //    LUA: write state: 0x01 (start) (click)
+    //    dev:       state: 0x03 (confirmation needed) (confirm), info: "really?"
+    //    LUA: write state: 0x04 (confirm) (confirmed)
+    //    dev:       state: 0x00 (ready) (idle), info: "done"
+    // 
+    // 3b) cancel:
+    //    LUA: write state: 0x01 (start) (click)
+    //    dev:       state: 0x03 (confirmation needed) (confirm), info: "really?"
+    //    LUA: write state: 0x05 (cancel) (cancel)
+    //    dev:       state: 0x00 (ready) (idle), info: "canceled"
+    //
+
+    // bug: LUA does not display "done" 
+    
+    static inline std::array<const char*, 3> mTexts_3 {
+        "Ready",
+        "Really?",
+        "done"
+    };
+    static inline uint8_t mCommand_3 = 0;
+    static inline bool cb3(const uint8_t v) {
+        const RC::Protokoll::Crsf::V4::Lua::CmdStep step{v};
+        bool res = false;
+        switch(step) {
+        case RC::Protokoll::Crsf::V4::Lua::CmdStep::Idle:
+            params[mCommand_3].options = mTexts_3[0];
+            break;
+        case RC::Protokoll::Crsf::V4::Lua::CmdStep::Click:
+            params[mCommand_3].options = mTexts_3[1];
+            res = true; // answer: confirm
+            break;
+        case RC::Protokoll::Crsf::V4::Lua::CmdStep::Confirmed:
+            params[mCommand_3].options = mTexts_3[2];
+            IO::outl<debug>("# command 3 Action");
+            break;
+        case RC::Protokoll::Crsf::V4::Lua::CmdStep::Cancel:
+            params[mCommand_3].options = "";
+            break;
+        case RC::Protokoll::Crsf::V4::Lua::CmdStep::Is_Immediate:
+            res = true; // ready
+            break;
+        default: // maybe confirm to not come thru
+            params[mCommand_3].options = mTexts_3[0];
+            break;
+        }
+        IO::outl<debug>("# command 3 v: ", v, " r: ", (uint8_t)res);
+        return res;
+    }
+    
+    // 4) confirm-long:
+    //    timeout==1
+    //    LUA: write state: 0x01 (start) (click)
+    //    dev:       state: 0x03 (confirmation needed) (confirm), info: "really?"
+    //    LUA: write state: 0x04 (confirm) (confirmed)
+    //    dev:       state: 0x02 (progess) (executing), info: "phase1"
+    //    LUA: write state: 0x06 (poll) (query)
+    //    dev:       state: 0x02 (progess) (executing), info: "phase2"
+    //    LUA: write state: 0x06 (poll) (query)
+    //    dev:       state: 0x02 (progess) (executing), info: "phase3"
+    //    LUA: write state: 0x06 (poll) (query)
+    //    dev:       state: 0x00 (ready) (idle), info: "done"
+    
+    static inline std::array<const char*, 6> mTexts_4 {
+        "Ready",
+        "Really?",
+        "phase1",
+        "phase2",
+        "phase3",
+        "done"
+    };
+    static inline uint8_t mCommand_4 = 0;
+    static inline bool cb4(const uint8_t v) {
+        const RC::Protokoll::Crsf::V4::Lua::CmdStep step{v};
+        bool res = false;
+        switch(step) {
+        case RC::Protokoll::Crsf::V4::Lua::CmdStep::Idle:
+            cmdFsm::reset();
+            params[mCommand_4].options = mTexts_4[0];
+            break;
+        case RC::Protokoll::Crsf::V4::Lua::CmdStep::Click:
+            params[mCommand_4].options = mTexts_4[1];
+            res = true; // confirm
+            break;
+        case RC::Protokoll::Crsf::V4::Lua::CmdStep::Confirmed:
+            params[mCommand_4].options = mTexts_4[2];
+            IO::outl<debug>("# command 4 Action");
+            cmdFsm::start();
+            break;
+        case RC::Protokoll::Crsf::V4::Lua::CmdStep::Cancel:
+            params[mCommand_4].options = "";
+            break;
+        case RC::Protokoll::Crsf::V4::Lua::CmdStep::Query:
+            params[mCommand_4].options = mTexts_4[cmdFsm::stateIndex() + 2];
+            res = cmdFsm::status(); 
+            break;
+        case RC::Protokoll::Crsf::V4::Lua::CmdStep::Is_Immediate:
+            res = false; // polling needed
+            break;
+        default:
+            break;
+        }
+        IO::outl<debug>("# command 4 v: ", v, " r: ", (uint8_t)res);
+        return res;
+    }
+    
+    
     static inline name_t mName = []{
         name_t name{};
         updateName(name);
         return name;
     }();
-
     static inline bool mEepromMode = false;
     static inline constexpr uint32_t mSerialNumber{1234};
     static inline constexpr uint32_t mHWVersion{HW_VERSION};
@@ -157,7 +352,6 @@ struct CrsfCallback {
     static inline void addForward(auto& p, const uint8_t parent, const char* const name) {
         addNode(p, Param_t{parent, PType::Sel, name, "Off;Forward;Tunnel", &eeprom.outputParams[index].telemetryMode[type], 0, 2, [](const uint8_t v){Meta::nth_element<index, crsf_ifaces>::forwardTelemetryMode(type, v); return true;}});
     }
-
     template<uint8_t index>
     static inline constexpr void addOutput(auto& p, const uint8_t parent, const char* const name) {
         const uint8_t parent2 = addParent(p, Param_t{parent, PType::Folder, name});
@@ -209,6 +403,34 @@ struct CrsfCallback {
         addNode(p, Param_t{0, PType::U8,  "Command B-Address", nullptr, &eeprom.commandBroadcastAddress, 192, 207, [](const uint8_t){return true;}});
         addOutput<0>(p, 0, "Port FD1");
         addOutput<1>(p, 0, "Port FD2");
+
+        addNode(p, Param_t{0, PType::Command, "Immediate", mTexts_1[0], nullptr, 
+                           0, // timeout, min -> def
+                           0, // max 
+                           cb1
+                });
+        mCommand_1 = p.size() - 1;
+
+        addNode(p, Param_t{0, PType::Command, "Immediate-long", mTexts_2[0], nullptr, 
+                           1, // timeout, min -> def
+                           0, // max 
+                           cb2
+                });
+        mCommand_2 = p.size() - 1;
+
+        addNode(p, Param_t{0, PType::Command, "Immediate-confirm", mTexts_3[0], nullptr, 
+                           0, // timeout, min -> def
+                           0, // max 
+                           cb3
+                });
+        mCommand_3 = p.size() - 1;
+
+        addNode(p, Param_t{0, PType::Command, "Long-confirm", mTexts_4[0], nullptr, 
+                           1, // timeout, min -> def
+                           0, // max 
+                           cb4
+                });
+        mCommand_4 = p.size() - 1;
         
         if (p.size() >= p.capacity()) {
             void fp();

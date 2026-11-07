@@ -11,7 +11,7 @@ Je nach Hardware und Firmware stehen PWM, Blinkfolgen, Morse, virtuelle Ausgangs
 Die Schaltbefehle werden als zusätzliche CRSF-Kommandos übertragen und belegen keinen der normalen RC-Proportionalkanäle.
 
 Dieses Verzeichnis enthält die STM32-Firmware. Der aktuelle gemeinsame Einstiegspunkt ist link:msw30.cc[`msw30.cc`], die Hardwarezuordnung steht in link:devices_3.h[`devices_3.h`].
-Die älteren Dateien `msw01.cc` bis `msw21.cc` sind nicht die Grundlage der nachfolgenden Beschreibung.
+Ältere Firmwaregenerationen wurden aus diesem Verzeichnis entfernt.
 Der tatsächliche Funktionsumfang hängt von den beim Übersetzen aktivierten Optionen ab.
 
 == Dokumentation und Hardware

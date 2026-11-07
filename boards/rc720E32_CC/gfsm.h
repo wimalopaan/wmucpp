@@ -41,6 +41,8 @@ struct GFSM {
     using crsf_cb = devs::crsf_cb;
     using crsf_pa = crsf_in::input;
 
+    using cmdFsm = devs::cmdFsm;
+    
     using crsf_ifaces = devs::crsf_ifaces;
 
     enum class Event : uint8_t {None, ConnectionLost, DirectConnected, ReceiverConnected};
@@ -88,7 +90,7 @@ struct GFSM {
         crsf_cb::update();
     }
 
-    using periodicsList = Meta::concat<crsf_ifaces, Meta::List<debug, crsf_in, led>>;
+    using periodicsList = Meta::concat<crsf_ifaces, Meta::List<debug, crsf_in, led, cmdFsm>>;
     using periodics = StandardComponents<periodicsList>;
 
     static inline void periodic() {

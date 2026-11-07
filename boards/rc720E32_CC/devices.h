@@ -43,6 +43,8 @@
 #include "crsfcb.h"
 #include "rc/router.h"
 
+#include "test_fsm.h"
+
 struct CC10;
 
 template<typename HW, typename Config, typename MCU = DefaultMcu>
@@ -140,7 +142,7 @@ struct Devices<CC10, Config, MCU> {
         using debug = Devices::debug;
         // using debug = void;
     };
-
+    using cmdFsm = TestFsm<0, systemTimer>;
     struct CrsfInCallbackConfig {
         using debug = void;
         // using debug = Devices::debug;
@@ -149,6 +151,7 @@ struct Devices<CC10, Config, MCU> {
         using storage = Devices::storage;
         using crsf_ifaces = Devices::crsf_ifaces;
         using src = Devices::crsf_in;
+        using cmdFsm = Devices::cmdFsm;
     };
     using crsf_cb = CrsfCallback<CrsfInCallbackConfig>;
     struct CrsfInConfig {

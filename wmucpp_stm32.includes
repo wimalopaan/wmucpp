@@ -9,3 +9,16 @@
 /home/lmeier/Projekte/STM32CubeG4/Drivers/CMSIS/DSP/Source
 
 include_stm32
+
+/home/lmeier/Projekte/ESP/esp-idf/components/esp_system/test_eh_frame_parser
+/home/lmeier/Projekte/ESP/esp-idf/components/esp_timer/include
+/home/lmeier/Projekte/ESP/esp-idf/components/esp_hw_support/etm/include
+/home/lmeier/Projekte/ESP/esp-idf/components/esp_hw_support/include
+/home/lmeier/Projekte/ESP/esp-idf/components/esp_common/include
+/home/lmeier/Projekte/ESP/esp-idf/components/esp_wifi/include
+/home/lmeier/Projekte/ESP/esp-idf/components/esp_netif/include
+/home/lmeier/Projekte/ESP/esp-idf/components/nvs_flash/include
+/home/lmeier/Projekte/ESP/esp-idf/components/esp_driver_gpio/include
+/home/lmeier/Projekte/ESP/esp-idf/components/esp_driver_uart/include
+/home/lmeier/Projekte/ESP/esp-idf/components/esp_driver_usb_serial_jtag/include
+boards/esp32/include

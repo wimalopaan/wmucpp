@@ -268,11 +268,11 @@ private:
         switch(step) {
         case RC::Protokoll::Crsf::V4::Lua::CmdStep::Click:
             params[mPingCommand].options = mPingTexts[1];
-            res = true;
+            res = true; // ask for confirm
             break;
         case RC::Protokoll::Crsf::V4::Lua::CmdStep::Confirmed:
             params[mPingCommand].options = mPingTexts[2];
-            srv::startPing();
+            srv::startPing(); // -> executing
             break;
         case RC::Protokoll::Crsf::V4::Lua::CmdStep::Cancel:
             params[mPingCommand].options = mPingTexts[3];
