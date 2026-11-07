@@ -2,9 +2,14 @@
 
 = MultiSwitch-E8 (STM32G0)
 :toc:
-:toclevels: 3
+:toclevels: 4
 :sectnums:
 :lang: de
+
+<<de,Deutsch>> | <<en,English>>
+
+[[de]]
+== Deutsch
 
 Der MultiSwitch-E8 schaltet acht Ausgänge über CRSF, beispielsweise für Beleuchtung, Soundmodule oder geeignete Lasttreiber im RC-Modell.
 Je nach Hardware und Firmware stehen PWM, Blinkfolgen, Morse, virtuelle Ausgangsgruppen, Lauflicht und Master-/Slave-Betrieb zur Verfügung.
@@ -14,7 +19,7 @@ Dieses Verzeichnis enthält die STM32-Firmware. Der aktuelle gemeinsame Einstieg
 Ältere Firmwaregenerationen wurden aus diesem Verzeichnis entfernt.
 Der tatsächliche Funktionsumfang hängt von den beim Übersetzen aktivierten Optionen ab.
 
-== Dokumentation und Hardware
+=== Dokumentation und Hardware
 
 [cols="1,3",options="header"]
 |===
@@ -33,7 +38,7 @@ Der tatsächliche Funktionsumfang hängt von den beim Übersetzen aktivierten Op
 | Aktuelle Hardwareentwürfe; die alte Small10-Platine ist in Electronics als überholt gekennzeichnet.
 |===
 
-=== Unterstützte Varianten
+==== Unterstützte Varianten
 
 [cols="1,2,2",options="header"]
 |===
@@ -57,7 +62,7 @@ Versorgungsspannung, Strombelastbarkeit, Polarität, Schutzbeschaltung und Steck
 PWM-Dimmen eignet sich nicht für jede Last; insbesondere Relais, Soundmodule und induktive Lasten entsprechend ihrer Beschaltung betreiben.
 ====
 
-== Anschluss und Adressen
+=== Anschluss und Adressen
 
 Ein typischer Aufbau ist:
 
@@ -88,7 +93,7 @@ Für mehrere Module vorzugsweise getrennte Empfänger-Schnittstellen oder einen 
 Open-Drain, Half-Duplex und Antwortslots sind spezielle Aufbauvarianten und ersetzen keine Prüfung der elektrischen und zeitlichen Busbedingungen.
 ====
 
-=== Drei verschiedene Adressen
+==== Drei verschiedene Adressen
 
 [cols="1,1,3",options="header"]
 |===
@@ -109,7 +114,7 @@ Für unabhängig erkennbare CRSF-Geräte außerdem eindeutige CRSF-Adressen verg
 ELRS V3 leitet standardmäßig nur die erweiterte Geräteadresse `0xc8` weiter; andere Geräteadressen benötigen die in Electronics beschriebene Routing-Erweiterung.
 ELRS V4 unterstützt vollständiges CRSF-Routing. Auch dort bleibt pro normaler serieller Schnittstelle ohne Router nur ein externes Gerät vorgesehen.
 
-== Bedienungsmöglichkeiten
+=== Bedienungsmöglichkeiten
 
 [cols="1,2,3",options="header"]
 |===
@@ -126,7 +131,7 @@ Die B&W-Variante ist in https://github.com/wimalopaan/LUA[LUA] und
 https://github.com/wimalopaan/Electronics/blob/main/docs/multiswitch.adoc#msw_bw[Electronics] beschrieben.
 Electronics nennt 192 kB Sender-RAM für den Betrieb neben dem ELRS-Skript; kleinere Sender nicht als kompatibel voraussetzen.
 
-=== MultiSwitch NG installieren und einrichten
+==== MultiSwitch NG installieren und einrichten
 
 . Das vollständige Widget-Verzeichnis nach `/WIDGETS/lvglMultiSwNG/` auf die Sender-SD-Karte kopieren, einschließlich der Module, `lang/` und Logos.
 . Im Modell das Widget `MultiSw NG` hinzufügen und zur Bedienung ins Vollbild wechseln.
@@ -145,7 +150,7 @@ NG verwendet standardmäßig Ziel `0` (Broadcast); die Zustellung muss zur einge
 Das Wiederholintervall wird in Einheiten von 10 ms angegeben; Vorgabe `100` entspricht einer Sekunde.
 Änderungen werden unabhängig davon zeitnah gesendet.
 
-=== Touch, Schalter und proportionale Bedienung
+==== Touch, Schalter und proportionale Bedienung
 
 [cols="1,3",options="header"]
 |===
@@ -172,7 +177,7 @@ Angewendete Konfigurationen werden standardmäßig automatisch gespeichert, Scha
 Nach einem Neustart beginnen Touch-Elemente ausgeschaltet; das ersetzt keine modellseitige Sicherheitsabschaltung.
 NG lädt oder migriert die Konfiguration des bisherigen Widgets nicht.
 
-=== Abgrenzung zu anderen Widget-Funktionen
+==== Abgrenzung zu anderen Widget-Funktionen
 
 [NOTE]
 ====
@@ -184,14 +189,14 @@ NG enthält derzeit außerdem keine SHM-Anbindung, Telemetrieaktionen oder das S
 Virtuelle _Firmware-Ausgangsgruppen_ sind davon unabhängig.
 ====
 
-== Firmware konfigurieren
+=== Firmware konfigurieren
 
 Das CRSF-Gerätemenü konfiguriert den MultiSwitch, das Widget-Menü die Senderbedienung.
 Beides sind getrennte Einstellungen: Ein im Widget benannter Button konfiguriert beispielsweise nicht automatisch den PWM-Modus im Gerät.
 Dauerhafte Parameteränderungen werden von der Firmware im Flash gespeichert; `Test` und `Operate` sind Laufzeitbedienung und keine gespeicherten Einschaltzustände.
 Regelmäßig wiederholte Widget-Befehle können Menütests wieder überschreiben.
 
-=== Globale Einstellungen und Ausgangsfunktionen
+==== Globale Einstellungen und Ausgangsfunktionen
 
 [cols="1,3",options="header"]
 |===
@@ -220,7 +225,7 @@ Bei Small11/Small12 teilen sich `Output 0` bis `3` sowie `Output 4` bis `7` jewe
 Andere Boards haben andere Timergruppen.
 `PWM Expo` ist als Parameter vorhanden, wird vom aktuell verwendeten Blinker jedoch nicht umgesetzt.
 
-=== Morse, virtuelle Gruppen und Lauflicht
+==== Morse, virtuelle Gruppen und Lauflicht
 
 `Morse` enthält den Text und die Zeiten für Dit, Dah, Zeichen- und Wortpausen in Einheiten von 100 ms.
 Auf Small12 stehen mehrere Textfelder zur Verfügung; nichtleere Teiltexte werden zu einem gemeinsamen Text zusammengefügt.
@@ -250,14 +255,14 @@ Für dieses Bedienkonzept daher nicht gleichzeitig den ersten Generator und glob
 Die Parameter `Next Address` und `Group` sowie Intermodul-Kommandos ermöglichen modulübergreifende Lauflichtketten.
 Dafür muss der CRSF-Übertragungsweg auch Nachrichten zwischen Geräten transportieren; ein bloß parallel angeschlossener UART-Aufbau garantiert das nicht.
 
-=== Master-/Slave-Betrieb
+==== Master-/Slave-Betrieb
 
 Mit `USE_SLAVE_COMMAND` kann ein Master über `Global` -> `Slave Cmd` Ausgangszustände senden.
 Am Slave unter `Global` -> `Master` die logische Adresse des gewünschten Masters einstellen und bei den betreffenden Ausgängen `Slave = On` setzen.
 Diese Ausgänge reagieren dann auf Slave-Kommandos statt auf normale Einzel-Schaltbefehle.
 Der Transport zwischen den Modulen benötigt ebenfalls eine passende Routing-/Buslösung.
 
-=== Telemetrie, LED und Failsafe
+==== Telemetrie, LED und Failsafe
 
 Small11/Small12 liefern Spannungs- und interne MCU-Temperaturdaten mit den einstellbaren IDs `Cells Id` und `Temp Id`.
 Die Temperatur ist keine externe Last- oder Umgebungstemperaturmessung.
@@ -290,7 +295,7 @@ Außerdem laufen die Failsafe-Schaltbefehle durch die normale Ausgangszuordnung,
 Das Verhalten bei Ausfall von Sender, Funkstrecke und serieller Verbindung deshalb am tatsächlichen Aufbau prüfen und für sicherheitsrelevante Lasten eine unabhängige Abschaltung vorsehen.
 ====
 
-== Firmware bauen und übertragen
+=== Firmware bauen und übertragen
 
 Die Makefiles bauen `msw30.elf` und `msw30.bin`.
 Erforderlich sind die ARM-C++-Toolchain und die STM32CubeG0/CMSIS-Dateien gemäß den Include-Pfaden der Makefiles.
@@ -325,7 +330,7 @@ st-flash --reset --connect-under-reset write msw30.bin 0x08000000
 Beim WeAct-Board kann die Nutzung von PA14 für Taster oder Debugausgabe mit SWD kollidieren; die Hinweise in `msw30.cc` beachten und gegebenenfalls NRST beim Programmierstart verwenden.
 Vor einem Firmwarewechsel die bisherige Konfiguration dokumentieren und danach Parameter sowie Ausgangsverhalten erneut prüfen.
 
-== Fehlersuche und Grenzen
+=== Fehlersuche und Grenzen
 
 [cols="1,3",options="header"]
 |===
@@ -348,7 +353,357 @@ Offene Punkte stehen in link:todo.txt[`todo.txt`], darunter Hinweise zu Morse un
 Diese Datei enthält auch historische Einträge; für die konkrete Implementierung sind `msw30.cc`, `crsf_cb.h`, `switch_cb.h` und `gfsm.h` maßgeblich.
 Eine automatische Erkennung von SBus, IBus, SumDV3, PWM oder PPM ist kein implementiertes Eingangsfeature dieser Firmware.
 
-== Lizenz
+=== Lizenz
 
 Die Firmware ist Teil von WMuCpp und steht unter GPL-3.0-or-later.
 Hardwareunterlagen und Senderprogramme liegen in den oben verlinkten Projekten; deren jeweilige Lizenzangaben beachten.
+
+[[en]]
+== English
+
+The MultiSwitch-E8 controls eight outputs via CRSF, for example for lighting, sound modules or suitable load drivers in an RC model.
+Depending on the hardware and firmware, it supports PWM, flashing sequences, Morse, virtual output groups, running lights and master/slave operation.
+Switching commands are transmitted as additional CRSF commands and do not occupy any of the normal proportional RC channels.
+
+This directory contains the STM32 firmware. The current common entry point is link:msw30.cc[`msw30.cc`]; hardware mappings are defined in link:devices_3.h[`devices_3.h`].
+Older firmware generations have been removed from this directory.
+The actual feature set depends on the options enabled at compile time.
+
+=== Documentation and hardware
+
+[cols="1,3",options="header"]
+|===
+| Source | Contents
+| https://github.com/wimalopaan/Electronics/blob/main/docs/multiswitch.adoc[Electronics: MultiSwitch]
+| Hardware variants, schematics, PCBs, enclosures and alternative radio controls.
+| https://github.com/wimalopaan/LUA/tree/main/WIDGETS/lvglMultiSwNG[MultiSwitch NG]
+| Current LVGL widget for EdgeTX; https://github.com/wimalopaan/LUA/blob/main/WIDGETS/lvglMultiSwNG/README.adoc[user manual].
+| https://github.com/wimalopaan/Electronics/blob/main/docs/protocols.adoc#crsf_sw[CRSF MultiSwitch protocol]
+| Commands in realm `0xa1`, addresses and frame formats.
+| https://github.com/wimalopaan/Electronics/blob/main/docs/elrs.adoc[Electronics: ExpressLRS]
+| Routing, multiple CRSF devices and differences between ELRS V3 and V4.
+| https://github.com/wimalopaan/Electronics/blob/main/docs/crsf-devices.adoc#crsf-switch[CRSF-Switch / Router]
+| Connecting multiple devices to a receiver.
+| https://oshwlab.com/wilhelm.wm.meier/works[OSHWLab]
+| Current hardware designs; Electronics marks the old Small10 PCB as outdated.
+|===
+
+==== Supported variants
+
+[cols="1,2,2",options="header"]
+|===
+| Firmware selection | Hardware | Notes
+| `HW_MSW10` | RCMultiSwitchSmall10, STM32G030 | Older PCB; no virtual groups or running-light generators in the current selection.
+| `HW_MSW11` | RCMultiSwitchSmall11, STM32G031 | Voltage measurement; optional pushbutton instead of a status input.
+| `HW_MSW12` | RCMultiSwitchSmall12, STM32G0B1 | Extensive default features including virtual groups, running lights and slave commands; two status inputs.
+| `HW_MSW12` + `HW_MSW12_G051` | Small12 fitted with STM32G051 | Separate build selection and different feature defaults.
+| `HW_NUCLEO` | Nucleo-G031K8 | Development board with ST-Link; external load drivers required.
+| `HW_WEACT` | WeAct STM32G031F8 | Compact development board; external SWD programmer and load drivers required.
+|===
+
+A WeAct-based through-hole PCB, including its schematic and Gerber files, is described in
+https://github.com/wimalopaan/Electronics/blob/main/docs/multiswitch.adoc#msw_tht[Electronics].
+Always check pin assignments and electrical limits against the board actually used.
+
+[WARNING]
+====
+Development-board GPIOs are not power outputs. Connect loads only through suitable drivers.
+Supply voltage, current ratings, polarity, protection circuitry and connector pinouts are determined by the relevant schematic, not by this firmware description.
+PWM dimming is not suitable for every load; in particular, operate relays, sound modules and inductive loads according to their circuit requirements.
+====
+
+=== Connections and addresses
+
+A typical setup is:
+
+[source,text]
+----
+EdgeTX radio + ELRS RF module
+             |
+          Radio link
+             |
+        ELRS receiver
+             |
+        CRSF interface
+             |
+        MultiSwitch-E8
+             |
+       Eight load outputs
+----
+
+For a normal UART connection, connect receiver TX to MultiSwitch RX and receiver RX to MultiSwitch TX; a common ground is required.
+A single-wire/half-duplex setup requires matching hardware and firmware configuration.
+At startup, the firmware searches for a suitable CRSF baud rate and, where supported by the hardware driver, the duplex mode.
+
+[IMPORTANT]
+====
+Standard CRSF is a point-to-point connection, not a bus that can be freely wired in parallel.
+Do not connect multiple actively transmitting push-pull TX outputs together.
+For multiple modules, preferably use separate receiver interfaces or a CRSF switch/router.
+Open-drain, half-duplex and response slots are special configurations and do not replace checking the electrical and timing requirements of the bus.
+====
+
+==== Three different addresses
+
+[cols="1,1,3",options="header"]
+|===
+| Setting | Default | Meaning
+| `Switch Addr` | `0` | Logical switch address from 0 to 255 for the eight physical outputs. Enter this address as the tab/control address in the widget.
+| `Virtual Addr` | `1` | Additional logical address for virtual groups and running lights, if compiled in.
+| `CRSF Addr` | `200` (`0xc8`) | Device address for CRSF discovery, the configuration menu and telemetry; adjustable from `192` to `207` (`0xc0` to `0xcf`) in the menu.
+|===
+
+The logical switch address is not the CRSF device address.
+The device appears in the configuration menu as `MultiSwitch-E@<Switch Addr>:<CRSF Addr>`.
+Firmware and device menus number physical outputs from `Output 0` to `Output 7`; MultiSwitch NG displays the same outputs as `1` to `8`.
+
+With multiple modules, assign logical switch addresses and, where applicable, virtual addresses to avoid unintended simultaneous control.
+Also assign unique CRSF addresses to independently discoverable CRSF devices.
+Having 256 logical switch addresses does not mean that 256 devices can be electrically connected to one UART or operated simultaneously using the 16 CRSF device addresses offered here.
+
+By default, ELRS V3 only forwards the extended device address `0xc8`; other device addresses require the routing extension described in Electronics.
+ELRS V4 supports full CRSF routing. Even there, a normal serial interface is intended for only one external device unless a router is used.
+
+=== Control options
+
+[cols="1,2,3",options="header"]
+|===
+| Control method | Requirements | Use
+| MultiSwitch NG | EdgeTX 2.11.3 or newer with LVGL on a color-screen radio | Touch controls, physical switches, sources and PWM sliders; multiple tabs and modules.
+| Previous `lvglMultiSw` | Compatible EdgeTX color-screen radio | Still available as an alternative; includes status bits and telemetry actions as described in its own documentation.
+| B&W telemetry script | Suitable radio with a monochrome display | `mulsw2.lua` and the `MULSW2` directory from the LUA repository; operation without an LVGL touch widget.
+| CRSF device menu | Bidirectional connection and enabled configuration replies | Settings, output tests and optional `Operate`; with ELRS, access through `elrsv3.lua` under `Other devices`.
+| Custom CRSF control | Radio/software implementing the appropriate MultiSwitch commands | Direct control through `Set`, `Set4`, `Set4M` and `Prop`.
+| Master/slave operation and chained running lights | Corresponding firmware options and a suitable CRSF transport path | Control by other modules rather than exclusively by the radio.
+|===
+
+The B&W variant is documented in https://github.com/wimalopaan/LUA[LUA] and
+https://github.com/wimalopaan/Electronics/blob/main/docs/multiswitch.adoc#msw_bw[Electronics].
+Electronics specifies 192 kB of radio RAM for use alongside the ELRS script; do not assume compatibility with smaller radios.
+
+==== Installing and setting up MultiSwitch NG
+
+. Copy the complete widget directory to `/WIDGETS/lvglMultiSwNG/` on the radio SD card, including the modules, `lang/` and logos.
+. Add the `MultiSw NG` widget to the model and enter fullscreen mode to operate it.
+. Under `Setup` -> `Global`, use the `CRSF` protocol. The radio's internal or external RF module must be configured for CRSF/ELRS.
+. Under `Tab settings`, set the default address to match `Switch Addr`. The initial configuration uses address `0` and eight latching buttons for outputs `1` to `8`.
+. Name the controls and adjust their type, output number and physical assignments as required; select `Apply` and save.
+. First check each output individually without hazardous loads connected; then check load functions and behavior when the connection is interrupted.
+
+The NG widget has no functional widget options: configuration takes place in fullscreen mode.
+The interface follows the EdgeTX menu language, German or English.
+A control with address `-1` inherits its tab's default address; an explicit address can refer to another module.
+The combination of address and output must be unique across all tabs.
+
+The CRSF destination address configured under `Global` is, again, not a logical switch address.
+NG defaults to destination `0` (broadcast); delivery must be compatible with the CRSF/ELRS topology used.
+The repeat interval is specified in units of 10 ms; the default `100` means one second.
+Changes are transmitted promptly regardless of this repeat interval.
+
+==== Touch, switches and proportional control
+
+[cols="1,3",options="header"]
+|===
+| NG control | Behavior with this MultiSwitch
+| `Button` | Latching on/off control operated by tapping.
+| `Toggle` | On/off switch control.
+| `Momentary` | Active while pressed; touch momentary controls reset when changing tabs/pages or leaving fullscreen mode.
+| `3Pos` | Center sends `0`, right sends `1`, left sends `2`. This firmware treats both nonzero states as on; it does not provide direction reversal or two different load functions.
+| `Slider` | Sends 0 to 100 % through `Prop`; set the corresponding firmware output to `PWM Mode = Remote`.
+|===
+
+Assigning a physical switch disables touch operation of the corresponding switch control.
+For `3Pos`, the first assigned switch takes priority; the second activates state 2.
+A slider can be assigned to a radio source: values from `0` to `1024` map to `0` to `100 %`, while negative values map to `0 %`.
+For a stick with a symmetrical value range, prepare a suitable source/mix.
+Assigning a source disables touch operation of the slider.
+
+An activation switch can lock a control and reset its output.
+Exclusive groups allow only one active switch control per group and apply across tabs; sliders are not group members.
+Physical inputs are processed even on inactive tabs.
+Multiple NG widget instances within the same model share configuration, output states and transmission.
+
+Applied configurations are saved automatically by default, but output states are not.
+After a restart, touch controls start switched off; this does not replace a model-side safety shutdown.
+NG does not load or migrate the previous widget's configuration.
+
+==== Distinguishing other widget features
+
+[NOTE]
+====
+NG also offers `S.Port WM` and `S.Port ACW 1.5/1.4`. However, the STM32 firmware described here uses CRSF as its input.
+S.Port, SBus, IBus and SumDV3 in the broader Electronics documentation refer to other MultiSwitch firmware variants or transport paths; they are not automatically inputs supported by this project.
+
+Optional NG LED color transmission (`SetRGB`) does not turn the eight switch outputs into addressable RGB LED outputs: this firmware's decoder does not process `SetRGB`.
+NG currently also lacks SHM integration, telemetry actions and setting virtual radio inputs/switches.
+Virtual _firmware output groups_ are independent of these features.
+====
+
+=== Configuring the firmware
+
+The CRSF device menu configures the MultiSwitch, while the widget menu configures radio controls.
+These are separate settings: naming a button in the widget does not, for example, automatically configure the device's PWM mode.
+The firmware saves persistent parameter changes in flash; `Test` and `Operate` are runtime controls, not saved power-on states.
+Repeated widget commands can override menu tests.
+
+==== Global settings and output functions
+
+[cols="1,3",options="header"]
+|===
+| Menu | Meaning
+| `Global` -> `Switch Addr`, `Virtual Addr`, `CRSF Addr`
+| Addressing as described above; `Virtual Addr` is available only with the virtual feature enabled.
+| `Global` -> `PWM f G...`
+| Shared PWM frequency for a hardware timer group: values from 1 to 200 in steps of 100 Hz, meaning 100 Hz to 20 kHz. The menu label identifies the associated outputs.
+| `Output n` -> `PWM Mode`
+| `Off`: no PWM; `On`: PWM at the configured duty cycle; `Remote`: proportional control through CRSF; `Global/Indiv`: individual duty cycle with global scaling, if that feature is used.
+| `Output n` -> `PWM Duty`
+| Local duty cycle from 1 to 99 %. In `Remote` mode, the value comes from `Prop` commands, including 0 and 100 %.
+| `Output n` -> `Intervall Mode`
+| `Off`: steady switching; `On`: flashing sequence; `Morse`: shared Morse text when the Morse feature is compiled in. The additional visible `Pattern` label is not a separately selectable running-light mode here.
+| `Output n` -> `Intervall(on/off)`
+| Time values from 1 to 255 in units of 50 ms.
+| `Output n` -> `Intervall(count)`
+| Number of flashes in a sequence, from 1 to 4.
+| `Output n` -> `Test`
+| Switch an individual output off/on for testing.
+| `Operate`
+| Optional menu for directly switching all eight outputs.
+|===
+
+On Small11/Small12, `Output 0` to `3` share one PWM frequency, and `Output 4` to `7` share another.
+Other boards use different timer groups.
+`PWM Expo` is present as a parameter but is not implemented by the currently used blinker.
+
+==== Morse, virtual groups and running lights
+
+`Morse` contains the text and timing for dits, dahs, character gaps and word gaps in units of 100 ms.
+Small12 provides several text fields; nonempty text fragments are combined into one shared text.
+Set the desired output to `Intervall Mode = Morse` and switch it on.
+
+With `USE_VIRTUALS`, four groups (`Virtual 0` to `3`), each containing up to four physical outputs, can be defined under `Virtuals`.
+`Enable Virtuals` enables group operation; commands use the additional `Virtual Addr`.
+Group members are then no longer controlled by normal individual switching commands sent to `Switch Addr`.
+In the NG widget, these four groups correspond to outputs `1` to `4` at the virtual address.
+
+With `USE_PWM_GLOBAL_MODULATION`, proportional channel `4` (NG output `5`) at the virtual address can control global brightness.
+Enable `Virtual 4 = Global Dimming` and set the relevant physical outputs to `PWM Mode = Global/Indiv`.
+
+With `USE_PATTERNS`, running-light generators support continuous or single left/right or back-and-forth sequences.
+The pattern menu configures member order, on/off times in units of 10 ms, the next address and the group.
+On Small12, the entries are named `Pattern Virt. 5` to `8`.
+The four generators are switched through the remaining four bits of the virtual address, corresponding to NG outputs `5` to `8`.
+Outputs used as running-light members are not simultaneously controlled by normal individual switching commands.
+
+[IMPORTANT]
+====
+Global dimming and the first running-light generator overlap at NG output `5` of the virtual address: dimming uses `Prop`, while the generator uses the switch state.
+For a slider, NG also sends an on state for values greater than 0.
+For this control setup, do not use the first generator and global dimming simultaneously.
+====
+
+The `Next Address` and `Group` parameters, together with intermodule commands, enable running-light chains across modules.
+The CRSF transport path must also carry messages between devices; simply connecting UARTs in parallel does not guarantee this.
+
+==== Master/slave operation
+
+With `USE_SLAVE_COMMAND`, a master can transmit output states using `Global` -> `Slave Cmd`.
+On the slave, set `Global` -> `Master` to the desired master's logical address and set the relevant outputs to `Slave = On`.
+These outputs then respond to slave commands instead of normal individual switching commands.
+Transport between modules also requires a suitable routing/bus solution.
+
+==== Telemetry, LED and failsafe
+
+Small11/Small12 provide voltage and internal MCU temperature data with configurable `Cells Id` and `Temp Id` identifiers.
+The temperature is not an external load or ambient temperature measurement.
+The firmware also transmits available digital inputs as status bits; pulling an input to ground sets its bit.
+Displaying these status bits is a feature of suitable radio software, not of the general NG operating status display.
+
+When `USE_RESPONSE_SLOT` is compiled in, `Response Slot` and `Config resp.` are available.
+Different slots separate replies in time in suitable shared-bus setups.
+`Config resp. = Button` requires a physical pushbutton that is also enabled in the firmware; a long press activates replies.
+Small12 has no such pushbutton in the current hardware definition.
+
+[cols="1,3",options="header"]
+|===
+| Status LED | Meaning of the firmware states
+| Medium-rate flashing | Searching for a CRSF connection/baud rate.
+| Slow, once | Operation without telemetry/configuration replies.
+| Slow, twice | Operation with permanently enabled replies.
+| Slow, three times | Permanently enabled replies in detected half-duplex operation, if the driver provides this detection.
+| Steady on | Replies temporarily enabled by pushbutton.
+| Fast flashing | `NotConnected` state.
+|===
+
+With `USE_FAILSAFE`, `Failsafe` offers `Hold`, `All-Off` and `Set` modes, with an on/off pattern for eight outputs.
+The default is `Hold`.
+
+[WARNING]
+====
+The available failsafe parameters are not a safety guarantee: in the current `gfsm.h`, regular packet checking during operation is commented out.
+Furthermore, failsafe switching commands pass through the normal output mapping, which can affect virtual, pattern or slave members.
+Therefore, test behavior when the radio, RF link or serial connection fails on the actual setup, and provide an independent shutdown for safety-critical loads.
+====
+
+=== Building and flashing the firmware
+
+The Makefiles build `msw30.elf` and `msw30.bin`.
+The ARM C++ toolchain and STM32CubeG0/CMSIS files are required according to the include paths in the Makefiles.
+The complete wmucpp repository is needed; this board directory alone is insufficient.
+
+From this directory, run exactly the build matching the installed hardware:
+
+[cols="1,2",options="header"]
+|===
+| Hardware | Command
+| Small10 / STM32G030 | `make g030`
+| Small11 / STM32G031 | `make g031`
+| Small12 / STM32G051 | `make g051`
+| Small12 / STM32G0B1 | `make g0b1`
+| WeAct / STM32G031 | `make weact`
+|===
+
+The targets mostly select the hardware using compiler defines.
+For Nucleo, the G031 build needs a separate selection of `HW_NUCLEO` instead of `HW_MSW11`; the normal `g031` target selects Small11.
+Hardware selection, MCU, linker script and fitted components must match.
+Additional features are selected at the start of `msw30.cc`; Small12 automatically adds default features there depending on the MCU.
+`NO_DEFAULTS_MSW12` disables these automatic additions.
+The targets share output files and cleanup steps, so do not run builds for different hardware variants in parallel.
+
+Flash using ST-Link/SWD, for example for the binary previously built for the correct hardware:
+
+[source,console]
+----
+st-flash --reset --connect-under-reset write msw30.bin 0x08000000
+----
+
+On the WeAct board, using PA14 for a pushbutton or debug output can conflict with SWD; follow the notes in `msw30.cc` and use NRST when starting programming if necessary.
+Before changing firmware, record the existing configuration and check parameters and output behavior again afterwards.
+
+=== Troubleshooting and limitations
+
+[cols="1,3",options="header"]
+|===
+| Symptom | Check
+| Widget controls the wrong output or no output
+| `Switch Addr`, inherited tab address, explicit control address and numbering 0-7 versus 1-8.
+| Slider only switches on/off
+| CRSF as the NG protocol, `PWM Mode = Remote`, a suitable load and the correct radio source.
+| Individual output does not respond to its normal switch
+| Assignment to a virtual group, active pattern or slave; activation switch and exclusive group in the widget.
+| Device missing under `Other devices`
+| Return path, configuration replies, CRSF device address, ELRS routing and response slots where applicable.
+| NG reports `CRSF inactive`
+| Configure the internal/external RF module for CRSF/ELRS. The simulator instead requires a separately configured serial output.
+| NG displays transmission/storage errors
+| Read the status message; EdgeTX accepting a frame does not confirm reception by the MultiSwitch.
+|===
+
+Open issues are listed in link:todo.txt[`todo.txt`], including notes on Morse and optional IrDA.
+That file also contains historical entries; `msw30.cc`, `crsf_cb.h`, `switch_cb.h` and `gfsm.h` are authoritative for the actual implementation.
+Automatic detection of SBus, IBus, SumDV3, PWM or PPM is not an implemented input feature of this firmware.
+
+=== License
+
+The firmware is part of WMuCpp and is licensed under GPL-3.0-or-later.
+Hardware documentation and radio software are hosted in the projects linked above; consult their respective license notices.
