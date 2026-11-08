@@ -50,6 +50,15 @@ namespace RC::Protokoll::Crsf {
                     return false;
                 }
             }
+            template<typename T>
+            consteval bool arduPilotTelemetry() {
+                if constexpr(requires{T::arduPilotTelemetry;}) {
+                    return T::arduPilotTelemetry;
+                }
+                else {
+                    return false;
+                }
+            }
         }
         template<uint8_t N, typename Config, typename MCU = DefaultMcu>
         struct PacketRelayRewrite {
@@ -83,6 +92,10 @@ namespace RC::Protokoll::Crsf {
             // repeated if the answer does not arrive in time (elrsV3.lua waits 5s for every
             // lost answer from a device other than its own TX module)
             static inline constexpr bool useParamRetry = Reflection::paramRetry<Config>();
+            // Config::arduPilotTelemetry: ArduPilot passthrough (0x80, no extended header) is
+            // handled as telemetry (temporary off, forward rate, own mode) instead of being
+            // treated as an extended packet
+            static inline constexpr bool useArduPilotTelemetry = Reflection::arduPilotTelemetry<Config>();
 
             struct UartConfig {
                 struct HalfDuplex {
@@ -280,6 +293,11 @@ namespace RC::Protokoll::Crsf {
             static inline void linkStatMode(const uint8_t m) {
                 mLinkStatMode = m;
             }
+            static inline void arduPilotMode(const uint8_t mode)
+                requires(useArduPilotTelemetry)
+            {
+                mArduPilotMode = mode;
+            }
             static inline void forwardTelemetryMode(const uint8_t type, const uint8_t mode) {
                 if (type < mTelemetryForwardMode.size()) {
                     mTelemetryForwardMode[type] = mode;
@@ -466,6 +484,12 @@ namespace RC::Protokoll::Crsf {
                     uart::readBuffer([](const auto& buffer){
                         const auto handlePacket = [](auto data) {
                             const uint8_t paylength = data[PacketIndex::length];
+                            if constexpr(useArduPilotTelemetry) {
+                                if (data[PacketIndex::type] == (uint8_t)Type::ArduPilot) {
+                                    handleArduPilot(data);
+                                    return;
+                                }
+                            }
                             if (isExtendedPacket(&data.front(), data.size())) {
                                 IO::outl<debug>("# receive: ", paylength, " ", data.size());
                                 if constexpr(useParamRetry) {
@@ -697,6 +721,48 @@ namespace RC::Protokoll::Crsf {
                 return true; // answer, unsolicited entry (e.g. command progress) or new
             }
 
+            // ---- ArduPilot passthrough (Config::arduPilotTelemetry)
+            // subtypes: 0xF0 single packet (AppId 0x50xx), 0xF1 status text, 0xF2 multi packet
+            static inline bool shouldSendArduPilot(const auto& data) {
+                if (data.size() < 5) {
+                    return false;
+                }
+                const uint8_t sub = data[PacketIndex::type + 1];
+                uint8_t* c = &mArduPilotCounter[17];
+                if ((sub == 0xf0) && (data.size() >= 7)) {
+                    c = &mArduPilotCounter[data[PacketIndex::type + 2] & 0x0f]; // per AppId
+                }
+                else if (sub == 0xf1) {
+                    return true; // status texts are rare and important
+                }
+                else if (sub == 0xf2) {
+                    c = &mArduPilotCounter[16];
+                }
+                if (++(*c) >= mForwardRate) {
+                    *c = 0;
+                    return true;
+                }
+                return false;
+            }
+            static inline void handleArduPilot(const auto& data) {
+                if constexpr(!std::is_same_v<dest, void>) {
+                    if (mTelemetryTemporaryOff || (mArduPilotMode == 0)) {
+                        return;
+                    }
+                    if (!shouldSendArduPilot(data)) {
+                        return;
+                    }
+                    if (mArduPilotMode == 2) {
+                        if (!Packet::createTelemetryTunnel<dest>(data, storage::eeprom.address, PassThru::SubType::Telemetry)) {
+                            IO::outl<debug>("# tunnel packet too large, size: ", data.size());
+                        }
+                    }
+                    else {
+                        dest::enqueue(data);
+                    }
+                }
+            }
+
             static inline bool shouldSendtelemetry(const uint8_t type) {
                 if (type < mTypeCounter.size()) {
                     if (++mTypeCounter[type] >= mForwardRate) {
@@ -827,6 +893,8 @@ namespace RC::Protokoll::Crsf {
 
             static inline uint32_t mNow = 0; // ticks, for the parameter retry
             static inline std::array<PendingRequest, 4> mPending{};
+            static inline uint8_t mArduPilotMode = 1; // 0=Off; 1=Forward; 2=Tunnel
+            static inline std::array<uint8_t, 18> mArduPilotCounter{};
         };
     }
 }

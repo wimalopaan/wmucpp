@@ -230,6 +230,7 @@ private:
         addForward<0x1f>(p, parent, "MAVLink FC");
         addForward<0x21>(p, parent, "Flight Mode");
         addForward<0x22>(p, parent, "ESP Now");
+        addNode(p, Param_t{parent, PType::Sel, "ArduPilot", "Off;Forward;Tunnel", &eeprom.ardupilot_mode, 0, 2, [](const uint8_t v){relay::arduPilotMode(v); return true;}});
 
         addNode(p, Param_t{0, PType::Sel, "Half-Duplex", "Off;On", &eeprom.half_duplex, 0, 1, [](const uint8_t v){relay::setHalfDuplex(v == 1); return true;}});
         addNode(p, Param_t{0, PType::Sel, "Baudrate", "400k;420k;460K;921K;1,8M", &eeprom.baudrate, 0, 4, [](const uint8_t v){

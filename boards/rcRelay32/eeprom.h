@@ -58,6 +58,8 @@ struct EEProm {
 
     std::array<uint8_t, (uint8_t)RC::Protokoll::Crsf::V4::Type::Ping> telemetryMode{};
 
+    uint8_t ardupilot_mode = 1; // ArduPilot passthrough (0x80): 0=Off, 1=Forward, 2=Tunnel
+
     constexpr bool valid() const {
         return (magic == EEPROM_MAGIC) &&
             (std::find(txname.begin(), txname.end(), '\0') != txname.end()) &&
@@ -69,6 +71,7 @@ struct EEProm {
             (baudrate < RC::Protokoll::Crsf::V4::baudratesHandset.size()) &&
             (telemetry_rate >= 1) && (telemetry_rate <= 10) &&
             (tempOffTelemetry >= 1) && (tempOffTelemetry <= 60) &&
+            (ardupilot_mode <= 2) &&
             std::all_of(telemetryMode.begin(), telemetryMode.end(), [](const uint8_t mode) {
                 return mode <= 2;
             });
