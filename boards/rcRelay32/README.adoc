@@ -256,7 +256,8 @@ eingeschaltet) wiederholt das Relay eine Parameter-Leseanfrage selbst, wenn die
 Antwort ausbleibt:
 
 * nach dem Dreifachen der je Gerät gemessenen Laufzeit, mindestens 100 ms
-  (Sendemodul 2) bzw. 500 ms (über die Funkstrecke), höchstens 1,5 s,
+  (Sendemodul 2) bzw. 500 ms (über die Funkstrecke), höchstens 1,5 s;
+  solange noch keine Laufzeit gemessen ist, nach 100 ms bzw. 500 ms,
 * höchstens dreimal je Anfrage,
 * doppelte Antworten, die durch diese Wiederholungen entstehen, werden
   verworfen (gleicher Eintrag, gleicher Chunk),

@@ -642,7 +642,9 @@ namespace RC::Protokoll::Crsf {
             }
             static inline uint32_t retryTimeout(const PendingRequest& p) {
                 const bool local = (p.dev == (uint8_t)Address::TX); // module itself: no radio link in between
-                const uint32_t rtt = (p.rtt > 0) ? p.rtt : msToTicks(local ? 20 : 300);
+                // unknown device: assume a typical radio round trip (~150 ms) so the first
+                // retry already comes after the minimum timeout
+                const uint32_t rtt = (p.rtt > 0) ? p.rtt : msToTicks(local ? 20 : 150);
                 const uint32_t minT = msToTicks(local ? 100 : 500);
                 return std::min(msToTicks(1500), std::max(minT, 3 * rtt));
             }
