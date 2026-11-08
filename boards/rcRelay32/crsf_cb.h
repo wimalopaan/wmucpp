@@ -233,6 +233,10 @@ private:
 
         addNode(p, Param_t{0, PType::Sel, "Half-Duplex", "Off;On", &eeprom.half_duplex, 0, 1, [](const uint8_t v){relay::setHalfDuplex(v == 1); return true;}});
         addNode(p, Param_t{0, PType::Sel, "Baudrate", "400k;420k;460K;921K;1,8M", &eeprom.baudrate, 0, 4, [](const uint8_t v){
+                               if (v >= RC::Protokoll::Crsf::V4::baudratesHandset.size()) {
+                                   IO::outl<debug>("# invalid baudrate index: ", v);
+                                   return false;
+                               }
                                relay::baud(RC::Protokoll::Crsf::V4::baudratesHandset[v]);
                                return true;
                            }});

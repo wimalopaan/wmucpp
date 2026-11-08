@@ -19,6 +19,7 @@
 #pragma once
 
 #include <algorithm>
+#include <cstddef>
 #include "output.h"
 #include "eeprom.h"
 
@@ -26,8 +27,18 @@ template<typename Config>
 struct Storage {
     using debug = Config::debug;
 
-    static inline void init() {
-        std::memcpy(&eeprom, &eeprom_flash, sizeof(EEProm));
+    static inline bool init() {
+        // Flash programming changes this const object outside the C++ memory model.
+        const auto* flash = reinterpret_cast<const volatile uint8_t*>(&eeprom_flash);
+        auto* ram = reinterpret_cast<uint8_t*>(&eeprom);
+        for (std::size_t i = 0; i < sizeof(EEProm); ++i) {
+            ram[i] = flash[i];
+        }
+        if (!eeprom.valid()) {
+            reset();
+            return false;
+        }
+        return true;
     }
     static inline void reset() {
         eeprom = EEProm{};

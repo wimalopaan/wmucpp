@@ -20,6 +20,7 @@
 
 #include <cstdint>
 #include <array>
+#include <algorithm>
 
 #include "rc/rc_2.h"
 
@@ -56,4 +57,20 @@ struct EEProm {
     uint8_t tempOffTelemetry = 30; // seconds for temporary telemetry off after parameter request
 
     std::array<uint8_t, (uint8_t)RC::Protokoll::Crsf::V4::Type::Ping> telemetryMode{};
+
+    constexpr bool valid() const {
+        return (magic == EEPROM_MAGIC) &&
+            (std::find(txname.begin(), txname.end(), '\0') != txname.end()) &&
+            (rewrite_name <= 1) && (link_stat_mode <= 3) && (failsafe_mode <= 1) &&
+            (address >= 192) && (address <= 207) &&
+            (tx_rewrite_address >= 192) && (tx_rewrite_address <= 207) &&
+            (rx_rewrite_address >= 192) && (rx_rewrite_address <= 207) &&
+            (half_duplex <= 1) && (irda <= 1) &&
+            (baudrate < RC::Protokoll::Crsf::V4::baudratesHandset.size()) &&
+            (telemetry_rate >= 1) && (telemetry_rate <= 10) &&
+            (tempOffTelemetry >= 1) && (tempOffTelemetry <= 60) &&
+            std::all_of(telemetryMode.begin(), telemetryMode.end(), [](const uint8_t mode) {
+                return mode <= 2;
+            });
+    }
 };

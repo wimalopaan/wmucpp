@@ -84,9 +84,12 @@ struct AppConfig {
 	using timer = devs::systemTimer;
 };
 int main() {
-    DevsConfig::storage::init();
+    const bool validEeprom = DevsConfig::storage::init();
 
-    app::main([]{
+    app::main([validEeprom]{
+        if (!validEeprom) {
+            IO::outl<devs::debug>("# invalid EEPROM; using defaults");
+        }
         NVIC_EnableIRQ(USART1_IRQn);
 #if defined(USE_WEACT) || defined(USE_NUCLEO_431)
         NVIC_EnableIRQ(USART2_IRQn);

@@ -29,6 +29,7 @@
 #include <chrono>
 #include <cstring>
 #include <type_traits>
+#include <utility>
 
 #include "etl/fixedvector.h"
 #include "etl/event.h"
@@ -273,31 +274,49 @@ namespace RC {
                                 }
                             }
                             else {
-                                typename Param_t::value_type value{};
+                                int64_t decoded{};
                                 if (params[index].type <= Param_t::I8) {
                                     if (paylength < 1) {
                                         return false;
                                     }
-                                    value = data[0];
+                                    decoded = params[index].type == Param_t::I8 ?
+                                        static_cast<int8_t>(data[0]) : data[0];
                                 }
                                 else if (params[index].type <= Param_t::I16) {
                                     if (paylength < 2) {
                                         return false;
                                     }
-                                    value = (data[0] << 8) + data[1];
+                                    const uint16_t raw = (uint16_t{data[0]} << 8) | data[1];
+                                    decoded = params[index].type == Param_t::I16 ?
+                                        static_cast<int16_t>(raw) : raw;
                                 }
                                 else if (params[index].type <= Param_t::F32) {
                                     if (paylength < 4) {
                                         return false;
                                     }
-                                    value = (data[3] << 24) + (data[2] << 16) + (data[1] << 8) + data[0];
+                                    const uint32_t raw = (uint32_t{data[3]} << 24) | (uint32_t{data[2]} << 16) |
+                                                         (uint32_t{data[1]} << 8) | data[0];
+                                    if constexpr(std::is_signed_v<typename Param_t::value_type>) {
+                                        decoded = static_cast<int32_t>(raw);
+                                    }
+                                    else {
+                                        decoded = raw;
+                                    }
                                 }
                                 else if (params[index].type == Param_t::Sel) {
                                     if (paylength < 1) {
                                         return false;
                                     }
-                                    value = data[0];
+                                    decoded = data[0];
                                 }
+                                else {
+                                    return false;
+                                }
+                                if (std::cmp_less(decoded, params[index].min) ||
+                                    std::cmp_greater(decoded, params[index].max)) {
+                                    return false;
+                                }
+                                const auto value = static_cast<typename Param_t::value_type>(decoded);
                                 params[index].value(value);
                                 if (params[index].cb) {
                                     mustSave = params[index].cb(value);
