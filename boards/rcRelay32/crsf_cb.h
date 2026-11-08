@@ -66,6 +66,9 @@ struct CrsfCallback {
         if (RC::Protokoll::Crsf::V4::Util::setParameter(params, index, data, paylength)) {
             save();
         }
+        else {
+            IO::outl<debug>("# SetPV not saved: ", index);
+        }
         update();
     }
     static inline Param_t parameter(const uint8_t index) {

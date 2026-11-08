@@ -460,7 +460,7 @@ namespace RC {
                     T max{0};
                     bool (*cb)(T){nullptr};
                     T def{min};
-                    uint8_t units{0}; // should be a c-string??? (not allways: for STRING this is maxLength of the string when written)
+                    uint8_t units{0}; // For Str: buffer capacity including the terminator.
                     T val{def};
                     char* stringValue = nullptr;
                     const char* unitString = nullptr;

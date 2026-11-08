@@ -257,16 +257,17 @@ namespace RC {
                         if (index < params.size()) {
                             bool mustSave = true;
                             if (params[index].type == Param_t::Str) {
-                                // IO::outl<debug>("# String");
-                                if (params[index].stringValue) {
-                                    for(uint8_t i = 0; (i < MaxStringParamLength) && (i < paylength); ++i) {
-                                        params[index].stringValue[i] = data[i];
-                                        if (data[i] == '\0') {
-                                            break;
-                                        }
-                                    }
-                                    params[index].stringValue[paylength] = '\0';
+                                auto& p = params[index];
+                                if (!p.stringValue || (p.units == 0)) {
+                                    return false;
                                 }
+                                uint8_t length = 0;
+                                while ((length < paylength) && (length < MaxStringParamLength) &&
+                                       (length < p.units - 1) && (data[length] != '\0')) {
+                                    p.stringValue[length] = data[length];
+                                    ++length;
+                                }
+                                p.stringValue[length] = '\0';
                                 if (params[index].cb) {
                                     mustSave = params[index].cb(typename Param_t::value_type{});
                                 }
@@ -275,19 +276,15 @@ namespace RC {
                                 typename Param_t::value_type value{};
                                 if (params[index].type <= Param_t::I8) {
                                     value = data[0];
-                                    // IO::outl<debug>("# I8: v: ", value);
                                 }
                                 else if (params[index].type <= Param_t::I16) {
                                     value = (data[0] << 8) + data[1];
-                                    // IO::outl<debug>("# I16: v: ", value);
                                 }
                                 else if (params[index].type <= Param_t::F32) {
                                     value = (data[3] << 24) + (data[2] << 16) + (data[1] << 8) + data[0];
-                                    // IO::outl<debug>("# F32: v: ", value);
                                 }
                                 else if (params[index].type == Param_t::Sel) {
                                     value = data[0];
-                                    // IO::outl<debug>("# Sel: v: ", value);
                                 }
                                 params[index].value(value);
                                 if (params[index].cb) {
@@ -624,6 +621,10 @@ namespace RC {
                             }
                             break;
                         case RC::Protokoll::Crsf::V4::Type::ParamWrite:
+                            if (paylength < 6) {
+                                IO::outl<debug>("# ParamWrite too short: ", paylength);
+                                break;
+                            }
                             if constexpr(requires(){callback::disableTelemetry();}) {
                                 callback::disableTelemetry();
                             }
@@ -636,7 +637,7 @@ namespace RC {
                                     output::sendCommandResponse(pIndex, pValue);
                                 }
                                 else {
-                                    callback::setParameterValue(pIndex, data + 6, paylength - 3); // complete payload for string parameter type
+                                    callback::setParameterValue(pIndex, data + 6, paylength - 5);
                                 }
                             }
                             else {
