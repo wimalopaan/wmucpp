@@ -101,8 +101,12 @@ struct Devices<Nucleo, Config, MCU> {
     using inputtx = Mcu::Stm::Pin<gpiob, 3, MCU>;
     using inputrx = Mcu::Stm::Pin<gpiob, 4, MCU>;
 
+    using debug = void;
+
     struct CrsfConfig;
     using crsf = RC::Protokoll::Crsf::V4::Master<2, CrsfConfig, MCU>;
+    struct CrsfCallbackConfig;
+    using crsf_cb = CrsfCallback<CrsfCallbackConfig, debug>;
     using crsf_in = crsf::input;
 
     struct RouterConfig;
@@ -111,8 +115,6 @@ struct Devices<Nucleo, Config, MCU> {
         using storage = Devices::storage;
         using debug = void;
     };
-
-    using debug = void;
 
     // Led
     using led = Mcu::Stm::Pin<gpiob, 8, MCU>;
@@ -140,8 +142,6 @@ struct Devices<Nucleo, Config, MCU> {
         using tp2 = void;
         static inline constexpr uint8_t fifoSize = 16;
     };
-    struct CrsfCallbackConfig;
-    using crsf_cb = CrsfCallback<CrsfCallbackConfig, debug>;
     struct CrsfConfig {
         using rxpin = inputrx;
         using txpin = inputtx;
@@ -249,8 +249,12 @@ struct Devices<WeAct, Config, MCU> {
     using inputtx = Mcu::Stm::Pin<gpioa, 2, MCU>;
     using inputrx = Mcu::Stm::Pin<gpioa, 3, MCU>;
 
+	using debug = void;
+
     struct CrsfConfig;
     using crsf = RC::Protokoll::Crsf::V4::Master<2, CrsfConfig, MCU>;
+    struct CrsfCallbackConfig;
+    using crsf_cb = CrsfCallback<CrsfCallbackConfig, debug>;
     using crsf_in = crsf::input;
 
     struct RouterConfig;
@@ -260,8 +264,6 @@ struct Devices<WeAct, Config, MCU> {
         using debug = void;
     };
 
-	using debug = void;
-	
 	// Led
     using led = Mcu::Stm::Pin<gpioa, 4, MCU>;
     using invLed = Mcu::Stm::Gpio::Inverter<led>;
@@ -286,8 +288,6 @@ struct Devices<WeAct, Config, MCU> {
         using tp2 = void;
         static inline constexpr uint8_t fifoSize = 16;
     };
-    struct CrsfCallbackConfig;
-    using crsf_cb = CrsfCallback<CrsfCallbackConfig, debug>;
     struct CrsfConfig {
         using rxpin = inputrx;
         using txpin = inputtx;
@@ -404,10 +404,6 @@ struct Devices<Wmg0b1, Config, MCU> {
     using tp2 = Mcu::Stm::Pin<gpiob, 7, MCU>;
 #endif
 
-    struct CrsfConfig;
-    using crsf = RC::Protokoll::Crsf::V4::Master<1, CrsfConfig, MCU>;
-    using crsf_in = crsf::input;
-
 #ifdef SERIAL_DEBUG
     using debugtx = Mcu::Stm::Pin<gpiob, 3, MCU>;
     struct DebugConfig;
@@ -415,6 +411,12 @@ struct Devices<Wmg0b1, Config, MCU> {
 #else
     using debug = void;
 #endif
+
+    struct CrsfConfig;
+    using crsf = RC::Protokoll::Crsf::V4::Master<1, CrsfConfig, MCU>;
+    struct CrsfCallbackConfig;
+    using crsf_cb = CrsfCallback<CrsfCallbackConfig, debug>;
+    using crsf_in = crsf::input;
 
     // Led
     using led = Mcu::Stm::Pin<gpiob, 2, MCU>;
@@ -452,8 +454,6 @@ struct Devices<Wmg0b1, Config, MCU> {
 #endif
         static inline constexpr uint8_t fifoSize = 64;
     };
-    struct CrsfCallbackConfig;
-    using crsf_cb = CrsfCallback<CrsfCallbackConfig, debug>;
     struct CrsfConfig {
         using rxpin = inputrx;
         using txpin = inputtx;

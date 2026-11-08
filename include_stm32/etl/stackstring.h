@@ -40,7 +40,7 @@ namespace etl {
         constexpr StackString(const E (&s)[N]) : mSize{N}, data{std::to_array(s)} {
         }
 
-        constexpr explicit StackString(const T* const s) {
+        constexpr explicit StackString(const T* const) {
         }
         
         inline constexpr T& operator[](size_type index) {

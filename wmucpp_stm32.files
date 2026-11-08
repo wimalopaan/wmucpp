@@ -377,6 +377,7 @@ boards/rcLed4x4/switch_cb.h
 boards/rcLed4x4/system_g0.cc
 boards/rcLed4x4/telemetry.h
 boards/rcLed4x4/todo.txt
+boards/rcRelay32/Makefile
 boards/rcRelay32/Makefile.G031
 boards/rcRelay32/Makefile.G0B1
 boards/rcRelay32/Makefile.G431

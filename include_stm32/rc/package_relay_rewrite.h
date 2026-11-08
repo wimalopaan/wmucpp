@@ -354,6 +354,7 @@ namespace RC::Protokoll::Crsf {
                                 mRxEvent = RxEvent::ReceiveComplete;
                                 return true;
                             }
+                            IO::outl<debug>("# invalid relay header");
                             return false;
                         };
                         uart::Isr::onIdle(f2);
@@ -437,120 +438,121 @@ namespace RC::Protokoll::Crsf {
             }
             static inline void handleIncoming() {
                 if constexpr(!std::is_same_v<dest, void>) {
-                    uart::readBuffer([](const auto& data){
-                        const uint8_t paylength = std::min((uint8_t)data[1], maxPayloadSize);
-                        if (!crcCheck(&data[0], paylength)) {
-                            IO::outl<debug>("# wrong crc");
-                            return;
-                        }
-                        if (isExtendedPacket(&data.front(), data.size())) {
-                            IO::outl<debug>("# receive: ", paylength, " ", data.size());
-                            if (data[PacketIndex::type] != (uint8_t)Type::RadioID) {
-                                if constexpr(std::is_same_v<router, void>) {
-                                    rewriteIncoming(data);
-                                }
-                                else { // with router
-                                    if (mUseRouter) {
-                                        // rewriteRxTxSource(data);
-                                        rewriteDestination(data);
-                                        if (data[PacketIndex::src] == (uint8_t)Address::TX) {
-                                            rewriteName(data);
-                                        }
-                                        routeIncoming(data);
-                                    }
-                                    else {
+                    uart::readBuffer([](const auto& buffer){
+                        const auto handlePacket = [](auto data) {
+                            const uint8_t paylength = data[PacketIndex::length];
+                            if (isExtendedPacket(&data.front(), data.size())) {
+                                IO::outl<debug>("# receive: ", paylength, " ", data.size());
+                                if (data[PacketIndex::type] != (uint8_t)Type::RadioID) {
+                                    if constexpr(std::is_same_v<router, void>) {
                                         rewriteIncoming(data);
                                     }
-                                }
-                            }
-                        }
-                        else { // type < Ping
-                            // IO::outl<debug>("# telem");
-                            if constexpr(!std::is_same_v<dest, void>) {
-                                const uint8_t type = data[PacketIndex::type];
-
-                                if (type >= (uint8_t)Type::Ping) {
-                                    IO::outl<debug>("# wrong type");
-                                    return;
-                                }
-                                
-                                if (mTelemetryTemporaryOff) {
-                                    return;
-                                }
-
-                                if (type == (uint8_t)Type::Link) {
-                                    if (mLinkStatMode > 0) {
-                                        if (shouldSendtelemetry(type)) {
-                                            if (mLinkStatMode == 1) { // forward
-                                                IO::outl<debug>("# return link stats");
-                                                dest::enqueue(data);
+                                    else { // with router
+                                        if (mUseRouter) {
+                                            // rewriteRxTxSource(data);
+                                            rewriteDestination(data);
+                                            if (data[PacketIndex::src] == (uint8_t)Address::TX) {
+                                                rewriteName(data);
                                             }
-                                            else if (mLinkStatMode == 2) { // transform
-                                                const uint8_t up_rssi1 = data[PacketIndex::type + 1 + 0];
-                                                const uint8_t up_rssi2 = data[PacketIndex::type + 1 + 1];
-                                                const uint8_t up_link_qly  = data[PacketIndex::type + 1 + 2];
-                                                const uint8_t up_snr  = data[PacketIndex::type + 1 + 3];
-                                                // const uint8_t active_ant  = data[PacketIndex::type + 1 + 4];
-                                                const uint8_t rf_profile  = data[PacketIndex::type + 1 + 5];
-                                                const uint8_t up_rf_power  = data[PacketIndex::type + 1 + 6]; // not correctly displayed in EdgeTx (missing lookup)
-                                                const uint8_t dn_rssi  = data[PacketIndex::type + 1 + 7];
-                                                const uint8_t dn_link_qly  = data[PacketIndex::type + 1 + 8];
-                                                const uint8_t dn_snr  = data[PacketIndex::type + 1 + 9];
-                                                IO::outl<debug>("# link rx tx: ", data.size());
-                                                dest::create_back((uint8_t)Type::LinkStatsRx, [&](auto& ta){
-                                                    ta.push_back(dn_rssi);
-                                                    ta.push_back(dn_link_qly);
-                                                    ta.push_back(dn_link_qly); // ???
-                                                    ta.push_back(dn_snr);
-                                                    ta.push_back(up_rf_power);
-                                                });
-                                                dest::create_back((uint8_t)Type::LinkStatsTx, [&](auto& ta){
-                                                    ta.push_back(std::min(up_rssi1, up_rssi2)); // makes sense?
-                                                    ta.push_back(up_link_qly);
-                                                    ta.push_back(up_link_qly); // ???
-                                                    ta.push_back(up_snr);
-                                                    ta.push_back(uint8_t(0)); // ???
-                                                    ta.push_back(rf_profile); // ???
-                                                });
-                                            }
-                                            else if (mLinkStatMode == 3) { // tunnel
-                                                IO::outl<debug>("# tunnel link stats, size: ", data.size());
-                                                dest::create_back((uint8_t)Type::PassThru, [&](auto& ta){
-                                                    ta.push_back(Address::Handset);
-                                                    ta.push_back(storage::eeprom.address);
-                                                    ta.push_back(PassThru::AppId::Telem);
-                                                    ta.push_back(PassThru::SubType::LinkStat);
-                                                    for(uint8_t i = PacketIndex::type; i < (data.size() - 1); ++i) {
-                                                        ta.push_back(data[i]);
-                                                    }
-                                                });
-                                            }
+                                            routeIncoming(data);
                                         }
-                                    }
-                                }
-                                else {
-                                    if (const uint8_t mode = mTelemetryForwardMode[type]; mode > 0) {
-                                        if (shouldSendtelemetry(type)) {
-                                            if (mode == 2) {
-                                                IO::outl<debug>("# tunnel telemtry, size: ", data.size(), " t: ", data[PacketIndex::type]);
-                                                dest::create_back((uint8_t)Type::PassThru, [&](auto& ta){
-                                                    ta.push_back(Address::Handset);
-                                                    ta.push_back(storage::eeprom.address);
-                                                    ta.push_back(PassThru::AppId::Telem);
-                                                    ta.push_back(PassThru::SubType::Telemetry);
-                                                    for(uint8_t i = PacketIndex::type; i < (data.size() - 1); ++i) {
-                                                        ta.push_back(data[i]);
-                                                    }
-                                                });
-                                            }
-                                            else if (mode == 1) {
-                                                IO::outl<debug>("# telemtry, size: ", data.size());
-                                                dest::enqueue(data);
-                                            }
+                                        else {
+                                            rewriteIncoming(data);
                                         }
                                     }
                                 }
                             }
+                            else { // type < Ping
+                                // IO::outl<debug>("# telem");
+                                if constexpr(!std::is_same_v<dest, void>) {
+                                    const uint8_t type = data[PacketIndex::type];
+
+                                    if (type >= (uint8_t)Type::Ping) {
+                                        IO::outl<debug>("# wrong type");
+                                        return;
+                                    }
+
+                                    if (mTelemetryTemporaryOff) {
+                                        return;
+                                    }
+
+                                    if (type == (uint8_t)Type::Link) {
+                                        if (mLinkStatMode > 0) {
+                                            if (shouldSendtelemetry(type)) {
+                                                if (mLinkStatMode == 1) { // forward
+                                                    IO::outl<debug>("# return link stats");
+                                                    dest::enqueue(data);
+                                                }
+                                                else if (mLinkStatMode == 2) { // transform
+                                                    const uint8_t up_rssi1 = data[PacketIndex::type + 1 + 0];
+                                                    const uint8_t up_rssi2 = data[PacketIndex::type + 1 + 1];
+                                                    const uint8_t up_link_qly  = data[PacketIndex::type + 1 + 2];
+                                                    const uint8_t up_snr  = data[PacketIndex::type + 1 + 3];
+                                                    // const uint8_t active_ant  = data[PacketIndex::type + 1 + 4];
+                                                    const uint8_t rf_profile  = data[PacketIndex::type + 1 + 5];
+                                                    const uint8_t up_rf_power  = data[PacketIndex::type + 1 + 6]; // not correctly displayed in EdgeTx (missing lookup)
+                                                    const uint8_t dn_rssi  = data[PacketIndex::type + 1 + 7];
+                                                    const uint8_t dn_link_qly  = data[PacketIndex::type + 1 + 8];
+                                                    const uint8_t dn_snr  = data[PacketIndex::type + 1 + 9];
+                                                    IO::outl<debug>("# link rx tx: ", data.size());
+                                                    dest::create_back((uint8_t)Type::LinkStatsRx, [&](auto& ta){
+                                                        ta.push_back(dn_rssi);
+                                                        ta.push_back(dn_link_qly);
+                                                        ta.push_back(dn_link_qly); // ???
+                                                        ta.push_back(dn_snr);
+                                                        ta.push_back(up_rf_power);
+                                                    });
+                                                    dest::create_back((uint8_t)Type::LinkStatsTx, [&](auto& ta){
+                                                        ta.push_back(std::min(up_rssi1, up_rssi2)); // makes sense?
+                                                        ta.push_back(up_link_qly);
+                                                        ta.push_back(up_link_qly); // ???
+                                                        ta.push_back(up_snr);
+                                                        ta.push_back(uint8_t(0)); // ???
+                                                        ta.push_back(rf_profile); // ???
+                                                    });
+                                                }
+                                                else if (mLinkStatMode == 3) { // tunnel
+                                                    IO::outl<debug>("# tunnel link stats, size: ", data.size());
+                                                    dest::create_back((uint8_t)Type::PassThru, [&](auto& ta){
+                                                        ta.push_back(Address::Handset);
+                                                        ta.push_back(storage::eeprom.address);
+                                                        ta.push_back(PassThru::AppId::Telem);
+                                                        ta.push_back(PassThru::SubType::LinkStat);
+                                                        for(uint8_t i = PacketIndex::type; i < (data.size() - 1); ++i) {
+                                                            ta.push_back(data[i]);
+                                                        }
+                                                    });
+                                                }
+                                            }
+                                        }
+                                    }
+                                    else {
+                                        if (const uint8_t mode = mTelemetryForwardMode[type]; mode > 0) {
+                                            if (shouldSendtelemetry(type)) {
+                                                if (mode == 2) {
+                                                    IO::outl<debug>("# tunnel telemtry, size: ", data.size(), " t: ", data[PacketIndex::type]);
+                                                    dest::create_back((uint8_t)Type::PassThru, [&](auto& ta){
+                                                        ta.push_back(Address::Handset);
+                                                        ta.push_back(storage::eeprom.address);
+                                                        ta.push_back(PassThru::AppId::Telem);
+                                                        ta.push_back(PassThru::SubType::Telemetry);
+                                                        for(uint8_t i = PacketIndex::type; i < (data.size() - 1); ++i) {
+                                                            ta.push_back(data[i]);
+                                                        }
+                                                    });
+                                                }
+                                                else if (mode == 1) {
+                                                    IO::outl<debug>("# telemtry, size: ", data.size());
+                                                    dest::enqueue(data);
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        };
+                        if (!Packet::forEach(buffer, handlePacket)) {
+                            IO::outl<debug>("# invalid relay packet");
                         }
                     });
                 }
@@ -588,7 +590,7 @@ namespace RC::Protokoll::Crsf {
                 if constexpr(requires(){storage::eeprom.txname[0];}) {
                     if (mDoRewriteName && (data[PacketIndex::type] == (uint8_t)Type::Info)) {
                         bool end = false;
-                        for(uint8_t i = 0; i < 16; ++i) {
+                        for(size_t i = 0; (i < 16) && (PacketIndex::payload + i + 15 < data.size()); ++i) {
                             if (data[PacketIndex::payload + i] == '\0') {
                                 break;
                             }
@@ -643,33 +645,8 @@ namespace RC::Protokoll::Crsf {
                 data[len + PacketIndex::type - 1] = crc;
             }
 
-            static inline bool validityCheck(const volatile uint8_t* const data, const uint16_t) {
-                if (const uint8_t s = data[0]; ((s != (uint8_t)RC::Protokoll::Crsf::V4::Address::StartByte) &&
-                                                (s != (uint8_t)RC::Protokoll::Crsf::V4::Address::Handset) && 
-                                                (s != (uint8_t)RC::Protokoll::Crsf::V4::Address::RX) // RM ERS Sensoren
-                                                )) {
-                    return false;
-                }
-                if (const uint8_t l = data[1]; l > RC::Protokoll::Crsf::V4::maxPayloadSize) {
-                    return false;
-                }
-                else if (l < RC::Protokoll::Crsf::V4::minPayloadSize) {
-                    return false;
-                }
-                if (const uint8_t t = data[2]; t > (uint8_t)RC::Protokoll::Crsf::V4::Type::Last) {
-                    return false;
-                }
-                return true;
-            }
-            static inline bool crcCheck(const auto& data, const uint8_t paylength) {
-                CRC8 csum;
-                for(int8_t i = 0; i < paylength - 1; ++i) {
-                    csum += data[i + 2];
-                }
-                if (csum == data[paylength - 1 + 2]) {
-                    return true;
-                }
-                return false;
+            static inline bool validityCheck(const volatile uint8_t* const data, const uint16_t size) {
+                return Packet::hasValidHeader(std::span{data, size});
             }
             static inline void update() { // channels to dest
                 if (mSource && mEnabled) {

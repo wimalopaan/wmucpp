@@ -156,15 +156,16 @@ namespace Mcu::Stm {
                 mcuAdcCommon->CCR = [] consteval {
                     uint32_t r = 0;
                     if constexpr(isClockDivider<trigger>) {
-                        static constexpr uint16_t values[16] = {1, 2, 4, 6, 8, 10, 12, 16, 32, 64, 128, 256};
+                        static constexpr uint16_t values[] = {1, 2, 4, 6, 8, 10, 12, 16, 32, 64, 128, 256};
                         static constexpr uint32_t bits = [&]{
                             for(uint8_t i = 0; i < std::size(values); ++i) {
                                 if (values[i] == trigger::clockDivider) {
                                     return i;
                                 }
                             }
-                            assert(false);
+                            return static_cast<uint8_t>(std::size(values));
                         }();
+                        static_assert(bits < std::size(values), "unsupported ADC clock divider");
                         // std::integral_constant<uint8_t, bits>::_;
                         r |= (bits << ADC_CCR_PRESC_Pos); // 64 / 4 = 42,5 MHz
                     }
@@ -213,7 +214,7 @@ namespace Mcu::Stm {
                     // mcuAdc->CFGR |= ADC_CFGR_DMACFG;
                     // mcuAdc->CFGR |= ADC_CFGR_DMAEN;
 
-                mcuAdc->SQR1 = []<auto... CC>(std::integer_sequence<auto, CC...>) consteval{
+                mcuAdc->SQR1 = []<typename T, auto... CC>(std::integer_sequence<T, CC...>) consteval{
                     uint32_t r = (nChannels - 1) << ADC_SQR1_L_Pos;
                     const std::array<uint8_t, sizeof...(CC)> channels{CC...};
 
@@ -224,7 +225,7 @@ namespace Mcu::Stm {
                 }(channels_list{});
 
                 if constexpr(nChannels > 4) {
-                    mcuAdc->SQR2 = []<auto... CC>(std::integer_sequence<auto, CC...>) consteval{
+                    mcuAdc->SQR2 = []<typename T, auto... CC>(std::integer_sequence<T, CC...>) consteval{
                         uint32_t r = 0;
                         const std::array<uint8_t, sizeof...(CC)> channels{CC...};
                         for(uint8_t i{4}; i < nChannels; ++i) {
@@ -272,15 +273,16 @@ namespace Mcu::Stm {
                 mcuAdcCommon->CCR = [] consteval {
                         uint32_t r = 0;
                         if constexpr(isClockDivider<trigger>) {
-                            static constexpr uint16_t values[16] = {1, 2, 4, 6, 8, 10, 12, 16, 32, 64, 128, 256};
+                            static constexpr uint16_t values[] = {1, 2, 4, 6, 8, 10, 12, 16, 32, 64, 128, 256};
                             static constexpr uint32_t bits = [&]{
                                 for(uint8_t i = 0; i < std::size(values); ++i) {
                                     if (values[i] == trigger::clockDivider) {
                                         return i;
                                     }
                                 }
-                                assert(false);
+                                return static_cast<uint8_t>(std::size(values));
                             }();
+                            static_assert(bits < std::size(values), "unsupported ADC clock divider");
                             // std::integral_constant<uint8_t, bits>::_;
                             r |= (bits << ADC_CCR_PRESC_Pos); // 64 / 4 = 42,5 MHz
                         }
@@ -557,15 +559,16 @@ namespace Mcu::Stm {
                 mcuAdc->ISR = ADC_ISR_ADRDY; // clear flag
 
                 if constexpr(isClockDivider<TriggerSource>) {
-                    constexpr uint16_t values[16] = {1, 2, 4, 6, 8, 10, 12, 16, 32, 64, 128, 256};
+                    constexpr uint16_t values[] = {1, 2, 4, 6, 8, 10, 12, 16, 32, 64, 128, 256};
                     constexpr uint8_t bits = [&]{
                         for(uint8_t i = 0; i < std::size(values); ++i) {
                             if (values[i] == TriggerSource::clockDivider) {
                                 return i;
                             }
                         }
-                        assert(false);
+                        return static_cast<uint8_t>(std::size(values));
                     }();
+                    static_assert(bits < std::size(values), "unsupported ADC clock divider");
                     // std::integral_constant<uint8_t, bits>::_;
                     MODIFY_REG(mcuAdcCommon->CCR, ADC_CCR_PRESC_Msk, (bits << ADC_CCR_PRESC_Pos)); // 64 / 4 = 42,5 MHz
                 }

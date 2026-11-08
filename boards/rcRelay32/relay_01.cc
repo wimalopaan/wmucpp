@@ -16,13 +16,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-// #define USE_WEACT // STM32G031
-#define USE_WMG0B1 // STM32G0B1
-// #define USE_NUCLEO_431 // STM32G431 (dev board)
+#if (defined(USE_WEACT) + defined(USE_WMG0B1) + defined(USE_NUCLEO_431)) != 1
+#error "select a board using make BOARD=WEACT, WMG0B1 or NUCLEO431"
+#endif
 
+#ifdef USE_WMG0B1
 #define SERIAL_DEBUG // only for WMG0B1
 
 #define ALTERNATE_PINS // WmG0B1 only
+#endif
 // #define USE_IRDA
 
 // #define USE_IRDA_TX_INVERT // for testing only (or direct connection)

@@ -29,20 +29,6 @@
 namespace Mcu::Stm {
     using namespace Units::literals;
 
-    
-#ifdef USE_MCU_STM_V2
-    inline 
-#endif
-    namespace V2 {
-        
-    }
-    
-#ifdef USE_MCU_STM_V1
-    inline 
-#endif
-    namespace V1 {
-    }
-    
     template<typename Letter, typename MCU = void>
     struct GPIO;
 

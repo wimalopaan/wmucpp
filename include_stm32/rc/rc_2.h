@@ -23,6 +23,7 @@
 #include <cstring>
 #include <limits>
 #include <numbers>
+#include <span>
 
 #include "crc.h"
 #include "byte.h"
@@ -273,6 +274,77 @@ namespace RC {
                     unsigned ch14 : 11;
                     unsigned ch15 : 11;
                 };
+                namespace Packet {
+                    static inline bool hasValidHeader(const auto& data) {
+                        if (data.size() < minMessageSize) {
+                            return false;
+                        }
+                        const uint8_t start = data[PacketIndex::sync];
+                        if ((start != (uint8_t)Address::StartByte) &&
+                            (start != (uint8_t)Address::Handset) &&
+                            (start != (uint8_t)Address::RX)) {
+                            return false;
+                        }
+                        const uint8_t length = data[PacketIndex::length];
+                        return (length >= minPayloadSize) && (length <= maxPayloadSize) &&
+                               (size_t(length) + 2 <= data.size()) &&
+                               (data[PacketIndex::type] <= (uint8_t)Type::Last);
+                    }
+                    static inline bool hasValidPayload(const auto& data) {
+                        if (!hasValidHeader(data)) {
+                            return false;
+                        }
+                        const uint8_t length = data[PacketIndex::length];
+                        switch ((std::byte)data[PacketIndex::type]) {
+                        case Type::Channels:
+                            return length >= sizeof(Channels) + 2;
+                        case Type::Link:
+                            return length >= 12;
+                        case Type::ParamRead:
+                        case Type::ParamWrite:
+                        case Type::Command:
+                            return length >= 6;
+                        case Type::Info:
+                            // Device info ends with 14 bytes after the terminated name.
+                            for (size_t i = PacketIndex::payload; i + 15 < size_t(length) + 2; ++i) {
+                                if (data[i] == '\0') {
+                                    return true;
+                                }
+                            }
+                            return false;
+                        default:
+                            return (data[PacketIndex::type] < (uint8_t)Type::Ping) || (length >= 4);
+                        }
+                    }
+                    static inline bool crcCheck(const auto& data) {
+                        if (!hasValidHeader(data)) {
+                            return false;
+                        }
+                        const size_t crcIndex = size_t(data[PacketIndex::length]) + 1;
+                        CRC8 csum;
+                        for (size_t i = PacketIndex::type; i < crcIndex; ++i) {
+                            csum += data[i];
+                        }
+                        return csum == data[crcIndex];
+                    }
+                    static inline bool forEach(const auto& data, const auto f) {
+                        size_t offset = 0;
+                        while (offset < data.size()) {
+                            const auto remaining = data.subspan(offset);
+                            if (!hasValidHeader(remaining)) {
+                                return false;
+                            }
+                            const size_t size = size_t(remaining[PacketIndex::length]) + 2;
+                            const auto packet = remaining.first(size);
+                            if (!hasValidPayload(packet) || !crcCheck(packet)) {
+                                return false;
+                            }
+                            f(packet);
+                            offset += size;
+                        }
+                        return true;
+                    }
+                }
                 template<typename C>
                 requires(std::is_pointer_v<C>)
                 static inline void pack(const std::array<uint16_t, 16>& channels, C out) {

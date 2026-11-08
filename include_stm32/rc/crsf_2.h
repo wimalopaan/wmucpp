@@ -275,15 +275,27 @@ namespace RC {
                             else {
                                 typename Param_t::value_type value{};
                                 if (params[index].type <= Param_t::I8) {
+                                    if (paylength < 1) {
+                                        return false;
+                                    }
                                     value = data[0];
                                 }
                                 else if (params[index].type <= Param_t::I16) {
+                                    if (paylength < 2) {
+                                        return false;
+                                    }
                                     value = (data[0] << 8) + data[1];
                                 }
                                 else if (params[index].type <= Param_t::F32) {
+                                    if (paylength < 4) {
+                                        return false;
+                                    }
                                     value = (data[3] << 24) + (data[2] << 16) + (data[1] << 8) + data[0];
                                 }
                                 else if (params[index].type == Param_t::Sel) {
+                                    if (paylength < 1) {
+                                        return false;
+                                    }
                                     value = data[0];
                                 }
                                 params[index].value(value);
@@ -494,6 +506,7 @@ namespace RC {
                                         mRxEvent = Event::ReceiveComplete;
                                         return true;
                                     }
+                                    IO::outl<debug>("# invalid CRSF header");
                                     return false;
                                 };
                                 uart::Isr::onIdle(f2);
@@ -533,33 +546,8 @@ namespace RC {
                         }
                     }
                     private:
-                    static inline bool validityCheck(const volatile uint8_t* const data, const uint16_t) {
-                        if (const uint8_t s = data[0]; ((s != (uint8_t)RC::Protokoll::Crsf::V4::Address::StartByte) &&
-                                                        (s != (uint8_t)RC::Protokoll::Crsf::V4::Address::Handset) &&
-                                                        (s != (uint8_t)RC::Protokoll::Crsf::V4::Address::RX) // RM ERS Sensoren 
-                                                        )) {
-                            return false;
-                        }
-                        if (const uint8_t l = data[1]; l > RC::Protokoll::Crsf::V4::maxPayloadSize) {
-                            return false;
-                        }
-                        else if (l < RC::Protokoll::Crsf::V4::minPayloadSize) {
-                            return false;
-                        }
-                        if (const uint8_t t = data[2]; t > (uint8_t)RC::Protokoll::Crsf::V4::Type::Last) {
-                            return false;
-                        }
-                        return true;
-                    }
-                    static inline bool crcCheck(const auto& data, const uint8_t paylength) {
-                        CRC8 csum;
-                        for(int8_t i = 0; i < paylength - 1; ++i) {
-                            csum += data[i + 2];
-                        }
-                        if (csum == data[paylength - 1 + 2]) {
-                            return true;
-                        }
-                        return false;
+                    static inline bool validityCheck(const volatile uint8_t* const data, const uint16_t size) {
+                        return Packet::hasValidHeader(std::span{data, size});
                     }
                     static inline void analyze(volatile uint8_t* const data, const uint8_t paylength) {
                         const std::byte type = (std::byte)data[2];
@@ -661,16 +649,11 @@ namespace RC {
                     }
                     static inline void readReply() {
                         uart::readBuffer([&](const auto& data){
-                            uint16_t offset = 0;
-                            do { // analyze all packages in one contiguous frame
-                                const uint8_t paylength = std::min((uint8_t)data[1 + offset], maxPayloadSize);
-                                // IO::outl<debug>("# rply: ", paylength);
-                                if (!crcCheck(&data[offset], paylength)) {
-                                    return;
-                                }
-                                analyze(&data[offset], paylength);
-                                offset += paylength + 2;
-                            } while(data.size() > offset);
+                            if (!Packet::forEach(data, [](const auto& packet) {
+                                analyze(packet.data(), packet[PacketIndex::length]);
+                            })) {
+                                IO::outl<debug>("# invalid CRSF packet");
+                            }
                         });
                     }
                     static inline uint16_t mCommandPackagesCounter = 0;

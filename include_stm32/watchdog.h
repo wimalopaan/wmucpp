@@ -39,7 +39,14 @@ template<typename Config>
 struct WatchDog {
     static inline constexpr uint32_t reload = Config::reload;
     static inline void init() {
-        if (RCC->CSR & RCC_CSR_PWRRSTF) {
+#if defined(RCC_CSR_PWRRSTF)
+        constexpr uint32_t powerResetFlag = RCC_CSR_PWRRSTF;
+#elif defined(RCC_CSR_BORRSTF)
+        constexpr uint32_t powerResetFlag = RCC_CSR_BORRSTF;
+#else
+#error "unsupported power reset flag"
+#endif
+        if (RCC->CSR & powerResetFlag) {
             pin_count = 0;
             wdg_count = 0;
             test_count = 0;
