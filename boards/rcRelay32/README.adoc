@@ -1,0 +1,318 @@
+= RC-Relay32
+
+RC-Relay32 ist eine Bare-Metal-C++-Firmware für eine CRSF-Relaisstation auf
+STM32-Basis. Sie übernimmt die Kanäle eines vorgeschalteten RC-Empfängers,
+sendet sie an ein nachgeschaltetes CRSF-Sendemodul und führt dessen
+Telemetrie und Gerätekommunikation zurück. Dabei können Geräteadressen
+umgeschrieben sowie Telemetriedaten gefiltert, reduziert oder getunnelt werden.
+Das Projekt schaltet keine elektromechanischen Relais.
+
+Diese Beschreibung bezieht sich auf den Quellcode in diesem Verzeichnis und
+die verwendeten Komponenten aus `../../include_stm32`.
+
+== Datenfluss
+
+----
+Vorgeschalteter CRSF-Empfänger       RC-Relay32       Nachgeschaltetes CRSF-TX-Modul
+  Kanäle / Linkstatistik  ---------> Eingang
+                                     Relay -------> RC-Kanäle / Geräteanfragen
+  Telemetrie / Antworten <---------- Eingang <------ Telemetrie / Geräteantworten
+----
+
+Der Eingang arbeitet mit *420.000 Baud*. Die Baudrate der Relay-Seite ist
+konfigurierbar; der EEPROM-Standard ist *921.600 Baud*.
+
+Die Firmware dekodiert die Eingangskanäle und erzeugt im Normalbetrieb alle
+*10 ms* ein neues CRSF-Kanalpaket aus den zuletzt gespeicherten Werten.
+Eingehende Kanalpakete und Linkstatistiken werden nicht zusätzlich unverändert
+zum TX-Modul weitergereicht. Erweiterte CRSF-Pakete, beispielsweise
+Geräteabfragen und Parameterzugriffe, werden weitergeleitet; für den Relay32
+selbst bestimmte Parameterzugriffe beantwortet die Eingangs-Komponente lokal.
+
+Beide CRSF-Seiten verarbeiten den Empfangspuffer als einzelne Pakete und prüfen
+vollständige Rahmenlänge, die implementierten typabhängigen Mindestlängen und
+CRC vor der Verarbeitung. Kanalpakete benötigen mindestens 26 Byte,
+Linkstatistikpakete mindestens 14 Byte einschließlich Rahmen.
+Bei einem ungültigen oder unvollständigen Paket endet die Verarbeitung dieses
+Puffers; vorherige gültige Pakete bleiben verarbeitet. Ungültige Pakete erhöhen
+die Kanal- und Linkstatistikzähler nicht.
+
+Auf dem Rückweg schreibt die Relay-Komponente erweiterte Gerätepakete um und
+behandelt einfache Telemetriepakete nach den konfigurierten Modi.
+`RadioID`-Pakete vom nachgeschalteten Modul werden nicht zurückgereicht.
+
+=== Adressumschreibung
+
+[cols="1,2,2",options="header"]
+|===
+| Gerät | Adresse auf der Eingangsseite, Standard | Native CRSF-Adresse
+| Relay32 selbst | `0xCD` (205) | Eigene konfigurierbare Geräteadresse
+| Nachgeschaltetes TX-Modul | `0xCE` (206) | `0xEE`
+| Dessen RX-Gerät | `0xCF` (207) | `0xEC`
+|===
+
+Ausgehende Zieladressen `0xCE` und `0xCF` werden auf die nativen TX-/RX-Adressen
+abgebildet; eingehende Quelladressen werden entsprechend zurückgeschrieben.
+Eine eingehende Zieladresse `0xEE` wird auf die Handset-Adresse `0xEA` geändert.
+Nach Änderungen berechnet die Firmware die Paket-CRC neu.
+
+Optional wird der Gerätename des nachgeschalteten TX-Moduls in dessen
+`Info`-Antworten überschrieben. Das Namensfeld im EEPROM umfasst acht Bytes.
+Die Umschreibung ersetzt Zeichen innerhalb des vorhandenen Namensfelds und
+füllt verbleibende Zeichen mit Punkten; sie verlängert das Paket nicht.
+
+== Hardware und Pinbelegung
+
+Die Boardauswahl erfolgt über `make BOARD=...`; der Standard ist `WEACT`.
+Für *WMG0B1* sind in `relay_01.cc` derzeit `ALTERNATE_PINS` und
+`SERIAL_DEBUG` aktiviert; diese Optionen gelten nicht für die anderen Boards.
+
+Alle TX-/RX-Angaben sind aus Sicht des Mikrocontrollers:
+
+[cols="2,1,1,1,2,1",options="header"]
+|===
+| Board / Auswahl | Eingangs-UART | Eingang TX / RX | Relay-UART | Relay TX / RX | Status-LED
+| WMG0B1, `ALTERNATE_PINS` | USART1 | PA9 / PA10 | USART6 | PA4 / PB9 | PB2
+| WMG0B1, ohne `ALTERNATE_PINS` | USART1 | PA9 / PA10 | USART2 | PA2 / PA3 | PB2
+| WeAct STM32G031 | USART2 | PA2 / PA3 | USART1 | PA9 / PA10, mit Remapping | PA4, invertiert
+| Nucleo STM32G431 | USART2 | PB3 / PB4 | USART1 | PA9 / PA10 | PB8
+|===
+
+Beim G031 aktiviert der Code das PA11-/PA12-Remapping für die logischen
+PA9-/PA10-Funktionen. Die tatsächlich herausgeführten Anschlüsse müssen anhand
+des konkreten Boards und der MCU-Pinbelegung geprüft werden.
+
+RX des Relay32 mit TX des vorgeschalteten Empfängers verbinden; Eingang-TX
+führt die Rückkommunikation zu dessen RX. Auf der Relay-Seite werden TX und RX
+ebenfalls mit den Gegenanschlüssen verbunden. Im aktivierten *Half-Duplex-Modus*
+erfolgt die Kommunikation der Relay-Seite über deren TX-Pin.
+Gemeinsame Masse und geeignete STM32-Logikpegel sicherstellen; Angaben zur
+Versorgung und zu externen Pegelwandlern lassen sich aus der Firmware nicht
+ableiten.
+
+WMG0B1 besitzt zusätzlich eine LED an PC6, die hier dauerhaft eingeschaltet
+wird. Die optionale Debug-Ausgabe erfolgt über USART5-TX an PB3 mit
+*115.200 Baud*.
+
+== Start, Verbindungserkennung und Failsafe
+
+Beim Start wird die Flash-Konfiguration in den RAM geladen und validiert.
+Danach initialisiert der Scheduler die Hardware und wendet die
+Parameter-Callbacks auf die gültigen RAM-Werte beziehungsweise Standardwerte
+an. Die Hauptschleife verarbeitet UART-/DMA-Ereignisse; die zeitgesteuerte
+Verarbeitung läuft mit *2 kHz*.
+
+Die globale Zustandsmaschine wartet zunächst *500 ms* und wechselt nach
+`Init`. Alle *300 ms* werden die seit der letzten Prüfung eingegangenen
+Kanal- und Linkstatistikpakete gezählt:
+
+[cols="2,2,2",options="header"]
+|===
+| Ergebnis | Ereignis / Zustand | Status-LED
+| Kanalpakete und Linkstatistiken vorhanden | `ReceiverConnected` → `Run` | Langsames Zweier-Blinkmuster
+| Keine Kanalpakete | `ConnectionLost` → `UnConnected` | Schnelles Einer-Blinkmuster
+| Kanalpakete, aber keine Linkstatistik | `DirectConnected` → `Run` | Langsames Zweier-Blinkmuster
+| Eintritt in `Init` | Warten auf Verbindungsereignis | Dauerlicht
+|===
+
+Die Erkennung bewertet Paketankunft, nicht den Linkqualitätswert oder ein
+separates Failsafe-Flag des Empfängers. Gültige Kanalpakete genügen für den
+Verbindungsaufbau und die Wiederverbindung; Linkstatistik ist optional.
+
+*Failsafe `Forward` (Standard):* Beim Eintritt in `UnConnected` werden die
+Kanalgenerierung und die Weiterleitung Richtung TX-Modul deaktiviert. Das
+nachgeschaltete Funksystem muss den ausbleibenden Kanalstrom selbst als
+Verbindungsverlust behandeln. Dies sendet weder Nullwerte noch ein explizites
+Failsafe-Paket.
+
+*Failsafe `Hold`:* Ein zuvor freigegebener Relay-Ausgang bleibt beim
+Verbindungsverlust aktiviert und sendet weiter die zuletzt empfangenen
+Kanalwerte. Die Rückkommunikation wird durch `relay::enable(false)` nicht
+abgeschaltet.
+
+WARNING: Änderungen des Failsafe-Modus aktualisieren den Ausgang während eines
+laufenden Verbindungsverlusts derzeit nicht. Insbesondere schaltet `Hold` →
+`Forward` den weiterlaufenden Kanalstrom nicht ab; `Forward` → `Hold` aktiviert
+einen bereits abgeschalteten Ausgang nicht wieder. Die Failsafe-Einstellung
+daher vor dem Verbindungsverlust festlegen.
+
+Der Ausgang wird vor der Hardwareinitialisierung gesperrt und erst beim
+Eintritt in `Run` aktiviert, wenn gültige Kanalpakete erkannt wurden.
+Diese Startsperre gilt auch bei `Hold`: Ohne vorherige Verbindung werden keine
+voreingestellten Kanalwerte gesendet. Die Rückkommunikation bleibt möglich.
+
+Bei erkannten UART-Framing-Fehlern auf der Relay-Seite erzeugt die Firmware
+außerdem ein CRSF-Speed-Kommando mit dem Handset-Baudratenwert 400.000.
+Dies ist keine automatische lokale Baudratenumschaltung.
+
+== Konfiguration über CRSF
+
+Der Relay32 erscheint als *`RC-Relay32@205`*; die Zahl folgt seiner
+konfigurierten Adresse. Hardwareversionen sind 1 (WeAct), 2 (WMG0B1) und
+3 (Nucleo), die aktuelle Softwareversion ist 16.
+
+[cols="2,3,2",options="header"]
+|===
+| Menüeintrag | Auswahl / Bereich | EEPROM-Standard
+| `Version(HW/SW)` | Versionsinformation | Boardabhängig / 16
+| `Watchdog` | Reset-Zähler, Pin-Reset : Watchdog-Reset | Diagnose
+| `CRSF Address` | 192–207 | 205
+| `TX Rewrite Address` | 192–207 | 206
+| `RX Rewrite Address` | 192–207 | 207
+| `TX Rewrite Name` | Höchstens sieben Namensbytes plus NUL-Terminierung | `RelayTX`
+| `Rewrite Name` | Off / On | Off
+| `LinkStat` | Off / Forward / Transform / Tunnel | Transform
+| `Failsafe` | Forward / Hold | Forward
+| `Telem. Off Dur.` | 1–60, Menüeinheit Sekunden | 30
+| `Telemetry forwarding` → `Forward Rate` | 1–10 | 2
+| Einzelne Telemetrietypen | Off / Forward / Tunnel | Forward
+| `Half-Duplex` | Off / On | Off
+| `Baudrate` | 400.000 / 420.000 / 460.800 / 921.600 / 1.870.000 Baud | 921.600
+|===
+
+Der TX-Name wird begrenzt kopiert und immer NUL-terminiert. Überlange oder
+nicht terminierte Eingaben werden als gekürzte Version übernommen, nicht
+vollständig verworfen; das EEPROM-Namensfeld bleibt auf acht Byte begrenzt.
+
+`Forward Rate` ist ein *Teiler*, keine Frequenz in Hertz: Bei Wert 2 wird
+jedes zweite Paket je Telemetrietyp weitergegeben. Die Zähler laufen getrennt
+für die einzelnen Typen.
+
+Die Einzelauswahl umfasst GPS, GPS Time, GPS Ext, Vario, Battery, Barometer,
+Airspeed, Heartbeat, RPM, Temperature, Voltages, VTX Telemetry, Link RX,
+Link TX, Attitude, MAVLink FC, Flight Mode und ESP Now.
+
+=== Telemetriemodi
+
+* *Off:* Pakete des betreffenden Typs verwerfen.
+* *Forward:* Originalpakete unter Berücksichtigung des Teilers zurückgeben.
+* *Transform, nur `LinkStat`:* Linkstatistik `0x14` in die beiden Typen
+  `LinkStatsRx` (`0x1C`) und `LinkStatsTx` (`0x1D`) umsetzen. Die Abbildung im
+  Quellcode enthält noch provisorische Feldzuordnungen; sie ist keine
+  verlustfreie Darstellung aller ursprünglichen Felder.
+* *Tunnel:* Originaltyp und Nutzdaten in CRSF-`PassThru` (`0x7F`) kapseln.
+  Ziel ist das Handset, Quelle die Relay32-Adresse; App-ID ist 6200,
+  Subtyp `0x01` für Linkstatistik oder `0x02` für andere Telemetrie.
+  Die Auswertung benötigt eine passende Lua-Anwendung.
+
+Ein Tunnelpaket ist sechs Bytes länger als das ursprüngliche CRSF-Paket.
+Damit können höchstens 58 Byte lange Eingangspakete getunnelt werden.
+Größere Pakete werden vor dem Schreiben verworfen und über die vorhandene
+Debug-Ausgabe gemeldet; sie werden weder gekürzt noch automatisch weitergeleitet.
+
+Bei Ping-, Parameterlese- und Parameterschreibpaketen wird einfache
+Rückweg-Telemetrie vorübergehend unterdrückt, um die Gerätekommunikation zu
+entlasten. Erweiterte Geräteantworten bleiben möglich; erneute Anfragen setzen
+den Timer zurück.
+
+*Zeitbasis beachten:* `telemetryTempOffDuration()` setzt den Timer mit
+`fromRaw(d * 1000)` statt mit einer Sekunden-Dauer. Bei den hier konfigurierten
+2 kHz entsprechen die angezeigten 30 Sekunden tatsächlich etwa *15 Sekunden*.
+Das betrifft auch den beim Start angewendeten EEPROM-Standard.
+
+Parameteränderungen werden über `Mcu::Stm32::savecfg()` im Flash-Bereich
+`.eeprom` gespeichert; es handelt sich nicht um ein externes EEPROM.
+Numerische Parameter außerhalb ihres Menü-Wertebereichs werden vor Übernahme
+und Callback abgelehnt und nicht gespeichert; die Diagnose erfolgt im Aufrufer.
+Speicherfehler werden über die Debug-Ausgabe gemeldet. Beim Laden werden
+`magic` (42), Wertebereiche, Baudratenindex und die Terminierung des TX-Namens
+geprüft. Bei ungültigen Daten wird die gesamte RAM-Konfiguration durch
+Standardwerte ersetzt und der Fehler nach der Hardwareinitialisierung gemeldet.
+Der Flash wird dabei nicht automatisch überschrieben. Eine automatische
+Konfigurationsmigration ist nicht implementiert.
+
+== Bauen und Flashen
+
+Voraussetzungen sind GNU Make, die `arm-none-eabi`-Toolchain mit Unterstützung
+für den im Makefile verwendeten Modus *C++26* und die
+STM32Cube-Header. Die erwartete Verzeichnisstruktur ist:
+
+----
+<Arbeitsverzeichnis>/
+  wmucpp/
+    include_stm32/
+    boards/rcRelay32/
+  STM32CubeG0/Drivers/...
+  STM32CubeG4/Drivers/...
+----
+
+Das gemeinsame Board-Makefile aktiviert die passende MCU und Boardauswahl in
+`relay_01.cc`. Ohne Angabe von `BOARD` wird für WeAct G031 gebaut:
+
+[cols="1,1,2",options="header"]
+|===
+| Board | `BOARD` | Build aus diesem Verzeichnis
+| WeAct G031 | `WEACT` (Standard) | `make` oder `make BOARD=WEACT`
+| WMG0B1 | `WMG0B1` | `make BOARD=WMG0B1`
+| Nucleo G431 | `NUCLEO431` | `make BOARD=NUCLEO431`
+|===
+
+GCC ist der Standardcompiler (`TOOLCHAIN=gcc`). Mit `TOOLCHAIN=clang` werden
+die C++-Quellen mit `clang++` und LLVM-LTO gebaut und mit `ld.lld` gelinkt:
+
+[source,shell]
+----
+make TOOLCHAIN=clang
+make BOARD=WMG0B1 TOOLCHAIN=clang
+make BOARD=NUCLEO431 TOOLCHAIN=clang
+----
+
+Clang benötigt ebenfalls C++26-Unterstützung sowie die installierte
+`arm-none-eabi`-GCC-Toolchain für C++-Header, Startup-Objekte und
+Laufzeitbibliotheken. Die Board-Startup-Assemblerdatei wird weiterhin mit GCC
+assembliert.
+
+`SERIAL_DEBUG` und `ALTERNATE_PINS` sind WMG0B1-Optionen.
+`USE_IRDA` ergänzt bei geeigneter Hardware einen IrDA-Menüeintrag und erhöht
+bei Aktivierung das Kanalintervall auf 40 ms. Mit `ALTERNATE_PINS` wird IrDA
+im Quellcode ausdrücklich deaktiviert. `NDEBUG` ist als Entwicklungsoption
+markiert und soll laut Quellcode nicht geändert werden.
+
+GCC-Builds erzeugen `relay_01.elf` und `relay_01.bin` unter `build/<BOARD>/`,
+Clang-Builds unter `build/<BOARD>/clang/`.
+Nach dem Erzeugen eines Images zeigt `arm-none-eabi-size` die Speicherbelegung
+der ELF-Datei an.
+Objekte und Header-Abhängigkeiten liegen ebenfalls getrennt nach Board und
+Compiler dort; ein Wechsel benötigt daher weder `clean` noch `-B`.
+`make clean` entfernt das gesamte `build/`-Verzeichnis mit den Ausgaben aller
+Boards und Compiler, unabhängig von `BOARD` und `TOOLCHAIN`.
+Die Startup-Quelldateien bleiben unverändert.
+
+Zum Schreiben des passenden Images mit ST-Link, erst nach Prüfung der
+Boardauswahl und Verdrahtung:
+
+[source,shell]
+----
+st-flash --reset --connect-under-reset write build/WEACT/relay_01.bin 0x08000000
+----
+
+Das Binärimage enthält auch den `.eeprom`-Bereich. Beim Schreiben eines neuen
+Images muss damit gerechnet werden, dass gespeicherte Einstellungen durch die
+mitgebauten Standardwerte ersetzt werden.
+
+== Quellcodeübersicht und Grenzen
+
+[cols="2,3",options="header"]
+|===
+| Datei | Aufgabe
+| `relay_01.cc` | Build-Schalter, Typverdrahtung, Einstiegspunkt und UART-Interrupts
+| `devices.h` | Boardvarianten, Pins, Takt, DMA, UARTs, LEDs und Hardwareinitialisierung
+| `gfsm.h` | Verbindungserkennung, LED-Anzeige und Failsafe-Steuerung
+| `crsf_cb.h` | CRSF-Geräteidentität, Parametermenü und Konfigurations-Callbacks
+| `eeprom.h` / `storage.h` | Konfigurationslayout, Standardwerte und Flash-/RAM-Speicherung
+| `../../include_stm32/rc/package_relay_rewrite.h` | Kanalgenerierung, Adressumschreibung und Telemetriebehandlung
+| `Makefile`, `link_*.ld`, `startup_*.s`, `system_*.cc` | Boardauswahl, MCU-spezifischer Build und Startcode
+|===
+
+Auf WMG0B1 wird ein Watchdog mit 500-ms-Konfiguration initialisiert; die anderen
+Boardvarianten definieren ihn ebenfalls, rufen in ihrer Hardwareinitialisierung
+aber kein `watchDog::init()` auf. Der ADC wird gestartet, seine Messwerte werden
+in dieser Anwendung noch nicht als Spannungs- oder Temperaturtelemetrie genutzt.
+
+`todo.txt` nennt unter anderem einen möglichen Ausfall des Lua-Telemetrietunnels
+unter EdgeTX 3.0 und Probleme bei 1,8-MBaud mit TBS Tracer. Diese Hinweise sind
+keine hier verifizierte Kompatibilitätszusage. Vor dem Einsatz insbesondere
+Failsafe, Baudrate und Telemetrie mit der konkreten Empfänger-/Modulkombination
+prüfen.
+
+Lizenz: *GPL-3.0-or-later*, entsprechend den Quellcodeköpfen.
