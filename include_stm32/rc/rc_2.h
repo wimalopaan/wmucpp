@@ -344,6 +344,26 @@ namespace RC {
                         }
                         return true;
                     }
+                    template<typename Destination>
+                    static inline bool createTelemetryTunnel(const auto& data, const uint8_t source,
+                                                             const std::byte subtype) {
+                        // Two addresses, a two-byte App-ID, a subtype and an outer type.
+                        constexpr size_t overhead = 6;
+                        if ((data.size() < minMessageSize) || (data.size() > maxMessageSize - overhead) ||
+                            (data.size() + overhead > Destination::Entry::size)) {
+                            return false;
+                        }
+                        Destination::create_back((uint8_t)Type::PassThru, [&](auto& ta) {
+                            ta.push_back(Address::Handset);
+                            ta.push_back(source);
+                            ta.push_back(PassThru::AppId::Telem);
+                            ta.push_back(subtype);
+                            for (size_t i = PacketIndex::type; i < data.size() - 1; ++i) {
+                                ta.push_back(data[i]);
+                            }
+                        });
+                        return true;
+                    }
                 }
                 template<typename C>
                 requires(std::is_pointer_v<C>)

@@ -513,15 +513,10 @@ namespace RC::Protokoll::Crsf {
                                                 }
                                                 else if (mLinkStatMode == 3) { // tunnel
                                                     IO::outl<debug>("# tunnel link stats, size: ", data.size());
-                                                    dest::create_back((uint8_t)Type::PassThru, [&](auto& ta){
-                                                        ta.push_back(Address::Handset);
-                                                        ta.push_back(storage::eeprom.address);
-                                                        ta.push_back(PassThru::AppId::Telem);
-                                                        ta.push_back(PassThru::SubType::LinkStat);
-                                                        for(uint8_t i = PacketIndex::type; i < (data.size() - 1); ++i) {
-                                                            ta.push_back(data[i]);
-                                                        }
-                                                    });
+                                                    if (!Packet::createTelemetryTunnel<dest>(
+                                                            data, storage::eeprom.address, PassThru::SubType::LinkStat)) {
+                                                        IO::outl<debug>("# tunnel packet too large, size: ", data.size());
+                                                    }
                                                 }
                                             }
                                         }
@@ -531,15 +526,10 @@ namespace RC::Protokoll::Crsf {
                                             if (shouldSendtelemetry(type)) {
                                                 if (mode == 2) {
                                                     IO::outl<debug>("# tunnel telemtry, size: ", data.size(), " t: ", data[PacketIndex::type]);
-                                                    dest::create_back((uint8_t)Type::PassThru, [&](auto& ta){
-                                                        ta.push_back(Address::Handset);
-                                                        ta.push_back(storage::eeprom.address);
-                                                        ta.push_back(PassThru::AppId::Telem);
-                                                        ta.push_back(PassThru::SubType::Telemetry);
-                                                        for(uint8_t i = PacketIndex::type; i < (data.size() - 1); ++i) {
-                                                            ta.push_back(data[i]);
-                                                        }
-                                                    });
+                                                    if (!Packet::createTelemetryTunnel<dest>(
+                                                            data, storage::eeprom.address, PassThru::SubType::Telemetry)) {
+                                                        IO::outl<debug>("# tunnel packet too large, size: ", data.size());
+                                                    }
                                                 }
                                                 else if (mode == 1) {
                                                     IO::outl<debug>("# telemtry, size: ", data.size());
