@@ -1,0 +1,106 @@
+# .github/workflows/rcrelay32.yml
+#
+# Baut die RC-Relay32-Firmware (boards/rcRelay32) für alle Boards und stellt
+# die .bin/.elf-Dateien als Download bereit. Gleiche Umgebung wie der Codespace
+# (.devcontainer): Arch Linux mit arm-none-eabi-gcc, STM32CubeG0/G4 neben dem Repo.
+#
+#  - bei jedem Push/PR, der das Relay oder die Bibliothek betrifft: Download unter
+#    "Actions" -> Lauf auswählen -> "Artifacts"
+#  - manuell über "Run workflow" (workflow_dispatch)
+#  - bei einem Tag "rcRelay32-v*" zusätzlich ein GitHub-Release mit den Dateien
+
+name: rcRelay32
+
+on:
+  push:
+    paths:
+      - "boards/rcRelay32/**"
+      - "include_stm32/**"
+      - ".github/workflows/rcrelay32.yml"
+    tags:
+      - "rcRelay32-v*"
+  pull_request:
+    paths:
+      - "boards/rcRelay32/**"
+      - "include_stm32/**"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: archlinux:base
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - board: WEACT
+            family: G0
+          - board: WMG0B1
+            family: G0
+          - board: NUCLEO431
+            family: G4
+
+    steps:
+      - name: Toolchain installieren
+        run: |
+          pacman -Syu --noconfirm --needed arm-none-eabi-gcc arm-none-eabi-newlib make git
+          git config --global --add safe.directory '*'
+          arm-none-eabi-g++ --version | head -1
+
+      # Das Makefile erwartet ../../../STM32Cube<Familie>, also neben dem Repo
+      - name: Repository auschecken
+        uses: actions/checkout@v4
+        with:
+          path: wmucpp
+
+      - name: STM32Cube${{ matrix.family }} aus dem Cache
+        id: cube
+        uses: actions/cache@v4
+        with:
+          path: STM32Cube${{ matrix.family }}
+          key: stm32cube-${{ matrix.family }}-v1
+
+      - name: STM32Cube${{ matrix.family }} holen
+        if: steps.cube.outputs.cache-hit != 'true'
+        run: |
+          git clone --depth 1 --recursive --shallow-submodules \
+            https://github.com/STMicroelectronics/STM32Cube${{ matrix.family }}.git \
+            STM32Cube${{ matrix.family }}
+
+      - name: Bauen (${{ matrix.board }})
+        working-directory: wmucpp/boards/rcRelay32
+        run: make BOARD=${{ matrix.board }}
+
+      - name: Dateien benennen
+        run: |
+          mkdir -p out
+          ver=$(git -C wmucpp describe --tags --always)
+          for f in relay_01.bin relay_01.elf; do
+            cp "wmucpp/boards/rcRelay32/build/${{ matrix.board }}/$f" \
+               "out/rcRelay32-${{ matrix.board }}-${ver}.${f##*.}"
+          done
+          ls -l out
+
+      - name: Hochladen
+        uses: actions/upload-artifact@v4
+        with:
+          name: rcRelay32-${{ matrix.board }}
+          path: out/*
+          if-no-files-found: error
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/rcRelay32-v')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: out
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: out/*
+
+
