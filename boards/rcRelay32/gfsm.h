@@ -49,6 +49,7 @@ struct GFSM {
         crsf_cb::update();
     }
     static inline void init() {
+        relay::enable(false);
         devs::init();
         updateFromEeprom();
     }
