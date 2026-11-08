@@ -74,6 +74,8 @@ struct GFSM {
         case State::Init:
             mEvent.on(Event::ReceiverConnected, []{
                 mState = State::Run;
+                }).thenOn(Event::DirectConnected, []{
+                    mState = State::Run;
                 }).thenOn(Event::ConnectionLost, []{
                     mState = State::UnConnected;
             });
@@ -81,6 +83,8 @@ struct GFSM {
         case State::UnConnected:
             mEvent.on(Event::ReceiverConnected, []{
                 mState = State::Run;
+                }).thenOn(Event::DirectConnected, []{
+                    mState = State::Run;
             });
             break;
         case State::Run:
