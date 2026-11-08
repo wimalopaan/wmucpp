@@ -221,6 +221,26 @@ Standardwerte ersetzt und der Fehler nach der Hardwareinitialisierung gemeldet.
 Der Flash wird dabei nicht automatisch überschrieben. Eine automatische
 Konfigurationsmigration ist nicht implementiert.
 
+=== Wiederholung von Parameteranfragen
+
+Das ELRS-Lua-Skript (`elrsV3.lua`) wartet bei jedem Gerät außer seinem eigenen
+Sendemodul 5 Sekunden, bevor es eine unbeantwortete Anfrage wiederholt. Hinter
+dem Relay (Sendemodul 2 unter `0xCE`, dessen Empfänger unter `0xCF`, der
+Flugcontroller z. B. unter `0xC8`) geht gelegentlich eine Antwort verloren; jeder
+Verlust kostete 5 Sekunden, das Laden eines Menüs dauerte so oft 10–20 Sekunden.
+
+Mit `paramRetry` in der Relay-Konfiguration (für alle Boards von rcRelay32
+eingeschaltet) wiederholt das Relay eine Parameter-Leseanfrage selbst, wenn die
+Antwort ausbleibt:
+
+* nach dem Dreifachen der je Gerät gemessenen Laufzeit, mindestens 100 ms
+  (Sendemodul 2) bzw. 500 ms (über die Funkstrecke), höchstens 1,5 s,
+* höchstens dreimal je Anfrage,
+* doppelte Antworten, die durch diese Wiederholungen entstehen, werden
+  verworfen (gleicher Eintrag, gleicher Chunk),
+* Schreibanfragen werden nie wiederholt; unaufgeforderte Antworten
+  (z. B. Fortschrittsmeldungen von Kommandos) laufen unverändert durch.
+
 == Bauen und Flashen
 
 Voraussetzungen sind GNU Make, die `arm-none-eabi`-Toolchain mit Unterstützung
