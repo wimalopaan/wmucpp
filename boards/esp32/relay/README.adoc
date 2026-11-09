@@ -90,8 +90,6 @@ Task-Watchdog ueberwacht die Anwendung. Die Konfiguration liegt in NVS,
 nicht im STM32-Flashformat; vorhandene STM32-Flashabbilder sind nicht
 uebertragbar. Firmware verwendet beide UARTs, WLAN/Bluetooth bleiben aus.
 
-Zeitbasis sind Mikrosekunden: `Telem. Off Dur.` sind echte Sekunden,
-anders als die halbierte Dauer durch den 2-kHz-Tick der Vorlage.
 Geraeteantworten werden direkt ueber den UART-Treiber gepuffert, nicht
 an den STM32-Kanalslot-Scheduler gebunden. Auch direkt an das
 umgeschriebene Modul gerichtete Pings werden weitergeleitet.
