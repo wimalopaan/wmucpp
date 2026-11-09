@@ -30,15 +30,30 @@ namespace Hott {
             Callback::decode(data, length);
         };
 
-        template<auto N = 0, typename Dbg = void, typename Callback = void>
+        template<auto N = 0, typename Dbg = void, typename Callback = void, uint16_t TimeoutTicks = 0>
         struct ProtocollAdapter {
 
             enum class State : uint8_t {Undefined, Start, Length, Data, CheckL, CheckH};
             
-            inline static void ratePeriodic() {}
+            inline static void ratePeriodic() {
+                if constexpr (TimeoutTicks > 0) {
+                    if (mState != State::Undefined) {
+                        if (++mIdleTicks >= TimeoutTicks) {
+                            mState = State::Undefined;
+                            mIndex = 0;
+                            mLength = 0;
+                            mIdleTicks = 0;
+                            ++mTimeoutsCounter;
+                        }
+                    }
+                }
+            }
             
             inline static bool process(const std::byte c) { 
                 Dbg::toggle();
+                if constexpr (TimeoutTicks > 0) {
+                    mIdleTicks = 0;
+                }
                 static uint16_t csum;
                 static uint16_t package_crc;
                 switch (mState) {
@@ -52,6 +67,7 @@ namespace Hott {
                 case State::Start:
                     etl::crc16(csum, std::to_integer(c));
                     if ((c & 0x0f_B) == SumDMsgV3::version_code) {
+                        mStatus = c & 0xf0_B;
                         mState = State::Length;
                     }
                     else {
@@ -60,8 +76,8 @@ namespace Hott {
                     break;
                 case State::Length:
                     etl::crc16(csum, std::to_integer(c));
-                    mLength = 2 * uint8_t(c);
-                    if (mLength <= 36) {
+                    if (const uint8_t words = uint8_t(c); (words > 0) && (words <= SumDMsgV3::MaxWords)) {
+                        mLength = 2 * words;
                         mIndex = 0;
                         mState = State::Data;
                     } 
@@ -85,6 +101,12 @@ namespace Hott {
                     if (csum == package_crc) {
                         ++mPackagesCounter;
                         if constexpr(!std::is_same_v<Callback, void>) {
+                            if constexpr (requires { Callback::received(mStatus); }) {
+                                Callback::received(mStatus);
+                            }
+                            else if constexpr (requires { Callback::received(); }) {
+                                Callback::received();
+                            }
                             if constexpr(LengthAwareCallback<Callback, MesgType>) {
                                 Callback::decode(*active, mLength);
                             }
@@ -102,10 +124,14 @@ namespace Hott {
             }
             inline static uint16_t packages() {
                 return mPackagesCounter;
-            }            
+            }
+            inline static uint16_t timeouts() {
+                return mTimeoutsCounter;
+            }
         private:
             using MesgType = std::array<std::byte, 36>; // 18 words in total
             inline static uint8_t mLength;
+            inline static std::byte mStatus{};
             inline static State mState{State::Undefined};
             inline static MesgType mData0;
             inline static MesgType mData1;
@@ -113,6 +139,8 @@ namespace Hott {
             inline static MesgType* inactive = &mData1;
             inline static uint8_t mIndex;
             inline static uint16_t mPackagesCounter{};
+            inline static uint16_t mIdleTicks{};
+            inline static uint16_t mTimeoutsCounter{};
         };
     }
     
