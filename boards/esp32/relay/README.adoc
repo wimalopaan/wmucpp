@@ -1,0 +1,137 @@
+= RC-Relay32 on the WeAct ESP32-C3 Core Board
+
+Language: *English* | link:README.de.adoc[Deutsch]
+
+ESP-IDF port of `../../rcRelay32` for the WeAct ESP32-C3FH4 Core Board
+with 4 MB flash. This is a CRSF relay station between an upstream
+receiver and a downstream transmitter module, not an electromechanical
+relay controller. The configuration structure, CRSF packet validation,
+and parameter serialization are reused from the original project and
+`include_stm32`; STM32 hardware drivers are not included.
+
+== Connections
+
+All TX/RX labels are from the ESP32-C3's perspective:
+
+[cols="2,1,1",options="header"]
+|===
+|Function |GPIO |UART
+|Input RX, from receiver TX |20 |0
+|Input TX, to receiver RX |21 |0
+|Relay TX, to transmitter module RX |4 |1
+|Relay RX, from transmitter module TX |5 |1
+|Blue onboard LED, active low |8 |-
+|USB Serial/JTAG |18/19 |unchanged
+|===
+
+Pin assignment: `main/board.h`. GPIO4/5 are unavailable for external
+JTAG with this assignment. GPIO2/8/9 are strapping pins; BOOT on GPIO9
+remains available. LED/BOOT assignments follow the
+https://github.com/WeActStudio/WeActStudio.ESP32C3CoreBoard/tree/master/Hardware[WeAct schematic].
+UART0 may output ROM boot messages on GPIO21.
+The running application uses USB exclusively for logging.
+
+Use a common ground and 3.3 V logic levels. Do not connect RS232 levels
+or 5 V signals directly. Check the power supply and any required signal
+inversion or level shifting for your receiver/transmitter module separately.
+
+Input: fixed at 420000 baud, 8N1, non-inverted, two-wire full duplex.
+Relay: 400000, 420000, 460800, 921600, or 1870000 baud; default 921600.
+
+With `Half-Duplex=On`, only GPIO4 is used as the shared TX/RX line;
+GPIO5 is unused. The ESP32 driver uses RS485 half-duplex mode for
+echo suppression, but does not use an RS485 transceiver or RTS pin.
+GPIO4 is open drain with an internal pull-up.
+A suitable external pull-up to 3.3 V is required, especially at high
+baud rates; measure signal edges and bus turnaround on the actual hardware.
+The other device must also support a shared half-duplex bus.
+When changing modes, the wiring must match the selected mode.
+
+== Features
+
+* After a 500 ms startup delay, connection detection runs every 300 ms
+  using CRC-valid channel packets; link statistics are not required.
+  Output remains disabled until the first connection, even in Hold mode.
+* Channel packets are regenerated every 10 ms using the last received
+  values of all 16 channels. Original channel/link packets are not
+  forwarded in addition to the regenerated packets.
+* Failsafe `Forward`: stop the channel stream and forwarding to the
+  transmitter module. Failsafe `Hold`: keep sending the last channel
+  values after a previous connection. Return communication remains
+  active in both cases.
+* Address rewriting: local device 0xCD, module 0xCE <-> 0xEE,
+  its receiver 0xCF <-> 0xEC; all configurable.
+  Optional TX name, up to seven characters; the rest of the existing
+  name field is filled with dots, as in the original implementation.
+* Per-type telemetry Off/Forward/Tunnel modes with independent rate
+  dividers per type. Link statistics additionally support Transform,
+  using the same provisional field mapping as the STM32 version.
+  Tunnel: PassThru 0x7F, app ID 6200, original packet up to 58 bytes.
+* ArduPilot 0x80 is passed through unchanged without address rewriting,
+  with its own Off/Forward parameter and a rate divider per app ID
+  nibble (0xF0) or for multi-packets (0xF2).
+  Status texts (0xF1) are not rate-divided.
+* Parameter reads: four device slots, adaptive timeouts starting at
+  100 ms locally / 500 ms over the radio link, up to 1500 ms,
+  at most three retries, and duplicate suppression.
+  Writes are never retried.
+* Ping and parameter accesses temporarily suppress simple telemetry;
+  extended responses remain possible. RadioID is not returned.
+* Module-side framing errors trigger a 400000-baud speed command,
+  as in the original implementation, without changing the local baud rate.
+* CRSF device `RC-Relay32@205`, hardware version 4, software version 19.
+  Parameter order matches the original without IrDA; `Reset reason`
+  replaces the STM32 watchdog counters and shows the ESP-IDF reset reason.
+* Configuration is saved to NVS 500 ms after the last valid parameter
+  change. Invalid/missing configuration falls back to defaults with a
+  diagnostic message, without automatically erasing stored data.
+
+LED: off at startup, then initially steady on; fast single flashes
+when disconnected, slow double flashes when connected.
+
+=== Differences from the STM32 version
+
+No IrDA or STM32 ADC/DMA/watchdog reset counters. The ESP-IDF task
+watchdog monitors the application. Configuration is stored in NVS,
+not in the STM32 flash format; existing STM32 flash images cannot
+be transferred. The firmware uses both UARTs; Wi-Fi/Bluetooth remain off.
+
+Device responses are buffered directly through the UART driver rather
+than being tied to the STM32 channel-slot scheduler. Pings addressed
+directly to the rewritten module address are also forwarded.
+Unlike the original implementation, switching from Hold to Forward
+while already disconnected takes effect at the next connection check.
+Hold does not enable an output that was previously disabled.
+
+UART processing and channel regeneration run in one FreeRTOS task.
+Missed 10 ms slots are not replayed. NVS writes may briefly block the
+task; do not change configuration during safety-critical operation.
+This does not provide hard real-time guarantees.
+
+== Building and flashing
+
+Activate ESP-IDF with an installed ESP32-C3 toolchain:
+
+[source,sh]
+----
+. "$IDF_PATH/export.sh"
+idf.py set-target esp32c3
+idf.py build
+idf.py -p /dev/ttyACM0 flash monitor
+----
+
+Firmware: `build/relay.bin`. Defaults enable 4 MB flash,
+USB Serial/JTAG, 160 MHz, and a 1 kHz FreeRTOS tick.
+For the first USB flash, hold BOOT and press Reset if necessary.
+
+Host tests with AddressSanitizer/UndefinedBehaviorSanitizer:
+
+[source,sh]
+----
+make -C tests test
+----
+
+Hardware testing is still pending. Before use, check both UARTs, all
+required baud rates, half-duplex turnaround, NVS persistence across
+restarts, channel timing, and connection loss/reconnection with your
+actual radio system.

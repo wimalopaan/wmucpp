@@ -29,6 +29,10 @@
 // #define INPUT_SPORT // input via SPort (Phy-ID / App-ID see below)
 #define INPUT_SUMDV3 // input via SumDV3
 
+#ifndef SUMDV3_FAILSAFE_MODE
+#define SUMDV3_FAILSAFE_MODE SumDV3FailsafeMode::Reset // Hold or Reset, for receiver failsafe and receive timeout
+#endif
+
 #define DEFAULT_ADDRESS 0 // values: 0 ... 3 (must match value in widget)
 
 // #define SBUS_INVERT // to receive SBus as "normal" uninverted serial data (invert SBUS means: invert an already inverted signal -> normal signal)
@@ -433,8 +437,8 @@ namespace SumDV3 {
         using leds = Leds<ledList>;
 
         struct CallbackConfig;
-        using commandDecoder = SumDV3CommandCallback<CallbackConfig>;
-        using sumd_pa = Hott::V4::ProtocollAdapter<0, tp, commandDecoder>;
+        using commandDecoder = SumDV3CommandCallback<CallbackConfig, 1000, SUMDV3_FAILSAFE_MODE>; // 500 ms at 2 kHz
+        using sumd_pa = Hott::V4::ProtocollAdapter<0, tp, commandDecoder, 10>; // 5 ms at 2 kHz
 #if defined(__AVR_ATtiny1614__) && defined(ALT_PINOUT) && defined(DEBUG_OUTPUT)
         using sumdSendQueue = AVR::SendQueueLength<256>;
 #else
@@ -485,8 +489,9 @@ namespace SumDV3 {
         }
         static inline void ratePeriodic() {
             sumd_pa::ratePeriodic();
+            commandDecoder::ratePeriodic();
             (++mStateTicks).on(debugTicks, [] static {
-                etl::outl<terminal>("sumd p: "_pgm, sumd_pa::packages());
+                etl::outl<terminal>("sumd p: "_pgm, sumd_pa::packages(), " t: "_pgm, sumd_pa::timeouts());
             });
         }
         private:

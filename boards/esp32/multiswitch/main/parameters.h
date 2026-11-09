@@ -1,0 +1,233 @@
+#pragma once
+
+#include <cstdio>
+#include <span>
+
+#include "etl/fixedvector.h"
+#include "board.h"
+#include "outputs.h"
+#include "protocol.h"
+#include "switches.h"
+
+namespace Multiswitch {
+    class Parameters {
+    public:
+        using Parameter = Crsf::Parameter<uint8_t>;
+        using Type = Parameter::Type;
+        enum class Action {Store, Output, Test, Reset, Dimming, Pattern, PatternTest};
+        enum class Result {Invalid, Changed, Transient, Reset};
+        enum class ReadResult {Ok, InvalidIndex, InvalidChunk};
+        struct Entry {
+            Parameter parameter;
+            Action action = Action::Store;
+            uint8_t output = 0;
+        };
+
+        Parameters(EEProm& config, std::array<Output, 8>& outputs, Switches& switches) :
+            mConfig{config}, mOutputs{outputs}, mSwitches{switches} {
+            updateInfo();
+            add({0, Type::Folder, ""});
+            add({0, Type::Info, "Version(HW/SW)", "13:42"});
+            const auto global = folder(0, "Global");
+            add({global, Type::U8, "Switch Addr", nullptr, &config.addresses[0], 0, 255});
+            add({global, Type::U8, "Virtual Addr", nullptr, &config.addresses[1], 0, 255});
+            add({global, Type::U8, "PWM f (O0..7)", nullptr, &config.pwm1, 1, 10,
+                 nullptr, 10, 0, 1, nullptr, "*100Hz"});
+            add({global, Type::U8, "CRSF Addr", nullptr, &config.crsf_address, 0xc0, 0xcf});
+            add({global, Type::Sel, "Config resp.", "Button;Always on", &config.telemetry, 0, 1});
+            add({global, Type::Sel, "Slave Cmd", "Off;On", &config.slaveSend, 0, 1});
+            add({global, Type::U8, "Master", nullptr, &config.master, 0, 255});
+            for (uint8_t i = 0; i < outputs.size(); ++i) {
+                const auto parent = folder(0, names[i]);
+                auto& out = config.outputs[i];
+                add({parent, Type::Sel, "PWM Mode", "Off;On;Remote;Global/Indiv", &out.pwm, 0, 3}, Action::Output, i);
+                add({parent, Type::U8, "PWM Duty", nullptr, &out.pwmDuty, 1, 99,
+                     nullptr, 1, 0, 1, nullptr, "%"}, Action::Output, i);
+                add({parent, Type::U8, "PWM Expo", nullptr, &out.pwmScale, 0, 100}, Action::Output, i);
+                add({parent, Type::Sel, "Intervall Mode", "Off;On;Morse", &out.blink, 0, 2}, Action::Output, i);
+                add({parent, Type::U8, "Intervall(on)", nullptr, &out.blinkOnTime, 1, 255,
+                     nullptr, 1, 0, 1, nullptr, "*50ms"}, Action::Output, i);
+                add({parent, Type::U8, "Intervall(off)", nullptr, &out.blinkOffTime, 1, 255,
+                     nullptr, 2, 0, 2, nullptr, "*50ms"}, Action::Output, i);
+                add({parent, Type::U8, "Intervall(count)", nullptr, &out.flashCount, 1, 4}, Action::Output, i);
+                add({parent, Type::Sel, "Slave", "Off;On", &out.slaveEnable, 0, 1}, Action::Output, i);
+                add({parent, Type::Sel, "Test", "Off;On", nullptr, 0, 1}, Action::Test, i);
+            }
+            const auto failsafe = folder(0, "Failsafe");
+            add({failsafe, Type::Sel, "Mode", "Hold;All-Off;Set", &config.failsafe_mode, 0, 2});
+            for (uint8_t i = 0; i < outputs.size(); ++i) {
+                add({failsafe, Type::Sel, names[i], "Off;On", &config.failsafe_pattern[i], 0, 1});
+            }
+            const auto morse = folder(0, "Morse");
+            for (size_t i = 0; i < config.morse_texts.size(); ++i) {
+                add({morse, Type::Str, morseNames[i], nullptr, nullptr, 0, 0, nullptr, 0,
+                     static_cast<uint8_t>(config.morse_texts[i].size()), 0, config.morse_texts[i].data()});
+            }
+            add({morse, Type::Info, "Full Text", mMorseText.data()});
+            add({morse, Type::U8, "Dit duration", nullptr, &config.morse_dit, 1, 10, nullptr, 3, 0, 3, nullptr, "*100ms"});
+            add({morse, Type::U8, "Dah duration", nullptr, &config.morse_dah, 1, 10, nullptr, 6, 0, 6, nullptr, "*100ms"});
+            add({morse, Type::U8, "Intra S. Gap dur.", nullptr, &config.morse_gap, 1, 10, nullptr, 3, 0, 3, nullptr, "*100ms"});
+            add({morse, Type::U8, "Inter S. Gap dur.", nullptr, &config.morse_igap, 1, 10, nullptr, 3, 0, 3, nullptr, "*100ms"});
+            add({morse, Type::U8, "Word Gap dur.", nullptr, &config.morse_wgap, 1, 10, nullptr, 9, 0, 9, nullptr, "*100ms"});
+            const auto virtuals = folder(0, "Virtuals");
+            add({virtuals, Type::Sel, "Enable Virtuals", "Off;On", &config.use_virtuals, 0, 1}, Action::Dimming);
+            for (uint8_t i = 0; i < config.virtuals.size(); ++i) {
+                const auto parent = folder(virtuals, virtualNames[i]);
+                for (uint8_t j = 0; j < config.virtuals[i].member.size(); ++j) {
+                    add({parent, Type::Sel, memberNames[j], memberOptions,
+                         &config.virtuals[i].member[j], 0, 8});
+                }
+            }
+            add({virtuals, Type::Sel, "Virtual 4", "Off;Global Dimming",
+                 &config.enableGlobalDimming_virtual4, 0, 1}, Action::Dimming);
+            const auto patterns = folder(0, "Pattern");
+            for (uint8_t i = 0; i < config.pattern.size(); ++i) {
+                const auto parent = folder(patterns, patternNames[i]);
+                auto& pattern = config.pattern[i];
+                add({parent, Type::Sel, "Pattern", "Off;Cont-LR;Cont-RL;Cont-LRL;Single-LR;Single-RL;Single-LRL",
+                     &pattern.type, 0, 6}, Action::Pattern, i);
+                add({parent, Type::U8, "On", nullptr, &pattern.onTime, 1, 255,
+                     nullptr, 33, 0, 33, nullptr, "*10ms"}, Action::Pattern, i);
+                add({parent, Type::U8, "Off", nullptr, &pattern.offTime, 1, 255,
+                     nullptr, 1, 0, 1, nullptr, "*10ms"}, Action::Pattern, i);
+                for (uint8_t j = 0; j < pattern.member.size(); ++j) {
+                    add({parent, Type::Sel, memberNames[j], memberOptions, &pattern.member[j], 0, 8},
+                        Action::Pattern, i);
+                }
+                add({parent, Type::U8, "Next Address", nullptr, &pattern.next_address, 0, 255});
+                add({parent, Type::U8, "Group", nullptr, &pattern.group, 0, 255});
+                add({parent, Type::Sel, "Test", "Off;On", nullptr, 0, 1}, Action::PatternTest, i);
+            }
+            const auto operate = folder(0, "Operate");
+            for (uint8_t i = 0; i < outputs.size(); ++i) {
+                add({operate, Type::Sel, names[i], "Off;On", nullptr, 0, 1}, Action::Test, i);
+            }
+            const auto reset = folder(0, "Reset");
+            add({reset, Type::Command, "Reset all", "Reset all?"}, Action::Reset);
+        }
+
+        uint8_t size() const { return mEntries.size(); }
+        const char* name() const { return mName.data(); }
+        Parameter& parameter(const uint8_t index) { return mEntries[index].parameter; }
+        const Parameter& operator[](const uint8_t index) const { return mEntries[index].parameter; }
+        bool isReset(const uint8_t index) const {
+            return index > 0 && index < size() && mEntries[index].action == Action::Reset;
+        }
+
+        bool valid() const {
+            if (mConfig.magic != EEPROM_MAGIC) return false;
+            for (const auto& entry : mEntries) {
+                const auto& p = entry.parameter;
+                if (p.value_ptr && (*p.value_ptr < p.min || *p.value_ptr > p.max)) return false;
+                if (p.stringValue && !std::memchr(p.stringValue, '\0', p.units)) return false;
+            }
+            return true;
+        }
+
+        template<typename Buffer>
+        void serialize(const uint8_t index, Buffer& buffer) {
+            parameter(index).serialize(buffer, *this, Crsf::Lua::CmdStep::Idle, index);
+        }
+
+        ReadResult read(const uint8_t destination, const uint8_t index, const uint8_t chunk,
+                        ByteBuffer<58>& payload) {
+            if (index >= size()) return ReadResult::InvalidIndex;
+            ByteBuffer<256> serialized;
+            serialize(index, serialized);
+            constexpr size_t chunkSize = 54;
+            const size_t chunks = (serialized.size() + chunkSize - 1) / chunkSize;
+            if (chunk >= chunks) return ReadResult::InvalidChunk;
+            payload.push_back(destination);
+            payload.push_back(mConfig.crsf_address);
+            payload.push_back(index);
+            payload.push_back(chunks - chunk - 1);
+            const size_t end = std::min(size_t(serialized.size()), (chunk + 1) * chunkSize);
+            for (size_t i = chunk * chunkSize; i < end; ++i) payload.push_back(serialized[i]);
+            return ReadResult::Ok;
+        }
+
+        Result write(const uint8_t index, const std::span<const uint8_t> data, const uint64_t now = 0) {
+            if (!index || index >= size() || data.empty()) return Result::Invalid;
+            auto& entry = mEntries[index];
+            auto& p = entry.parameter;
+            if (entry.action == Action::Reset) {
+                if (data[0] != static_cast<uint8_t>(Crsf::Lua::CmdStep::Confirmed)) {
+                    return Result::Transient;
+                }
+                mConfig = EEProm{};
+                apply();
+                return Result::Reset;
+            }
+            if (p.type == Type::Str) {
+                const size_t count = std::min(data.size(), size_t{p.units - 1u});
+                for (size_t i = 0; i < count; ++i) {
+                    p.stringValue[i] = static_cast<char>(data[i]);
+                }
+                p.stringValue[count] = '\0';
+            }
+            else if (p.type == Type::U8 || p.type == Type::Sel) {
+                if (data[0] < p.min || data[0] > p.max) return Result::Invalid;
+                p.value(data[0]);
+            }
+            else {
+                return Result::Invalid;
+            }
+            if (entry.action == Action::Test) {
+                mOutputs[entry.output].set(data[0] != 0);
+                return Result::Transient;
+            }
+            if (entry.action == Action::PatternTest) {
+                if (data[0]) mSwitches.startPattern(entry.output, now);
+                else mSwitches.stopPattern(entry.output);
+                return Result::Transient;
+            }
+            if (entry.action == Action::Output) {
+                mOutputs[entry.output].configure(mConfig.outputs[entry.output]);
+            }
+            if (entry.action == Action::Pattern) mSwitches.configurePattern(entry.output);
+            if (entry.action == Action::Dimming) mSwitches.resetDimming();
+            updateInfo();
+            return Result::Changed;
+        }
+
+        void apply() {
+            mSwitches.reset();
+            for (size_t i = 0; i < mOutputs.size(); ++i) {
+                mOutputs[i].set(false);
+                mOutputs[i].configure(mConfig.outputs[i]);
+            }
+            updateInfo();
+        }
+
+    private:
+        void updateInfo() {
+            std::snprintf(mName.data(), mName.size(), "MultiSwitch-E@%u:%u",
+                          mConfig.addresses[0], mConfig.crsf_address);
+            mMorseText = morseText(mConfig);
+        }
+        void add(Parameter p, const Action action = Action::Store, const uint8_t output = 0) {
+            mEntries.push_back({p, action, output});
+        }
+        uint8_t folder(const uint8_t parent, const char* name) {
+            add({parent, Type::Folder, name});
+            return size() - 1;
+        }
+
+        static constexpr std::array<const char*, 8> names{
+            "Output 0", "Output 1", "Output 2", "Output 3", "Output 4", "Output 5", "Output 6", "Output 7"};
+        static constexpr std::array<const char*, 8> memberNames{
+            "Member 0", "Member 1", "Member 2", "Member 3", "Member 4", "Member 5", "Member 6", "Member 7"};
+        static constexpr std::array<const char*, 4> virtualNames{
+            "Virtual 0", "Virtual 1", "Virtual 2", "Virtual 3"};
+        static constexpr std::array<const char*, 4> patternNames{
+            "Pattern Virt. 5", "Pattern Virt. 6", "Pattern Virt. 7", "Pattern Virt. 8"};
+        static constexpr std::array<const char*, 4> morseNames{"Text1", "Text2", "Text3", "Text4"};
+        static constexpr const char* memberOptions = "None;Out0;Out1;Out2;Out3;Out4;Out5;Out6;Out7";
+        EEProm& mConfig;
+        std::array<Output, 8>& mOutputs;
+        Switches& mSwitches;
+        etl::FixedVector<Entry, 240> mEntries;
+        std::array<char, 32> mName{};
+        std::array<char, 64> mMorseText{};
+    };
+}

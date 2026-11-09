@@ -17,6 +17,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+# git tag -a rcRelay32-v19 -m "Release 19"
+# git push origin rcRelay32-v19
+
+# st-flash --reset --connect-under-reset write relay_01.bin 0x8000000
+
 BOARD ?= WEACT
 TOOLCHAIN ?= gcc
 

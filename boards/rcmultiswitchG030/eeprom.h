@@ -20,9 +20,14 @@
 
 #define EEPROM_MAGIC 42
 
+#include <array>
+#include <cstdint>
+
 #include "etl/algorithm.h"
 
-#include "pattern.h"
+#ifdef USE_PATTERNS
+#include "pattern_config.h"
+#endif
 
 struct EEProm {
     constexpr EEProm() {
@@ -115,14 +120,6 @@ struct EEProm {
 # endif
 #endif
 #ifdef USE_PATTERNS
-	struct Pattern {
-		uint8_t type = 0;
-		std::array<uint8_t, 8> member{1, 2, 3, 4, 5, 6, 7, 8};
-		uint8_t onTime = 33; // time 10 ms
-		uint8_t offTime = 1;
-		uint8_t next_address = 3; // next multiswitch's virtual address
-		uint8_t group = 1; 
-	};
     std::array<External::Pattern::EEProm, 4> pattern{};
 #endif
 

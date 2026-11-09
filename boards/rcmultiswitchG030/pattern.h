@@ -25,16 +25,10 @@
 #include <meta.h>
 #include <rc/rc_2.h>
 
+#include "pattern_config.h"
+
 namespace External::Pattern {
 	using namespace std::literals::chrono_literals;
-	struct EEProm {
-		uint8_t type = 0;
-		std::array<uint8_t, 8> member{1, 2, 3, 4, 5, 6, 7, 8};
-		uint8_t onTime = 33; // *10 ms
-		uint8_t offTime = 1;
-		uint8_t next_address = 3; // next multiswitch's virtual address
-		uint8_t group = 1; // 0: no group (no triggering of other multiswitches)
-	};
 	template<uint8_t Number, typename Config>
 	struct Generator {
 		using timer = Config::timer;
