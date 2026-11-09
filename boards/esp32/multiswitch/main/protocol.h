@@ -80,13 +80,35 @@ namespace Multiswitch {
         uint64_t mLastByte = 0;
     };
 
-    template<typename Set, typename Duty, typename Baud>
-    bool command(const std::span<const uint8_t> frame, const uint8_t address,
-                 Set set, Duty duty, Baud baud) {
-        if (frame.size() < 9) return false;
+    template<typename Set, typename Duty, typename Baud, typename Start, typename Stop, typename Slave>
+    bool command(const std::span<const uint8_t> frame, const std::span<const uint8_t> addresses,
+                 Set set, Duty duty, Baud baud, Start start, Stop stop, Slave slave) {
+        if (frame.size() < 8) return false;
         const auto source = std::byte{frame[4]};
         const auto realm = std::byte{frame[5]};
         const auto cmd = std::byte{frame[6]};
+        const auto addressIndex = [&](const uint8_t address) {
+            return std::find(addresses.begin(), addresses.end(), address);
+        };
+        if (frame[3] == uint8_t(Crsf::Address::Broadcast) && realm == Crsf::CommandType::Switch) {
+            if (cmd == Crsf::SwitchCommand::InterModuleSlaveSet) {
+                if (frame.size() < 10) return false;
+                return slave(frame[7], frame[8]);
+            }
+            if (cmd == Crsf::SwitchCommand::InterModulePatternStart) {
+                if (frame.size() < 10 || frame[8] < 4 || frame[8] > 7) return false;
+                const auto address = addressIndex(frame[7]);
+                if (address == addresses.end()) return false;
+                start(static_cast<uint8_t>(address - addresses.begin()), frame[8]);
+                return true;
+            }
+            if (cmd == Crsf::SwitchCommand::InterModulePatternStopAll) {
+                if (frame.size() < 9 || !frame[7]) return false;
+                stop(frame[7]);
+                return true;
+            }
+            return false;
+        }
         if (source == Crsf::Address::RX && realm == Crsf::CommandType::general &&
             cmd == Crsf::GeneralCommand::speed) {
             if (frame.size() < 13) return false;
@@ -103,31 +125,37 @@ namespace Multiswitch {
             return false;
         }
         if (cmd == Crsf::SwitchCommand::Set4M) {
+            if (frame.size() < 9) return false;
             const size_t count = frame[7];
             if (frame.size() < 9 + 3 * count) return false;
             for (size_t i = 0; i < count; ++i) {
-                if (frame[8 + 3 * i] == address) {
+                const auto address = addressIndex(frame[8 + 3 * i]);
+                if (address != addresses.end()) {
                     const uint16_t bits = (uint16_t{frame[9 + 3 * i]} << 8) | frame[10 + 3 * i];
-                    for (uint8_t k = 0; k < 8; ++k) set(k, ((bits >> (2 * k)) & 3) != 0);
+                    for (uint8_t k = 0; k < 8; ++k) {
+                        set(static_cast<uint8_t>(address - addresses.begin()), k, ((bits >> (2 * k)) & 3) != 0);
+                    }
                 }
             }
             return true;
         }
-        if (frame[7] != address) return false;
+        if (frame.size() < 10) return false;
+        const auto address = addressIndex(frame[7]);
+        if (address == addresses.end()) return false;
+        const uint8_t index = address - addresses.begin();
         if (cmd == Crsf::SwitchCommand::Set) {
-            if (frame.size() < 10) return false;
-            for (uint8_t k = 0; k < 8; ++k) set(k, (frame[8] & (1 << k)) != 0);
+            for (uint8_t k = 0; k < 8; ++k) set(index, k, (frame[8] & (1 << k)) != 0);
             return true;
         }
         if (cmd == Crsf::SwitchCommand::Set4 || cmd == Crsf::SwitchCommand::Prop) {
             if (frame.size() < 11) return false;
             if (cmd == Crsf::SwitchCommand::Prop) {
                 if (frame[8] >= 8) return false;
-                duty(frame[8], std::min(frame[9], uint8_t{100}));
+                duty(index, frame[8], std::min(frame[9], uint8_t{100}));
             }
             else {
                 const uint16_t bits = (uint16_t{frame[8]} << 8) | frame[9];
-                for (uint8_t k = 0; k < 8; ++k) set(k, ((bits >> (2 * k)) & 3) != 0);
+                for (uint8_t k = 0; k < 8; ++k) set(index, k, ((bits >> (2 * k)) & 3) != 0);
             }
             return true;
         }

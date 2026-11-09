@@ -36,6 +36,10 @@ https://github.com/WeActStudio/WeActStudio.ESP32C3CoreBoard/tree/master/Hardware
 * Automatische Suche mit 400000, 420000 und 921600 Baud; Start bei 420000.
 * CRSF-Geraeteerkennung und dynamisches Parameter-Menue einschliesslich
   Operate/Test, Morse-Text, Failsafe und bestaetigtem Factory-Reset.
+* Vier virtuelle Gruppen, vier Pattern-Generatoren mit Verkettung und
+  globale PWM-Modulation ueber eine separate virtuelle Adresse.
+* Master/Slave-Betrieb mit Broadcast-Schaltzustand und individueller
+  Slave-Freigabe pro Ausgang, kompatibel zum Kommando der STM32-Version.
 * Failsafe nach einer Sekunde ohne gueltige Kanal-, Link-, Ping- oder passende
   Switch-Kommandopakete: Hold, All-Off oder konfiguriertes Ausgangsmuster.
   Remote-PWM wird bei All-Off ebenfalls auf null gesetzt.
@@ -62,9 +66,8 @@ weiter. Software-PWM ist dennoch nicht jitterfrei und muss unter realer Last
 mit einem Logikanalysator geprueft werden.
 
 PWM-Modi Off/On/Remote/Global-Indiv entsprechen der Vorlage.
-Ohne optionale globale Modulation verhaelt sich Global-Indiv wie On.
 PWM Expo ist wie in der Vorlage ohne Funktion.
-Virtuals, Patterns, Slave-Kommandos, IrDA, Halfduplex und STM32-spezifische
+IrDA, Halfduplex und STM32-spezifische
 ADC-/Spannungs-/Temperaturmessungen sind nicht Bestandteil dieses Ports.
 Parameter werden dynamisch aufgelistet; ihre Indizes entsprechen nicht
 denen einzelner STM32-Hardwarevarianten.
@@ -76,6 +79,89 @@ Ein Reset fuehrt keine Aktion beim blossen Lesen des Menueeintrags aus,
 sondern erst nach der CRSF-Bestaetigung.
 Morse kann auch waehrend der Ausgabe ausgeschaltet werden; Leerzeichen und
 unbekannte Zeichen werden begrenzt verarbeitet.
+
+== Virtuals, Patterns und globale Dimmung
+
+`Global / Switch Addr` adressiert die acht physischen Ausgaenge,
+`Global / Virtual Addr` die virtuellen Funktionen (Vorgabe 1).
+Die beiden Adressen sollten verschieden sein. Unter `Virtuals` lassen sich
+vier Gruppen mit jeweils bis zu vier Ausgaengen konfigurieren;
+`None` laesst einen Mitgliedsplatz frei.
+Set, Set4 und Set4M auf die virtuelle Adresse schalten mit den Indizes 0..3
+diese Gruppen. Bei `Enable Virtuals = On` ignorieren deren Mitglieder
+physische Schaltkommandos; Operate/Test bleibt direkt bedienbar.
+
+Die virtuellen Schaltindizes 4..7 starten/stoppen die vier Generatoren unter
+`Pattern / Pattern Virt. 5` bis `Pattern Virt. 8`. Jeder Generator hat eine
+eigene Mitgliederreihenfolge mit bis zu acht Plaetzen, On-/Off-Zeiten in
+10-ms-Schritten sowie sechs Modi:
+Cont-LR, Cont-RL, Cont-LRL, Single-LR, Single-RL und Single-LRL.
+`Off` deaktiviert den Generator. Pattern-Mitglieder sind bei aktiviertem
+Pattern fuer dessen Steuerung reserviert, auch wenn `Enable Virtuals` aus ist.
+Leere Listen bleiben aus; Listen mit nur einem Mitglied sind ebenfalls erlaubt.
+Ueberlappende Gruppen/Patterns vermeiden, damit nicht mehrere Steuerungen
+denselben Ausgang schalten. Fuer PWM innerhalb eines Patterns den PWM-Modus
+On oder Global/Indiv verwenden, nicht den unabhaengigen Remote-Modus.
+
+Nach einem Single-Durchlauf wird ein Broadcast-Startkommando fuer dieselbe
+Patternnummer an `Next Address` gesendet. Ein eingehendes Startkommando kann
+den naechsten Durchlauf ausloesen. Fuer einen erneuten lokalen Test erst
+Stop/Off, dann Start/On waehlen.
+Stop wird mit `Group` an andere Module weitergegeben; ein empfangener
+Gruppen-Stop beendet alle lokal passenden Generatoren ohne Ruecksendung.
+Gruppe 0 deaktiviert die Stop-Weitergabe. Bei einer eigenen `Next Address`
+wird kein Verkettungskommando gesendet. Failsafe All-Off/Set beendet laufende
+Patterns und setzt die physischen Ausgaenge unabhaengig von deren Zuordnung.
+
+`Virtuals / Virtual 4 = Global Dimming` aktiviert Prop-Kommandos auf Kanal 4
+der virtuellen Adresse. Diese skalieren den individuellen Duty-Wert aller
+Ausgaenge im Modus Global/Indiv mit 0..100 Prozent. Off, On und Remote bleiben
+unveraendert. Das Abschalten von Virtuals/globaler Dimmung setzt den globalen
+Faktor auf 100 Prozent zurueck. Test, Start/Stop und aktuelle Dimmwerte werden
+nicht gespeichert; Adressen, Zuordnungen und Pattern-Einstellungen schon.
+
+== Master/Slave-Betrieb
+
+Auf dem Master `Global / Slave Cmd = On` setzen. Das Modul sendet beim
+Aktivieren und bei Aenderungen den Zustand seiner acht Ausgaenge als
+CRSF-Broadcast `InterModuleSlaveSet` (0x13), mit `Switch Addr` als
+Masterkennung. Das ist unabhaengig von `Config resp.`/Status-Telemetrie.
+Ein Zustandspaket enthaelt alle acht Bits; unveraenderte Zustaende werden
+nicht fortlaufend wiederholt.
+
+Auf jedem Slave `Global / Master` auf die `Switch Addr` des Masters setzen
+und fuer die gewuenschten Ausgaenge `Output N / Slave = On` waehlen.
+Output N folgt immer Bit N des Masters; nicht freigegebene Ausgaenge bleiben
+lokal steuerbar. Slave-Ausgaenge ignorieren normale physische und virtuelle
+Schaltkommandos. Operate/Test und Failsafe bleiben wirksam.
+`Slave Cmd` auf reinen Slaves ausgeschaltet lassen und unterschiedliche
+Switch-Adressen verwenden, um Rueckkopplungen zu vermeiden. Die Verbindung
+muss CRSF-Broadcasts zwischen den Modulen weiterleiten; eine gemeinsame
+Empfaengeranbindung garantiert diese Weiterleitung nicht.
+
+Uebertragen wird der Ein/Aus-Zustand der Ausgangshuellkurve einschliesslich
+Intervall-, Morse- und Pattern-Wechseln, nicht die einzelnen PWM-Flanken
+oder der Duty-Wert. Ein Duty-Wert groesser null gilt als Ein.
+Der Slave verwendet seine eigenen PWM-/Intervall-/Morse-Einstellungen.
+Fuer direktes Spiegeln daher Intervall/Morse am Slave ausschalten und den
+PWM-Modus Off oder On/Global-Indiv verwenden; Remote arbeitet unabhaengig
+von Schaltkommandos. Slave-Ausgaenge nicht gleichzeitig lokalen Patterns
+zuordnen. Das Protokoll hat keine Bestaetigung oder periodische
+Zustandsauffrischung; nach einem spaeteren Slave-Neustart ggf. `Slave Cmd`
+am Master aus- und wieder einschalten.
+
+== Vorhandene Einstellungen
+
+Gueltige Einstellungen beider bisherigen Firmwarestaende (`config-v1`
+und `config-v2`) werden automatisch uebernommen und als `config-v3`
+gespeichert. Ausgangs-, Morse-, Failsafe- sowie vorhandene Virtual-/Pattern-
+Einstellungen bleiben erhalten; Master-Senden und alle Slave-Freigaben
+sind nach dem Upgrade ausgeschaltet.
+Beim Upgrade von v1 sind neue Gruppen leer, Patterns und globale Dimmung
+ausgeschaltet. Die neue virtuelle Adresse ist 1, bei Kollision mit der
+bisherigen Switch-Adresse 2. Nach dem Flashen das Geraetemenue am Sender
+neu oeffnen, damit die erweiterte Parameterliste eingelesen wird.
+Kein Factory-Reset oder Loeschen des NVS erforderlich.
 
 == Bauen und Flashen
 
@@ -95,13 +181,16 @@ CRSF-UART. Firmware: `build/multiswitch.bin`. Fuer die erste USB-Verbindung
 ggf. BOOT gedrueckt halten und Reset betaetigen.
 
 Host-Tests fuer Framing/CRC, Kommandolaengen und -adressierung,
-PWM-Flanken, Intervall, Morse, Failsafe-Ausgaenge und Parameter/Reset:
+PWM-Flanken, Intervall, Morse, Failsafe-Ausgaenge, Parameter/Reset,
+Virtuals, alle Pattern-Modi, Verkettung, globale Dimmung, Master/Slave
+und NVS-Migration:
 
 [source,sh]
 ----
 make -C tests test
 ----
 
-Ein Hardwaretest mit Empfaenger und angeschlossenen Ausgangstreibern steht
-noch aus. Insbesondere USB, Boot-Verhalten, UART-Baudratensuche und PWM-Jitter
-auf dem konkreten Board vor dem Einsatz pruefen.
+Die neuen Virtual-/Pattern-/Master-Slave-Funktionen und die moduluebergreifende Verkettung
+sind noch nicht am realen Empfaenger/Ausgangstreiber geprueft. Insbesondere
+das Zusammenspiel mehrerer Module und PWM-Jitter unter Last vor dem Einsatz
+auf dem konkreten Aufbau pruefen.

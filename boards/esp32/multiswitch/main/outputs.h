@@ -36,6 +36,10 @@ namespace Multiswitch {
             mDuty = std::min(value, uint8_t{100});
         }
 
+        void dutyGlobal(const uint8_t value) {
+            mDutyGlobal = std::min(value, uint8_t{100});
+        }
+
         void failsafe(const bool on) {
             set(on);
             if (mConfig.pwm == 2) {
@@ -50,7 +54,7 @@ namespace Multiswitch {
             if (!mOn) {
                 return 0;
             }
-            const uint8_t high = mConfig.pwm ? mDuty : 100;
+            const uint8_t high = mConfig.pwm == 3 ? mDuty * mDutyGlobal / 100 : mConfig.pwm ? mDuty : 100;
             if (mConfig.blink == 0) {
                 return high;
             }
@@ -149,6 +153,7 @@ namespace Multiswitch {
         EEProm::Output mConfig{};
         bool mOn = false;
         uint8_t mDuty = 1;
+        uint8_t mDutyGlobal = 100;
         Phase mPhase = Phase::Start;
         uint64_t mStart = 0;
         uint64_t mDeadline = 0;

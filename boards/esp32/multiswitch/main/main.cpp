@@ -11,6 +11,7 @@
 #include "nvs_flash.h"
 
 #include "parameters.h"
+#include "configuration.h"
 #include "pwm.h"
 #include "status_led.h"
 
@@ -77,25 +78,45 @@ namespace Multiswitch {
             }
             ESP_ERROR_CHECK(open);
             size_t size = sizeof(mConfig);
-            const auto result = nvs_get_blob(handle, "config-v1", &mConfig, &size);
+            auto result = nvs_get_blob(handle, "config-v3", &mConfig, &size);
+            bool valid = result == ESP_OK && size == sizeof(mConfig) && mParameters.valid();
+            bool migrated = false;
+            if (result == ESP_ERR_NVS_NOT_FOUND) {
+                std::array<uint8_t, sizeof(VirtualPatternConfiguration)> legacy{};
+                size = legacy.size();
+                result = nvs_get_blob(handle, "config-v2", legacy.data(), &size);
+                valid = result == ESP_OK && migrateVirtualPatterns({legacy.data(), size}, mConfig) && mParameters.valid();
+                migrated = valid;
+            }
+            if (result == ESP_ERR_NVS_NOT_FOUND) {
+                std::array<uint8_t, sizeof(LegacyConfiguration)> legacy{};
+                size = legacy.size();
+                result = nvs_get_blob(handle, "config-v1", legacy.data(), &size);
+                valid = result == ESP_OK && migrateLegacy({legacy.data(), size}, mConfig) && mParameters.valid();
+                migrated = valid;
+            }
             nvs_close(handle);
             if (result == ESP_ERR_NVS_NOT_FOUND) {
                 ESP_LOGW(tag, "Configuration key missing; using defaults");
                 mConfig = EEProm{};
                 return;
             }
-            if (result == ESP_ERR_NVS_INVALID_LENGTH || (result == ESP_OK && (size != sizeof(mConfig) || !mParameters.valid()))) {
+            if (result == ESP_ERR_NVS_INVALID_LENGTH || (result == ESP_OK && !valid)) {
                 ESP_LOGW(tag, "Incompatible/invalid configuration; using defaults");
                 mConfig = EEProm{};
                 return;
             }
             ESP_ERROR_CHECK(result);
+            if (migrated) {
+                mSaveAt = esp_timer_get_time() + 500'000;
+                ESP_LOGI(tag, "Configuration upgraded to master/slave layout");
+            }
         }
 
         void save() {
             nvs_handle_t handle;
             ESP_ERROR_CHECK(nvs_open("multiswitch", NVS_READWRITE, &handle));
-            ESP_ERROR_CHECK(nvs_set_blob(handle, "config-v1", &mConfig, sizeof(mConfig)));
+            ESP_ERROR_CHECK(nvs_set_blob(handle, "config-v3", &mConfig, sizeof(mConfig)));
             ESP_ERROR_CHECK(nvs_commit(handle));
             nvs_close(handle);
             mSaveAt = 0;
@@ -198,9 +219,7 @@ namespace Multiswitch {
                 return;
             }
             if (type == Crsf::Type::Command) {
-                const bool accepted = command(frame, mConfig.addresses[0],
-                    [this](const uint8_t i, const bool on) { mOutputs[i].set(on); },
-                    [this](const uint8_t i, const uint8_t duty) { mOutputs[i].duty(duty); },
+                const bool accepted = mSwitches.command(frame, now,
                     [this](const uint32_t speed) { setBaud(speed); });
                 if (accepted) {
                     mLastSignal = now;
@@ -237,7 +256,7 @@ namespace Multiswitch {
                     resetCommand(frame[4], frame[5], frame[6], now);
                     return;
                 }
-                const auto result = mParameters.write(frame[5], frame.subspan(6, frame.size() - 7));
+                const auto result = mParameters.write(frame[5], frame.subspan(6, frame.size() - 7), now);
                 if (result == Parameters::Result::Changed) mSaveAt = now + 500'000;
                 else if (result == Parameters::Result::Invalid) ESP_LOGW(tag, "Invalid parameter write: %u", frame[5]);
             }
@@ -256,10 +275,7 @@ namespace Multiswitch {
         }
 
         void failsafe() {
-            if (mConfig.failsafe_mode == 0) return;
-            for (size_t i = 0; i < mOutputs.size(); ++i) {
-                mOutputs[i].failsafe(mConfig.failsafe_mode == 2 && mConfig.failsafe_pattern[i] != 0);
-            }
+            mSwitches.failsafe();
         }
 
         void periodic(const uint64_t now) {
@@ -281,8 +297,8 @@ namespace Multiswitch {
                 mChannels = mLinks = mPings = mCommands = 0;
             }
 
-            std::array<uint8_t, 8> duties{};
-            for (size_t i = 0; i < duties.size(); ++i) duties[i] = mOutputs[i].value(now, mConfig);
+            const auto duties = mSwitches.periodic(now,
+                [this](const auto payload) { send(Crsf::Type::Command, payload); });
             SoftwarePwm::update(duties, mConfig.pwm1);
 
             if (!gpio_get_level(gpio_num_t(Board::button))) {
@@ -308,7 +324,8 @@ namespace Multiswitch {
 
         EEProm mConfig{};
         std::array<Output, 8> mOutputs;
-        Parameters mParameters{mConfig, mOutputs};
+        Switches mSwitches{mConfig, mOutputs};
+        Parameters mParameters{mConfig, mOutputs, mSwitches};
         Parser mParser;
         StatusLed mStatusLed;
         uint64_t mNextCheck = 0;
