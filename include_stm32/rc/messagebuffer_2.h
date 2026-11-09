@@ -127,6 +127,13 @@ namespace Util {
         static inline void freeRun(const bool on) {
             mFreeRun = on;
         }
+        // Bundling (default off): a message whose type byte (index 2) equals `type` takes
+        // the next queued message of another type with it in the same transmission (if both
+        // fit into the send buffer). Used on half-duplex links: the peer answers after the
+        // burst, so a request appended to the channels frame cannot collide with the answer.
+        static inline void bundleAfterType(const uint8_t type) {
+            mBundleAfterType = type;
+        }
         static inline void sendNext() {
             mResponseEvent = ResponseEvent::Send;
         }
@@ -183,14 +190,27 @@ namespace Util {
                 Out::fillSendBuffer([&](auto& data){
                     const auto& m = mFifo.front();
                     static_assert(m.message.size() == data.size());
+                    uint16_t length = m.length;
                     for(uint8_t i = 0; i < m.length; ++i) {
                         data[i] = m.message[i];
                     }
+                    const bool bundle = (mBundleAfterType != 0) && (m.length > 2) && (m.message[2] == mBundleAfterType);
                     mFifo.pop_front();
-                    return m.length;
+                    if (bundle && !mFifo.empty()) {
+                        const auto& n = mFifo.front();
+                        if ((n.length > 2) && (n.message[2] != mBundleAfterType) && ((length + n.length) <= data.size())) {
+                            for(uint8_t i = 0; i < n.length; ++i) {
+                                data[length + i] = n.message[i];
+                            }
+                            length += n.length;
+                            mFifo.pop_front();
+                        }
+                    }
+                    return length;
                 });
             }
         }
+        static inline uint8_t mBundleAfterType = 0;
         static inline bool mFreeRun = true;
         static inline etl::Event<Event> mEvent;
         static inline etl::Event<ResponseEvent> mResponseEvent;

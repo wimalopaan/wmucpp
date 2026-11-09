@@ -269,6 +269,22 @@ namespace RC::Protokoll::Crsf {
             static inline void arduPilotMode(const uint8_t mode) {
                 mArduPilotMode = mode;
             }
+            // Half duplex request bundling (default off): requests to the module are held back
+            // and sent directly behind the next channels frame in the same transmission (one
+            // per update period, like EdgeTX does), so they cannot collide with the module's
+            // answer, which follows the channels frame.
+            static inline void bundleRequests(const bool enabled) {
+                if (mBundleRequests != enabled) {
+                    mBundleRequests = enabled;
+                    messageBuffer::bundleAfterType(enabled ? (uint8_t)Type::Channels : 0);
+                    if (!enabled) {
+                        DeferredRequest r;
+                        while(mDeferred.pop_front(r)) {
+                            messageBuffer::enqueue(std::span<const volatile uint8_t>{r.data.data(), r.length});
+                        }
+                    }
+                }
+            }
             static inline void parameterRetry(const bool enabled) {
                 if (mParameterRetryEnabled != enabled) {
                     mPending = {};
@@ -452,7 +468,22 @@ namespace RC::Protokoll::Crsf {
                 if (mParameterRetryEnabled) {
                     trackRequest(data, length);
                 }
-                messageBuffer::enqueue(std::span{data, length});
+                enqueueRequest(data, length);
+            }
+            static inline void enqueueRequest(const volatile uint8_t* const data, const uint16_t length) {
+                if (mBundleRequests && (length <= DeferredRequest{}.data.size())) {
+                    DeferredRequest r;
+                    for(uint16_t i = 0; i < length; ++i) {
+                        r.data[i] = data[i];
+                    }
+                    r.length = length;
+                    if (!mDeferred.push_back(r)) {
+                        IO::outl<debug>("# deferred full");
+                    }
+                }
+                else {
+                    messageBuffer::enqueue(std::span<const volatile uint8_t>{data, length});
+                }
             }
             static inline void handleIncoming() {
                 if constexpr(!std::is_same_v<dest, void>) {
@@ -672,7 +703,7 @@ namespace RC::Protokoll::Crsf {
                     ++p.retries;
                     p.sentAt = mRetryTick;
                     IO::outl<debug>("# retry param read: ", p.dev, " i: ", p.index, " n: ", p.retries);
-                    messageBuffer::enqueue(std::span<const volatile uint8_t>{p.req.data(), p.length});
+                    enqueueRequest(p.req.data(), p.length);
                 }
             }
             // returns false if the answer is a duplicate and must not reach the handset
@@ -849,8 +880,20 @@ namespace RC::Protokoll::Crsf {
                     messageBuffer::create_back((uint8_t)Type::Channels, [](auto& ta){
                         RC::Protokoll::Crsf::V4::pack(src::values(), ta);
                     });
+                    if (mBundleRequests) { // at most one request behind each channels frame
+                        DeferredRequest r;
+                        if (mDeferred.pop_front(r)) {
+                            messageBuffer::enqueue(std::span<const volatile uint8_t>{r.data.data(), r.length});
+                        }
+                    }
                 }
             }
+            struct DeferredRequest {
+                std::array<uint8_t, 32> data{}; // requests from the handset side are short
+                uint8_t length = 0;
+            };
+            static inline bool mBundleRequests = false;
+            static inline etl::FiFo<DeferredRequest, 4> mDeferred;
             static inline tick_t autoOnTicks{30'000ms};
             
             static inline bool mTelemetryTemporaryOff  = false;

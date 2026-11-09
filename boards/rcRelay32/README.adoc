@@ -279,6 +279,20 @@ Die Einstellung wird im EEPROM gespeichert. Die EEPROM-Kennung wurde für das
 neue Feld von 42 auf 43 erhöht; beim ersten Start mit einer alten Konfiguration
 werden deshalb alle Einstellungen auf Standardwerte zurückgesetzt.
 
+=== Bündelung im Halbduplex
+
+Im Halbduplex teilen sich Relay und Sendemodul eine Leitung. Das Modul antwortet
+direkt nach einem empfangenen Kanalpaket. Werden Anfragen (Ping, Parameter,
+Kommandos) unabhängig vom Kanalpaket gesendet, können sie mit dieser Antwort
+kollidieren; beide Pakete gehen dann verloren.
+
+Mit `Half-Duplex` = `On` hält das Relay Anfragen an das Modul zurück und hängt
+höchstens eine davon direkt an das nächste Kanalpaket an, in derselben
+Übertragung (wie EdgeTX). Bis zu vier Anfragen werden zwischengespeichert, bei
+einer Kanalrate von 100 Hz also höchstens 40 ms verzögert. Die Wiederholungen
+der Parameteranfragen laufen ebenfalls über diesen Weg. Im Vollduplex bleibt
+alles wie bisher.
+
 == Bauen und Flashen
 
 Voraussetzungen sind GNU Make, die `arm-none-eabi`-Toolchain mit Unterstützung
