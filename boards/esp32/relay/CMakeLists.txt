@@ -1,0 +1,6 @@
+cmake_minimum_required(VERSION 3.22)
+include($ENV{IDF_PATH}/tools/cmake/project.cmake)
+project(relay)
+if(NOT IDF_TARGET STREQUAL "esp32c3")
+    message(FATAL_ERROR "This board requires IDF_TARGET=esp32c3")
+endif()

@@ -1,0 +1,107 @@
+= MultiSwitch auf dem WeAct ESP32-C3 Core Board
+
+ESP-IDF-Port von `../../rcmultiswitchG030` fuer das WeAct ESP32-C3FH4
+Core Board (4 MB Flash). Konfiguration (`EEProm`) und CRSF-Parameter-
+Serialisierung werden aus der Vorlage bzw. `include_stm32` wiederverwendet.
+Die STM32-Hardwareabstraktion wird nicht benoetigt.
+
+== Anschluesse
+
+[cols="1,2"]
+|===
+|Funktion |GPIO
+|Output 0..7 |0, 1, 3, 4, 5, 6, 7, 10
+|CRSF RX (vom Empfaenger-TX) |20
+|CRSF TX (zum Empfaenger-RX) |21
+|Blaue Board-LED, aktiv low |8
+|BOOT-Taster, aktiv low |9
+|USB Serial/JTAG |18/19, unveraendert
+|===
+
+Pinbelegung: `main/board.h`. Gemeinsame Masse mit dem Empfaenger verbinden.
+UART arbeitet mit 3,3-V-Pegeln, ohne Invertierung, in Zweidraht-Vollduplex.
+Die Ausgaenge sind aktive High-Logiksignale, keine Leistungsausgaenge:
+Lasten ueber geeignete Treiber/MOSFETs anschliessen. Waehrend Reset/Boot
+sind externe Pulldowns fuer sicher ausgeschaltete Lasten erforderlich.
+GPIO4..7 stehen bei dieser Belegung nicht fuer externes JTAG zur Verfuegung.
+GPIO2/8/9 sind Strapping-Pins; BOOT beim Einschalten startet den ROM-Bootloader.
+
+Die Pinbelegung der Board-LED und des Tasters entspricht dem
+https://github.com/WeActStudio/WeActStudio.ESP32C3CoreBoard/tree/master/Hardware[WeAct-Schaltplan].
+
+== Funktionsumfang
+
+* Acht Schaltausgaenge mit Software-PWM, Intervall/Mehrfachblitz und Morse.
+* CRSF-Switch-Kommandos Set, Set4, Set4M und Prop; Switch-Adresse 0 als Vorgabe.
+* Automatische Suche mit 400000, 420000 und 921600 Baud; Start bei 420000.
+* CRSF-Geraeteerkennung und dynamisches Parameter-Menue einschliesslich
+  Operate/Test, Morse-Text, Failsafe und bestaetigtem Factory-Reset.
+* Failsafe nach einer Sekunde ohne gueltige Kanal-, Link-, Ping- oder passende
+  Switch-Kommandopakete: Hold, All-Off oder konfiguriertes Ausgangsmuster.
+  Remote-PWM wird bei All-Off ebenfalls auf null gesetzt.
+* NVS-Persistenz, 500 ms nach der letzten Konfigurationsaenderung.
+  Operate/Test und Prop werden nicht gespeichert. Factory-Reset wird gespeichert.
+* CRSF-Status-Telemetrie im Format der Vorlage, alle 500 ms. Da diese
+  Pinbelegung keine Status-Eingaenge vorsieht, ist das Statusbyte null.
+  Nach Erkennung/Konfigurationszugriffen pausiert die Telemetrie 30 Sekunden.
+
+Die Status-LED verwendet die Zeiten der Vorlage: 100-ms-Blitze, bei mehreren
+Blitzen mit 100 ms Abstand. Baudratensuche: Einzelblitz mit 1200 ms Pause;
+Betrieb ohne Telemetrie: Einzelblitz mit 5000 ms Pause; mit Telemetrie:
+Doppelblitz mit 5000 ms Pause. Verbindungsverlust: Einzelblitz mit 210 ms Pause.
+Ein temporaer freigeschaltetes Konfigurationsfenster im Button-Modus wird
+bei bestehender Verbindung durch Dauerlicht angezeigt.
+
+=== Unterschiede zur STM32-Version
+
+Alle acht Ausgaenge verwenden eine gemeinsame PWM-Frequenz von 100 bis
+1000 Hz (`PWM f (O0..7)`, Einheit 100 Hz, Vorgabe 1000 Hz).
+Die logische Duty-Aufloesung betraegt 1 Prozent. Ein GPTimer schaltet nur
+an den benoetigten Flanken; die Ausgaenge laufen auch waehrend NVS-Zugriffen
+weiter. Software-PWM ist dennoch nicht jitterfrei und muss unter realer Last
+mit einem Logikanalysator geprueft werden.
+
+PWM-Modi Off/On/Remote/Global-Indiv entsprechen der Vorlage.
+Ohne optionale globale Modulation verhaelt sich Global-Indiv wie On.
+PWM Expo ist wie in der Vorlage ohne Funktion.
+Virtuals, Patterns, Slave-Kommandos, IrDA, Halfduplex und STM32-spezifische
+ADC-/Spannungs-/Temperaturmessungen sind nicht Bestandteil dieses Ports.
+Parameter werden dynamisch aufgelistet; ihre Indizes entsprechen nicht
+denen einzelner STM32-Hardwarevarianten.
+
+`Config resp.` ist standardmaessig eingeschaltet. Im Modus Button schaltet
+ein mindestens eine Sekunde gehaltener BOOT-Taster Antworten fuer 30 Sekunden
+frei; Parameterzugriffe verlaengern dieses Fenster.
+Ein Reset fuehrt keine Aktion beim blossen Lesen des Menueeintrags aus,
+sondern erst nach der CRSF-Bestaetigung.
+Morse kann auch waehrend der Ausgabe ausgeschaltet werden; Leerzeichen und
+unbekannte Zeichen werden begrenzt verarbeitet.
+
+== Bauen und Flashen
+
+ESP-IDF mit installierter ESP32-C3-Toolchain aktivieren. Der Port wurde mit
+ESP-IDF 6.1 gebaut; verwendet werden die GPTimer- und UART-Treiber.
+
+[source,sh]
+----
+. "$IDF_PATH/export.sh"
+idf.py set-target esp32c3
+idf.py build
+idf.py -p /dev/ttyACM0 flash monitor
+----
+
+USB wird fuer Konsole/Debug verwendet; Logausgaben laufen nicht auf dem
+CRSF-UART. Firmware: `build/multiswitch.bin`. Fuer die erste USB-Verbindung
+ggf. BOOT gedrueckt halten und Reset betaetigen.
+
+Host-Tests fuer Framing/CRC, Kommandolaengen und -adressierung,
+PWM-Flanken, Intervall, Morse, Failsafe-Ausgaenge und Parameter/Reset:
+
+[source,sh]
+----
+make -C tests test
+----
+
+Ein Hardwaretest mit Empfaenger und angeschlossenen Ausgangstreibern steht
+noch aus. Insbesondere USB, Boot-Verhalten, UART-Baudratensuche und PWM-Jitter
+auf dem konkreten Board vor dem Einsatz pruefen.

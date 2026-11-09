@@ -1,0 +1,132 @@
+= RC-Relay32 auf dem WeAct ESP32-C3 Core Board
+
+ESP-IDF-Port von `../../rcRelay32` fuer das WeAct ESP32-C3FH4 Core Board
+mit 4 MB Flash. Dies ist eine CRSF-Relaisstation zwischen einem
+vorgeschalteten Empfaenger und einem nachgeschalteten Sendemodul, kein
+Schaltrelais. Die Konfigurationsstruktur und CRSF-Paketpruefung/
+Parameter-Serialisierung werden aus der Vorlage bzw. `include_stm32`
+wiederverwendet; STM32-Hardwaretreiber werden nicht eingebunden.
+
+== Anschluesse
+
+Alle TX/RX-Angaben aus Sicht des ESP32-C3:
+
+[cols="2,1,1",options="header"]
+|===
+|Funktion |GPIO |UART
+|Eingang RX, vom Empfaenger-TX |20 |0
+|Eingang TX, zum Empfaenger-RX |21 |0
+|Relay TX, zum Sendemodul-RX |4 |1
+|Relay RX, vom Sendemodul-TX |5 |1
+|Blaue Board-LED, aktiv low |8 |-
+|USB Serial/JTAG |18/19 |unveraendert
+|===
+
+Pinbelegung: `main/board.h`. GPIO4/5 koennen dann nicht fuer externes
+JTAG verwendet werden. GPIO2/8/9 sind Strapping-Pins; BOOT an GPIO9
+bleibt frei. LED/BOOT entsprechen dem
+https://github.com/WeActStudio/WeActStudio.ESP32C3CoreBoard/tree/master/Hardware[WeAct-Schaltplan].
+UART0 kann waehrend des ROM-Boots Meldungen an GPIO21 ausgeben.
+Die laufende Anwendung verwendet ausschliesslich USB fuer Logs.
+
+Gemeinsame Masse und 3,3-V-Logikpegel verwenden. Keine RS232-Pegel oder
+5-V-Signale direkt anschliessen. Versorgung und eventuelle Invertierung/
+Pegelwandlung des konkreten Empfaengers/Sendemoduls separat pruefen.
+
+Eingang: fest 420000 Baud, 8N1, nicht invertiert, Zweidraht-Vollduplex.
+Relay: 400000, 420000, 460800, 921600 oder 1870000 Baud; Vorgabe 921600.
+
+Bei `Half-Duplex=On` arbeitet ausschliesslich GPIO4 als gemeinsame
+TX/RX-Leitung, GPIO5 wird nicht benutzt. Der ESP32-Treiber verwendet
+RS485-Halbduplexmodus zur Echo-Unterdrueckung, aber keinen RS485-
+Transceiver oder RTS-Pin. GPIO4 ist Open-Drain mit internem Pull-up.
+Ein geeigneter externer Pull-up nach 3,3 V ist insbesondere bei hohen
+Baudraten erforderlich; Flanken und Bus-Turnaround am realen Aufbau messen.
+Auch die Gegenseite muss fuer einen gemeinsamen Halbduplexbus geeignet sein.
+Beim Umschalten muss die Verkabelung zum gewaehlten Modus passen.
+
+== Funktion
+
+* Nach 500 ms Startwartezeit alle 300 ms Verbindungserkennung anhand
+  CRC-gueltiger Kanalpakete; Linkstatistik ist nicht erforderlich.
+  Vor der ersten Verbindung bleibt die Ausgabe auch bei Hold gesperrt.
+* Kanalregenerierung alle 10 ms mit den zuletzt empfangenen 16 Kanaelen.
+  Keine doppelte Weiterleitung der urspruenglichen Kanal-/Linkpakete.
+* Failsafe `Forward`: Kanalstrom und Weiterleitung zum Sendemodul stoppen.
+  Failsafe `Hold`: nach vorheriger Verbindung letzte Kanaele weiter senden.
+  Die Rueckkommunikation bleibt in beiden Faellen aktiv.
+* Adressumschreibung: eigenes Geraet 0xCD, Modul 0xCE <-> 0xEE,
+  dessen Empfaenger 0xCF <-> 0xEC; alles konfigurierbar.
+  Optionaler TX-Name, maximal sieben Zeichen, Rest des vorhandenen
+  Namensfeldes wird wie in der Vorlage mit Punkten aufgefuellt.
+* Telemetrie Off/Forward/Tunnel je Typ, separater Teiler je Typ;
+  Linkstatistik zusaetzlich Transform mit derselben provisorischen
+  Feldzuordnung wie in der STM32-Version. Tunnel: PassThru 0x7F,
+  App-ID 6200, maximal 58 Byte Originalpaket.
+* ArduPilot 0x80 unveraendert ohne Adressumschreibung, eigener Off/Forward-
+  Parameter, Teiler je App-ID-Nibble (0xF0) bzw. fuer Multipakete (0xF2).
+  Statustexte (0xF1) werden nicht ausgeduennt.
+* Parameter-Reads: vier Geraete-Slots, adaptive Timeouts 100 ms lokal /
+  500 ms ueber Funk bis maximal 1500 ms, maximal drei Wiederholungen,
+  Duplikatunterdrueckung. Writes werden niemals wiederholt.
+* Ping und Parameterzugriffe unterdruecken einfache Telemetrie temporaer;
+  erweiterte Antworten bleiben moeglich. RadioID wird nicht zurueckgegeben.
+* Bei Framingfehlern am Modul wird wie in der Vorlage ein
+  400000-Baud-Speed-Kommando gesendet, ohne die lokale Baudrate zu aendern.
+* CRSF-Geraet `RC-Relay32@205`, Hardwareversion 4, Softwareversion 19.
+  Parameterreihenfolge wie in der Vorlage ohne IrDA; `Reset reason`
+  ersetzt STM32-Watchdogzaehler und zeigt den ESP-IDF-Resetgrund.
+* NVS-Speicherung 500 ms nach der letzten gueltigen Parameteraenderung.
+  Ungueltige/fehlende Konfiguration fuehrt mit Diagnose zu Standardwerten,
+  ohne den gespeicherten Inhalt automatisch zu loeschen.
+
+LED: beim Start aus, danach zunaechst Dauerlicht, unverbunden schnelles
+Einzelblinken, verbunden langsames Doppelblinken.
+
+=== Unterschiede zur STM32-Version
+
+Kein IrDA und keine STM32-ADC-/DMA-/Watchdog-Resetzaehler. Der ESP-IDF-
+Task-Watchdog ueberwacht die Anwendung. Die Konfiguration liegt in NVS,
+nicht im STM32-Flashformat; vorhandene STM32-Flashabbilder sind nicht
+uebertragbar. Firmware verwendet beide UARTs, WLAN/Bluetooth bleiben aus.
+
+Zeitbasis sind Mikrosekunden: `Telem. Off Dur.` sind echte Sekunden,
+anders als die halbierte Dauer durch den 2-kHz-Tick der Vorlage.
+Geraeteantworten werden direkt ueber den UART-Treiber gepuffert, nicht
+an den STM32-Kanalslot-Scheduler gebunden. Auch direkt an das
+umgeschriebene Modul gerichtete Pings werden weitergeleitet.
+Anders als in der Vorlage wird ein Wechsel von Hold zu Forward auch bei
+bereits verlorener Verbindung beim naechsten Verbindungscheck wirksam.
+Hold aktiviert keine zuvor gesperrte Ausgabe.
+
+UART-Verarbeitung und Kanalregenerierung laufen in einem FreeRTOS-Task.
+Es werden keine veralteten 10-ms-Slots nachgeholt. NVS-Schreiben kann den
+Task kurz blockieren; Konfiguration deshalb nicht waehrend eines
+sicherheitskritischen Betriebs aendern. Das ist keine harte Echtzeitgarantie.
+
+== Bauen und Flashen
+
+ESP-IDF mit installierter ESP32-C3-Toolchain aktivieren:
+
+[source,sh]
+----
+. "$IDF_PATH/export.sh"
+idf.py set-target esp32c3
+idf.py build
+idf.py -p /dev/ttyACM0 flash monitor
+----
+
+Firmware: `build/relay.bin`. Die Vorgaben aktivieren 4 MB Flash,
+USB Serial/JTAG, 160 MHz und einen 1-kHz-FreeRTOS-Tick.
+Fuer den ersten USB-Flash ggf. BOOT halten und Reset betaetigen.
+
+Host-Tests mit Address-/UndefinedBehaviorSanitizer:
+
+[source,sh]
+----
+make -C tests test
+----
+
+Ein Hardwaretest steht aus. Vor einem Einsatz beide UARTs, alle benoetigten
+Baudraten, Halbduplex-Turnaround, NVS-Neustart, Kanalintervall und
+Verbindungsverlust/Wiederverbindung mit dem konkreten Funksystem pruefen.
