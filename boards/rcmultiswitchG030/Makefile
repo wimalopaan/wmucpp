@@ -17,6 +17,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+# st-flash --reset --connect-under-reset write msw30.bin 0x8000000
+
 HW ?= HW_MSW12
 TOOLCHAIN ?= gcc
 
