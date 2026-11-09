@@ -40,25 +40,6 @@ namespace RC::Protokoll::Crsf {
             template<typename T>
             using getRouter_t = getRouter<T>::type;
 
-            // optional features, enabled by the board configuration (default: off)
-            template<typename T>
-            consteval bool paramRetry() {
-                if constexpr(requires{T::paramRetry;}) {
-                    return T::paramRetry;
-                }
-                else {
-                    return false;
-                }
-            }
-            template<typename T>
-            consteval bool arduPilotTelemetry() {
-                if constexpr(requires{T::arduPilotTelemetry;}) {
-                    return T::arduPilotTelemetry;
-                }
-                else {
-                    return false;
-                }
-            }
         }
         template<uint8_t N, typename Config, typename MCU = DefaultMcu>
         struct PacketRelayRewrite {
@@ -79,6 +60,7 @@ namespace RC::Protokoll::Crsf {
             using tp2 = Config::tp2;
             
             using tick_t = External::Tick<systemTimer, uint32_t>;
+            using retry_tick_t = External::Tick<systemTimer, uint32_t, std::numeric_limits<uint32_t>::max(), true>;
             
             using router = Reflection::getRouter_t<Config>;
 
@@ -87,15 +69,6 @@ namespace RC::Protokoll::Crsf {
             static inline constexpr uint8_t fifoSize = Config::fifoSize;
 
             static inline constexpr bool halfDuplex = std::is_same_v<rxpin, txpin>;
-
-            // Config::paramRetry: parameter read requests to devices behind the relay are
-            // repeated if the answer does not arrive in time (elrsV3.lua waits 5s for every
-            // lost answer from a device other than its own TX module)
-            static inline constexpr bool useParamRetry = Reflection::paramRetry<Config>();
-            // Config::arduPilotTelemetry: ArduPilot passthrough (0x80, no extended header) is
-            // handled as telemetry (temporary off, forward rate, own mode) instead of being
-            // treated as an extended packet
-            static inline constexpr bool useArduPilotTelemetry = Reflection::arduPilotTelemetry<Config>();
 
             struct UartConfig {
                 struct HalfDuplex {
@@ -293,10 +266,14 @@ namespace RC::Protokoll::Crsf {
             static inline void linkStatMode(const uint8_t m) {
                 mLinkStatMode = m;
             }
-            static inline void arduPilotMode(const uint8_t mode)
-                requires(useArduPilotTelemetry)
-            {
+            static inline void arduPilotMode(const uint8_t mode) {
                 mArduPilotMode = mode;
+            }
+            static inline void parameterRetry(const bool enabled) {
+                if (mParameterRetryEnabled != enabled) {
+                    mPending = {};
+                    mParameterRetryEnabled = enabled;
+                }
             }
             static inline void forwardTelemetryMode(const uint8_t type, const uint8_t mode) {
                 if (type < mTelemetryForwardMode.size()) {
@@ -338,9 +315,7 @@ namespace RC::Protokoll::Crsf {
             static inline void ratePeriodic() {
                 if (!mActive) return;
                 messageBuffer::ratePeriodic();
-                if constexpr(useParamRetry) {
-                    ++mNow;
-                }
+                ++mRetryTick;
                                 
                 const auto oldState = mState;
                 ++mStateTick;
@@ -358,7 +333,7 @@ namespace RC::Protokoll::Crsf {
                     mStateTick.on(updateTicks, []{
                         update();
                     });
-                    if constexpr(useParamRetry) {
+                    if (mParameterRetryEnabled) {
                         retryRequests();
                     }
                     break;
@@ -474,7 +449,7 @@ namespace RC::Protokoll::Crsf {
                     data[PacketIndex::dest] = (uint8_t)Address::RX;
                 }
                 recalculateCRC(data);
-                if constexpr(useParamRetry) {
+                if (mParameterRetryEnabled) {
                     trackRequest(data, length);
                 }
                 messageBuffer::enqueue(std::span{data, length});
@@ -484,15 +459,14 @@ namespace RC::Protokoll::Crsf {
                     uart::readBuffer([](const auto& buffer){
                         const auto handlePacket = [](auto data) {
                             const uint8_t paylength = data[PacketIndex::length];
-                            if constexpr(useArduPilotTelemetry) {
-                                if (data[PacketIndex::type] == (uint8_t)Type::ArduPilot) {
-                                    handleArduPilot(data);
-                                    return;
-                                }
+                            // ArduPilot passthrough has no extended address header.
+                            if (data[PacketIndex::type] == (uint8_t)Type::ArduPilot) {
+                                handleArduPilot(data);
+                                return;
                             }
                             if (isExtendedPacket(&data.front(), data.size())) {
                                 IO::outl<debug>("# receive: ", paylength, " ", data.size());
-                                if constexpr(useParamRetry) {
+                                if (mParameterRetryEnabled) {
                                     if (!answerFromModule(data)) {
                                         return;
                                     }
@@ -601,12 +575,12 @@ namespace RC::Protokoll::Crsf {
                     });
                 }
             }
-            // ---- parameter request retry (Config::paramRetry)
+            // ---- parameter request retry
             struct PendingRequest {
-                uint32_t sentAt = 0;
-                uint32_t lastUse = 0;
-                uint32_t dupUntil = 0;
-                uint32_t rtt = 0;       // smoothed round trip time (ticks)
+                retry_tick_t sentAt{};
+                retry_tick_t lastUse{};
+                retry_tick_t dupUntil{};
+                retry_tick_t rtt{};       // smoothed round trip time (ticks)
                 std::array<uint8_t, 8> req{}; // ParamRead as sent (rewritten): always 8 bytes
                 uint8_t dev = 0;        // relay side address (0xEE, 0xEC, 0xC8, ...)
                 uint8_t length = 0;
@@ -618,55 +592,67 @@ namespace RC::Protokoll::Crsf {
                 bool used = false;
                 bool active = false;    // waiting for an answer
             };
-            static inline constexpr uint32_t msToTicks(const uint32_t ms) {
-                return std::chrono::milliseconds{ms} / systemTimer::intervall;
-            }
+            static inline constexpr retry_tick_t localInitialRttTicks{20ms};
+            static inline constexpr retry_tick_t remoteInitialRttTicks{150ms};
+            static inline constexpr retry_tick_t localMinRetryTicks{100ms};
+            static inline constexpr retry_tick_t remoteMinRetryTicks{500ms};
+            static inline constexpr retry_tick_t maxRetryTicks{1500ms};
+            static inline constexpr retry_tick_t duplicateWindowTicks{3000ms};
             static inline constexpr uint8_t maxRetries = 3;
-            static inline PendingRequest* pendingSlot(const uint8_t dev, const bool create) {
+            // Returns the existing slot or a replacement candidate in one pass.
+            static inline PendingRequest& selectPendingSlot(const uint8_t dev) {
                 PendingRequest* victim = &mPending[0];
                 for(auto& p : mPending) {
                     if (p.used && (p.dev == dev)) {
-                        return &p;
+                        return p;
                     }
-                    if (!p.used || (victim->used && (int32_t(p.lastUse - victim->lastUse) < 0))) {
+                    if (!p.used || (victim->used && ((p.lastUse - victim->lastUse) < 0))) {
                         victim = &p;
                     }
                 }
-                if (!create) {
-                    return nullptr;
-                }
-                *victim = PendingRequest{};
-                victim->dev = dev;
-                victim->used = true;
-                return victim;
+                return *victim;
             }
-            static inline uint32_t retryTimeout(const PendingRequest& p) {
+            static inline PendingRequest* findPendingSlot(const uint8_t dev) {
+                PendingRequest& p = selectPendingSlot(dev);
+                return (p.used && (p.dev == dev)) ? &p : nullptr;
+            }
+            static inline PendingRequest& getOrCreatePendingSlot(const uint8_t dev) {
+                PendingRequest& p = selectPendingSlot(dev);
+                if (!p.used || (p.dev != dev)) {
+                    p = PendingRequest{};
+                    p.dev = dev;
+                    p.used = true;
+                }
+                return p;
+            }
+            static inline bool shouldRetry(const PendingRequest& p) {
                 const bool local = (p.dev == (uint8_t)Address::TX); // module itself: no radio link in between
                 // unknown device: assume a typical radio round trip (~150 ms) so the first
                 // retry already comes after the minimum timeout
-                const uint32_t rtt = (p.rtt > 0) ? p.rtt : msToTicks(local ? 20 : 150);
-                const uint32_t minT = msToTicks(local ? 100 : 500);
-                return std::min(msToTicks(1500), std::max(minT, 3 * rtt));
+                const retry_tick_t rtt = p.rtt ? p.rtt : (local ? localInitialRttTicks : remoteInitialRttTicks);
+                const retry_tick_t minT = local ? localMinRetryTicks : remoteMinRetryTicks;
+                const retry_tick_t timeout = std::min(maxRetryTicks, std::max(minT, rtt * 3));
+                return static_cast<uint32_t>(mRetryTick - p.sentAt) >= timeout.raw();
             }
             static inline void trackRequest(const volatile uint8_t* const data, const uint16_t length) {
                 const uint8_t dev = data[PacketIndex::dest];
                 if (dev == (uint8_t)Address::Broadcast) {
                     return;
                 }
-                if ((data[PacketIndex::type] == (uint8_t)Type::ParamRead) && (length >= 8) && (length <= 8)) {
-                    PendingRequest& p = *pendingSlot(dev, true);
+                if ((data[PacketIndex::type] == (uint8_t)Type::ParamRead) && (length == 8)) {
+                    PendingRequest& p = getOrCreatePendingSlot(dev);
                     for(uint16_t i = 0; i < length; ++i) {
                         p.req[i] = data[i];
                     }
                     p.length = length;
                     p.index = data[PacketIndex::payload];
-                    p.sentAt = mNow;
-                    p.lastUse = mNow;
+                    p.sentAt = mRetryTick;
+                    p.lastUse = mRetryTick;
                     p.retries = 0;
                     p.active = true;
                 }
                 else if (data[PacketIndex::type] == (uint8_t)Type::ParamWrite) {
-                    if (PendingRequest* p = pendingSlot(dev, false)) {
+                    if (PendingRequest* const p = findPendingSlot(dev)) {
                         p->active = false; // writes are never repeated
                     }
                 }
@@ -676,7 +662,7 @@ namespace RC::Protokoll::Crsf {
                     if (!p.used || !p.active || !mEnabled) {
                         continue;
                     }
-                    if ((mNow - p.sentAt) < retryTimeout(p)) {
+                    if (!shouldRetry(p)) {
                         continue;
                     }
                     if (p.retries >= maxRetries) {
@@ -684,7 +670,7 @@ namespace RC::Protokoll::Crsf {
                         continue;
                     }
                     ++p.retries;
-                    p.sentAt = mNow;
+                    p.sentAt = mRetryTick;
                     IO::outl<debug>("# retry param read: ", p.dev, " i: ", p.index, " n: ", p.retries);
                     messageBuffer::enqueue(std::span<const volatile uint8_t>{p.req.data(), p.length});
                 }
@@ -694,7 +680,7 @@ namespace RC::Protokoll::Crsf {
                 if ((data[PacketIndex::type] != (uint8_t)Type::ParamEntry) || (data.size() < 8)) {
                     return true;
                 }
-                PendingRequest* const pp = pendingSlot(data[PacketIndex::src], false);
+                PendingRequest* const pp = findPendingSlot(data[PacketIndex::src]);
                 if (!pp) {
                     return true;
                 }
@@ -702,46 +688,55 @@ namespace RC::Protokoll::Crsf {
                 const uint8_t index = data[PacketIndex::payload];
                 const uint8_t rem = data[PacketIndex::payload + 1];
                 // exact duplicate (same entry, same chunk) of an answer already passed on
-                if ((p.dupCount > 0) && (index == p.dupIndex) && (rem == p.dupRem) && (int32_t(p.dupUntil - mNow) > 0)) {
+                if ((p.dupCount > 0) && (index == p.dupIndex) && (rem == p.dupRem) && ((p.dupUntil - mRetryTick) > 0)) {
                     --p.dupCount;
                     IO::outl<debug>("# drop duplicate: ", p.dev, " i: ", index);
                     return false;
                 }
                 if (p.active && (index == p.index)) {
                     if (p.retries == 0) {
-                        const uint32_t rtt = mNow - p.sentAt;
-                        p.rtt = (p.rtt > 0) ? (p.rtt * 3 + rtt) / 4 : rtt;
+                        const retry_tick_t rtt = retry_tick_t::fromRaw(mRetryTick - p.sentAt);
+                        p.rtt = p.rtt ? (p.rtt * 3 + rtt) / 4 : rtt;
                     }
                     else {
                         p.dupIndex = index;
                         p.dupRem = rem;
                         p.dupCount = p.retries;
-                        p.dupUntil = mNow + msToTicks(3000);
+                        p.dupUntil = mRetryTick + duplicateWindowTicks;
                     }
                     p.active = false;
                 }
                 return true; // answer, unsolicited entry (e.g. command progress) or new
             }
 
-            // ---- ArduPilot passthrough (Config::arduPilotTelemetry)
+            // ---- ArduPilot passthrough
             // subtypes: 0xF0 single packet (AppId 0x50xx), 0xF1 status text, 0xF2 multi packet
+            static inline constexpr uint16_t arduPilotAppIdMask = 0x000f;
+            static inline constexpr size_t arduPilotMultiPacketIndex = arduPilotAppIdMask + 1;
+            static inline constexpr size_t arduPilotFallbackIndex = arduPilotMultiPacketIndex + 1;
+
             static inline bool shouldSendArduPilot(const auto& data) {
                 if (data.size() < 5) {
                     return false;
                 }
                 const uint8_t sub = data[PacketIndex::type + 1];
-                uint8_t* c = &mArduPilotCounter[17];
+                // Unknown subtypes and short 0xF0 frames share the fallback counter.
+                uint8_t* counter = &mArduPilotCounter[arduPilotFallbackIndex];
                 if ((sub == 0xf0) && (data.size() >= 7)) {
-                    c = &mArduPilotCounter[data[PacketIndex::type + 2] & 0x0f]; // per AppId
+                    // AppId is little-endian; only its low nibble selects the counter.
+                    const uint16_t appId = uint16_t(data[PacketIndex::type + 2]) |
+                                           (uint16_t(data[PacketIndex::type + 3]) << 8);
+                    const size_t appIdIndex = appId & arduPilotAppIdMask;
+                    counter = &mArduPilotCounter[appIdIndex];
                 }
                 else if (sub == 0xf1) {
                     return true; // status texts are rare and important
                 }
                 else if (sub == 0xf2) {
-                    c = &mArduPilotCounter[16];
+                    counter = &mArduPilotCounter[arduPilotMultiPacketIndex];
                 }
-                if (++(*c) >= mForwardRate) {
-                    *c = 0;
+                if (++(*counter) >= mForwardRate) {
+                    *counter = 0;
                     return true;
                 }
                 return false;
@@ -754,14 +749,7 @@ namespace RC::Protokoll::Crsf {
                     if (!shouldSendArduPilot(data)) {
                         return;
                     }
-                    if (mArduPilotMode == 2) {
-                        if (!Packet::createTelemetryTunnel<dest>(data, storage::eeprom.address, PassThru::SubType::Telemetry)) {
-                            IO::outl<debug>("# tunnel packet too large, size: ", data.size());
-                        }
-                    }
-                    else {
-                        dest::enqueue(data);
-                    }
+                    dest::enqueue(data);
                 }
             }
 
@@ -893,10 +881,11 @@ namespace RC::Protokoll::Crsf {
             static inline uint8_t mOtherRate = 1;
             static inline uint8_t mOtherCounter = 0;
 
-            static inline uint32_t mNow = 0; // ticks, for the parameter retry
+            static inline bool mParameterRetryEnabled = false;
+            static inline retry_tick_t mRetryTick;
             static inline std::array<PendingRequest, 4> mPending{};
-            static inline uint8_t mArduPilotMode = 1; // 0=Off; 1=Forward; 2=Tunnel
-            static inline std::array<uint8_t, 18> mArduPilotCounter{};
+            static inline uint8_t mArduPilotMode = 1; // 0=Off; 1=Forward
+            static inline std::array<uint8_t, arduPilotFallbackIndex + 1> mArduPilotCounter{};
         };
     }
 }

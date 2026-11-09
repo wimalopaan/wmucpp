@@ -24,7 +24,7 @@
 
 #include "rc/rc_2.h"
 
-#define EEPROM_MAGIC 42
+#define EEPROM_MAGIC 43
 
 struct EEProm {
     uint32_t magic = EEPROM_MAGIC;
@@ -58,7 +58,8 @@ struct EEProm {
 
     std::array<uint8_t, (uint8_t)RC::Protokoll::Crsf::V4::Type::Ping> telemetryMode{};
 
-    uint8_t ardupilot_mode = 1; // ArduPilot passthrough (0x80): 0=Off, 1=Forward, 2=Tunnel
+    uint8_t ardupilot_mode = 1; // ArduPilot passthrough (0x80): 0=Off, 1=Forward
+    uint8_t parameter_retry = 1;
 
     constexpr bool valid() const {
         return (magic == EEPROM_MAGIC) &&
@@ -71,7 +72,8 @@ struct EEProm {
             (baudrate < RC::Protokoll::Crsf::V4::baudratesHandset.size()) &&
             (telemetry_rate >= 1) && (telemetry_rate <= 10) &&
             (tempOffTelemetry >= 1) && (tempOffTelemetry <= 60) &&
-            (ardupilot_mode <= 2) &&
+            (ardupilot_mode <= 1) &&
+            (parameter_retry <= 1) &&
             std::all_of(telemetryMode.begin(), telemetryMode.end(), [](const uint8_t mode) {
                 return mode <= 2;
             });

@@ -163,9 +163,11 @@ konfigurierten Adresse. Hardwareversionen sind 1 (WeAct), 2 (WMG0B1) und
 | `Rewrite Name` | Off / On | Off
 | `LinkStat` | Off / Forward / Transform / Tunnel | Transform
 | `Failsafe` | Forward / Hold | Forward
+| `Parameter Retry` | Off / On | On
 | `Telem. Off Dur.` | 1–60, Menüeinheit Sekunden | 30
 | `Telemetry forwarding` → `Forward Rate` | 1–10 | 2
-| Einzelne Telemetrietypen, inkl. `ArduPilot` | Off / Forward / Tunnel | Forward
+| Einzelne Telemetrietypen, außer `ArduPilot` | Off / Forward / Tunnel | Forward
+| `ArduPilot` | Off / Forward | Forward
 | `Half-Duplex` | Off / On | Off
 | `Baudrate` | 400.000 / 420.000 / 460.800 / 921.600 / 1.870.000 Baud | 921.600
 |===
@@ -190,7 +192,7 @@ Link TX, Attitude, MAVLink FC, Flight Mode, ESP Now und ArduPilot.
   `LinkStatsRx` (`0x1C`) und `LinkStatsTx` (`0x1D`) umsetzen. Die Abbildung im
   Quellcode enthält noch provisorische Feldzuordnungen; sie ist keine
   verlustfreie Darstellung aller ursprünglichen Felder.
-* *Tunnel:* Originaltyp und Nutzdaten in CRSF-`PassThru` (`0x7F`) kapseln.
+* *Tunnel, außer `ArduPilot`:* Originaltyp und Nutzdaten in CRSF-`PassThru` (`0x7F`) kapseln.
   Ziel ist das Handset, Quelle die Relay32-Adresse; App-ID ist 6200,
   Subtyp `0x01` für Linkstatistik oder `0x02` für andere Telemetrie.
   Die Auswertung benötigt eine passende Lua-Anwendung.
@@ -215,10 +217,10 @@ Parameteränderungen werden über `Mcu::Stm32::savecfg()` im Flash-Bereich
 Numerische Parameter außerhalb ihres Menü-Wertebereichs werden vor Übernahme
 und Callback abgelehnt und nicht gespeichert; die Diagnose erfolgt im Aufrufer.
 Speicherfehler werden über die Debug-Ausgabe gemeldet. Beim Laden werden
-`magic` (42), Wertebereiche, Baudratenindex und die Terminierung des TX-Namens
+`magic` (43), Wertebereiche, Baudratenindex und die Terminierung des TX-Namens
 geprüft. Bei ungültigen Daten wird die gesamte RAM-Konfiguration durch
 Standardwerte ersetzt und der Fehler nach der Hardwareinitialisierung gemeldet.
-Der Flash wird dabei nicht automatisch überschrieben. Eine automatische
+Der Flash wird dabei nicht automatisch überschrieben. Eine allgemeine
 Konfigurationsmigration ist nicht implementiert.
 
 === ArduPilot-Telemetrie (0x80)
@@ -229,17 +231,22 @@ Quelladresse. Ohne Sonderbehandlung wurde er wie ein erweitertes Paket
 weitergeleitet: immer, auch während der vorübergehenden Telemetriesperre, ohne
 Teiler, und die Bytes 3/4 wurden umgeschrieben, falls sie wie Adressen aussahen.
 
-Mit `arduPilotTelemetry` in der Relay-Konfiguration (für alle Boards von
-rcRelay32 eingeschaltet) gilt `0x80` als normale Telemetrie:
+Das Relay behandelt `0x80` grundsätzlich als normale Telemetrie:
 
 * eigener Menüeintrag `ArduPilot` im Ordner `Telemetry forwarding`
-  (Off / Forward / Tunnel, Standard Forward),
+  (Off / Forward, Standard Forward),
 * wird bei Parameterzugriffen wie alle Telemetrie vorübergehend unterdrückt,
 * `Forward Rate` gilt getrennt je App-ID der Einzelpakete (Subtyp `0xF0`),
   damit bei der festen Sendereihenfolge von ArduPilot kein Wert vollständig
   ausfällt; Sammelpakete (`0xF2`) haben einen eigenen Zähler,
 * Statustexte (Subtyp `0xF1`) werden nie ausgedünnt,
 * die Pakete werden unverändert weitergegeben.
+
+ArduPilot-Pakete werden nicht zusätzlich getunnelt, damit sie direkt von
+Anwendungen wie Yaapu ausgewertet werden können und kein Tunnel-Overhead entsteht.
+Eine im aktuellen EEPROM-Format gespeicherte ArduPilot-Tunnel-Einstellung wird
+beim Laden auf Forward umgestellt; die übrigen Einstellungen bleiben erhalten.
+Beim nächsten Speichern wird die Umstellung auch im Flash abgelegt.
 
 INAV sendet keinen Typ `0x80`; dort hat der Menüeintrag keine Wirkung.
 
@@ -251,9 +258,8 @@ dem Relay (Sendemodul 2 unter `0xCE`, dessen Empfänger unter `0xCF`, der
 Flugcontroller z. B. unter `0xC8`) geht gelegentlich eine Antwort verloren; jeder
 Verlust kostete 5 Sekunden, das Laden eines Menüs dauerte so oft 10–20 Sekunden.
 
-Mit `paramRetry` in der Relay-Konfiguration (für alle Boards von rcRelay32
-eingeschaltet) wiederholt das Relay eine Parameter-Leseanfrage selbst, wenn die
-Antwort ausbleibt:
+Mit dem CRSF-Menüparameter `Parameter Retry` auf `On` (Standard) wiederholt das
+Relay eine Parameter-Leseanfrage selbst, wenn die Antwort ausbleibt:
 
 * nach dem Dreifachen der je Gerät gemessenen Laufzeit, mindestens 100 ms
   (Sendemodul 2) bzw. 500 ms (über die Funkstrecke), höchstens 1,5 s;
@@ -263,6 +269,15 @@ Antwort ausbleibt:
   verworfen (gleicher Eintrag, gleicher Chunk),
 * Schreibanfragen werden nie wiederholt; unaufgeforderte Antworten
   (z. B. Fortschrittsmeldungen von Kommandos) laufen unverändert durch.
+
+Bei `Off` werden keine neuen Anfragen für Wiederholungen erfasst, keine
+Wiederholungen erzeugt und keine doppelten Antworten unterdrückt.
+Beim Umschalten werden offene Retry-Einträge gelöscht; bereits eingereihte
+Wiederholungspakete können noch gesendet werden.
+
+Die Einstellung wird im EEPROM gespeichert. Die EEPROM-Kennung wurde für das
+neue Feld von 42 auf 43 erhöht; beim ersten Start mit einer alten Konfiguration
+werden deshalb alle Einstellungen auf Standardwerte zurückgesetzt.
 
 == Bauen und Flashen
 

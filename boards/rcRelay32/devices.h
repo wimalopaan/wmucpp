@@ -141,8 +141,6 @@ struct Devices<Nucleo, Config, MCU> {
         using tp1 = void;
         using tp2 = void;
         static inline constexpr uint8_t fifoSize = 16;
-        static inline constexpr bool paramRetry = true;          // repeat lost parameter reads
-        static inline constexpr bool arduPilotTelemetry = true;  // 0x80 as telemetry
     };
     struct CrsfConfig {
         using rxpin = inputrx;
@@ -289,8 +287,6 @@ struct Devices<WeAct, Config, MCU> {
         using tp1 = void;
         using tp2 = void;
         static inline constexpr uint8_t fifoSize = 16;
-        static inline constexpr bool paramRetry = true;          // repeat lost parameter reads
-        static inline constexpr bool arduPilotTelemetry = true;  // 0x80 as telemetry
     };
     struct CrsfConfig {
         using rxpin = inputrx;
@@ -457,8 +453,6 @@ struct Devices<Wmg0b1, Config, MCU> {
         using tp2 = void;
 #endif
         static inline constexpr uint8_t fifoSize = 64;
-        static inline constexpr bool paramRetry = true;          // repeat lost parameter reads
-        static inline constexpr bool arduPilotTelemetry = true;  // 0x80 as telemetry
     };
     struct CrsfConfig {
         using rxpin = inputrx;

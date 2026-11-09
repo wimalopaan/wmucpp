@@ -178,21 +178,19 @@ private:
         return s;
     }();
     template<typename T>
-    static inline uint8_t addParent(auto& c, const RC::Protokoll::Crsf::V4::Parameter<T>& p) {
+    static inline constexpr uint8_t addParent(auto& c, const RC::Protokoll::Crsf::V4::Parameter<T>& p) {
         c.push_back(p);
         return c.size() - 1;
     }
     template<typename T>
-    static inline void addNode(auto& c, const RC::Protokoll::Crsf::V4::Parameter<T>& p) {
+    static inline constexpr void addNode(auto& c, const RC::Protokoll::Crsf::V4::Parameter<T>& p) {
         c.push_back(p);
     }
     template<auto type>
-    static inline void addForward(auto& p, const uint8_t parent, const char* const name) {
+    static inline constexpr void addForward(auto& p, const uint8_t parent, const char* const name) {
         addNode(p, Param_t{parent, PType::Sel, name, "Off;Forward;Tunnel", &eeprom.telemetryMode[type], 0, 2, [](const uint8_t v){relay::forwardTelemetryMode(type, v); return true;}});
     }
-    using params_t = etl::FixedVector<Param_t, 48>;
-    static inline params_t params = [] {
-        params_t p;
+    static inline constexpr void fillParameters(auto& p) {
         addNode(p, Param_t{0, PType::Folder, "root"});
         addNode(p, Param_t{0, PType::Info, "Version(HW/SW)", &mVersionString[0]});
         addNode(p, Param_t{0, PType::Info, "Watchdog", &mWdgString[0]});
@@ -207,6 +205,7 @@ private:
 
         addNode(p, Param_t{0, PType::Sel, "LinkStat", "Off;Forward;Transform;Tunnel", &eeprom.link_stat_mode, 0, 3, [](const uint8_t v){relay::linkStatMode(v); return true;}});
         addNode(p, Param_t{0, PType::Sel, "Failsafe", "Forward;Hold", &eeprom.failsafe_mode, 0, 1, [](const uint8_t){return true;}});
+        addNode(p, Param_t{0, PType::Sel, "Parameter Retry", "Off;On", &eeprom.parameter_retry, 0, 1, [](const uint8_t v){relay::parameterRetry(v == 1); return true;}});
         
         addNode(p, Param_t{.parent = 0, .type = PType::U8, .name = "Telem. Off Dur.", .value_ptr = &eeprom.tempOffTelemetry, .min = 1, .max = 60, .cb = [](const uint8_t a){relay::telemetryTempOffDuration(a); return true;}, .unitString = "sec"});
         
@@ -230,7 +229,7 @@ private:
         addForward<0x1f>(p, parent, "MAVLink FC");
         addForward<0x21>(p, parent, "Flight Mode");
         addForward<0x22>(p, parent, "ESP Now");
-        addNode(p, Param_t{parent, PType::Sel, "ArduPilot", "Off;Forward;Tunnel", &eeprom.ardupilot_mode, 0, 2, [](const uint8_t v){relay::arduPilotMode(v); return true;}});
+        addNode(p, Param_t{parent, PType::Sel, "ArduPilot", "Off;Forward", &eeprom.ardupilot_mode, 0, 1, [](const uint8_t v){relay::arduPilotMode(v); return true;}});
 
         addNode(p, Param_t{0, PType::Sel, "Half-Duplex", "Off;On", &eeprom.half_duplex, 0, 1, [](const uint8_t v){relay::setHalfDuplex(v == 1); return true;}});
         addNode(p, Param_t{0, PType::Sel, "Baudrate", "400k;420k;460K;921K;1,8M", &eeprom.baudrate, 0, 4, [](const uint8_t v){
@@ -258,10 +257,31 @@ private:
                                 }
                                 return true;}});
 #endif
-        // detects overflow by calling undefined function f();
+    }
+    struct ParameterCounter {
+        constexpr void push_back(const Param_t&) {
+            ++mSize;
+        }
+        constexpr uint16_t size() const {
+            return mSize;
+        }
+    private:
+        uint16_t mSize{};
+    };
+    static inline constexpr auto parameterCount = []{
+        ParameterCounter p;
+        fillParameters(p);
+        return p.size();
+    }();
+    static_assert(parameterCount < 255, "CRSF parameter table exceeds capacity including reserve entry");
+
+    using params_t = etl::FixedVector<Param_t, parameterCount + 1>;
+    static inline params_t params = []() consteval {
+        params_t p;
+        fillParameters(p);
         if (p.size() >= p.capacity()) {
             void f();
-            f();
+            f(); // compile-time check (call to undefined function)
         }
         return p;
     }();
