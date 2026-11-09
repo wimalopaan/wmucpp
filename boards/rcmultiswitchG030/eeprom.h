@@ -20,9 +20,14 @@
 
 #define EEPROM_MAGIC 42
 
+#include <array>
+#include <cstdint>
+
 #include "etl/algorithm.h"
 
+#ifdef USE_PATTERNS
 #include "pattern.h"
+#endif
 
 struct EEProm {
     constexpr EEProm() {
