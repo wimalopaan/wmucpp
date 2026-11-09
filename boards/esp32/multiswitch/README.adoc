@@ -1,5 +1,7 @@
 = MultiSwitch auf dem WeAct ESP32-C3 Core Board
 
+Sprache: *Deutsch* | link:README.en.adoc[English]
+
 ESP-IDF-Port von `../../rcmultiswitchG030` fuer das WeAct ESP32-C3FH4
 Core Board (4 MB Flash). Die ESP32-Konfiguration (`EEProm`) liegt getrennt
 in `main/settings.h`; das `config-v4`-NVS-Layout bleibt unveraendert.
