@@ -34,6 +34,10 @@ struct Storage {
         for (std::size_t i = 0; i < sizeof(EEProm); ++i) {
             ram[i] = flash[i];
         }
+        // Preserve current-format configurations using the removed ArduPilot tunnel mode.
+        if ((eeprom.magic == EEPROM_MAGIC) && (eeprom.ardupilot_mode == 2)) {
+            eeprom.ardupilot_mode = 1;
+        }
         if (!eeprom.valid()) {
             reset();
             return false;

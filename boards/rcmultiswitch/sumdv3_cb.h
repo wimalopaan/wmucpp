@@ -18,7 +18,9 @@
 
 #pragma once
 
-template<typename Config>
+enum class SumDV3FailsafeMode : uint8_t {Hold, Reset};
+
+template<typename Config, uint16_t FailsafeTicks = 0, SumDV3FailsafeMode FailsafeMode = SumDV3FailsafeMode::Reset>
 struct SumDV3CommandCallback {
     using debug = Config::debug;
     using allLeds = Config::allLeds;
@@ -26,7 +28,29 @@ struct SumDV3CommandCallback {
     
     static inline constexpr std::array<uint8_t, 8> index2offset{1, 0, 3, 2, 5, 4, 7, 6};
 
+    static inline void received(const std::byte status = 0_B) {
+        if constexpr (FailsafeTicks > 0) {
+            mReceiveTicks = 0;
+        }
+        if (std::any(status & 0x80_B)) {
+            enterFailsafe();
+        }
+        else {
+            mFailsafeActive = false;
+        }
+    }
+    static inline void ratePeriodic() {
+        if constexpr (FailsafeTicks > 0) {
+            if (!mFailsafeActive && (++mReceiveTicks >= FailsafeTicks)) {
+                enterFailsafe();
+            }
+        }
+    }
+
     static inline void decode(const std::array<std::byte, 36>& data, const uint8_t length) {
+        if (mFailsafeActive) {
+            return;
+        }
         if (length != data.size()) {
             etl::outl<debug>("sumd length: "_pgm, length);
             return;
@@ -50,7 +74,7 @@ struct SumDV3CommandCallback {
         }
     }
     static inline void address(const uint8_t adr) {
-        if (adr < 7) {
+        if (adr < index2offset.size()) {
             mGroup = adr;
         }
     }
@@ -58,7 +82,24 @@ struct SumDV3CommandCallback {
         return mGroup;
     }
     private:
+    static inline void enterFailsafe() {
+        if (mFailsafeActive) {
+            return;
+        }
+        mFailsafeActive = true;
+        if constexpr (FailsafeMode == SumDV3FailsafeMode::Reset) {
+            allLeds::allOff();
+            mLastState = 0;
+            etl::outl<debug>("sumd failsafe reset"_pgm);
+        }
+        else {
+            etl::outl<debug>("sumd failsafe hold"_pgm);
+        }
+    }
+
     static inline uint8_t mLastState = 0;
     static inline uint16_t mCommandPackagesCounter = 0;
     static inline uint8_t mGroup = DEFAULT_ADDRESS;
+    static inline uint16_t mReceiveTicks = 0;
+    static inline bool mFailsafeActive = false;
 };

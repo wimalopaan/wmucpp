@@ -199,12 +199,13 @@ struct Serial<Protocoll::SPort, Config> {
 };
 template<typename Config>
 struct Serial<Protocoll::SumDV3, Config> {
+    using tp = AVR::NoPin;
     using uartPosition = Config::uartPosition;
     using ledGroups = Config::ledGroups;
 
     struct CallbackConfig;
     using commandDecoder = SumDV3CommandCallback<CallbackConfig>;
-    using protocoll_adapter = Hott::V4::ProtocollAdapter<0, void, commandDecoder>;
+    using protocoll_adapter = Hott::V4::ProtocollAdapter<0, tp, commandDecoder>;
     using serial = AVR::Usart<uartPosition, protocoll_adapter, AVR::UseInterrupts<false>, AVR::ReceiveQueueLength<0>, AVR::SendQueueLength<256>>;
 
 #ifdef DEBUG_OUTPUT

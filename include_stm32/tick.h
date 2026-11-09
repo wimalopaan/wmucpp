@@ -51,24 +51,34 @@ namespace External {
         value_type mValue{};
     };
 #endif
-    template<typename Timer, typename T = uint16_t, T MAX = std::numeric_limits<T>::max()>
+    template<typename Timer, typename T = uint16_t, T MAX = std::numeric_limits<T>::max(), 
+             bool counterWrap = false>
     struct Tick {
         inline static constexpr auto intervall = Timer::intervall;
+        using counter_t = std::conditional_t<counterWrap, T, etl::ranged<0u, MAX>>;
         
         inline constexpr Tick() = default;
         
         template<typename R, typename P>
-        inline constexpr explicit Tick(const std::chrono::duration<R, P>& v) : value(v / intervall) {
-//            static_assert(v / intervall <= std::numeric_limits<T>::max());
-        }
+        inline constexpr explicit Tick(const std::chrono::duration<R, P>& v) : value(v / intervall) {}
         
         template<typename R, typename P>
         inline constexpr void operator=(const std::chrono::duration<R, P>& v) {
-            value.set(v / intervall);
+            if constexpr(counterWrap) {
+                value = v / intervall;
+            }
+            else {
+                value.set(v / intervall);
+            }
         }  
         
         inline constexpr auto time() const {
-            return intervall * value.toInt();
+            if constexpr(counterWrap) {
+                return intervall * value;                
+            }
+            else {
+                return intervall * value.toInt();
+            }
         }
         
         inline explicit constexpr operator bool() const {
@@ -84,7 +94,12 @@ namespace External {
         }
 
         inline constexpr void operator++() volatile {
-            ++value;
+            if constexpr(counterWrap) {
+                value = value + 1;                
+            }
+            else {
+                ++value;
+            }
         }
         
         template<typename F>
@@ -123,11 +138,21 @@ namespace External {
         inline constexpr auto operator<=>(const Tick& rhs) const = default;
         
         inline constexpr void reset() {
-            value.toBottom();
+            if constexpr(counterWrap) {
+                value = 0;
+            }
+            else {
+                value.toBottom();
+            }
         }
 
         inline constexpr void reset() volatile {
-            value.toBottom();
+            if constexpr(counterWrap) {
+                value = 0;
+            }
+            else {
+                value.toBottom();
+            }
         }
 
         inline static constexpr Tick fromRaw(const T v) {
@@ -135,7 +160,20 @@ namespace External {
         }
 
         inline static constexpr T max() {
-            return decltype(value)::Upper;
+            return MAX;
+        }
+
+        inline constexpr auto operator-(const Tick& rhs) const
+            requires(counterWrap && std::is_unsigned_v<T>)
+        {
+            using signed_t = std::make_signed_t<T>;
+            return static_cast<signed_t>(static_cast<T>(raw() - rhs.raw()));
+        }
+
+        inline constexpr Tick operator+(const Tick& rhs) const
+            requires(counterWrap && std::is_unsigned_v<T>)
+        {
+            return fromRaw(static_cast<T>(raw() + rhs.raw()));
         }
         
         inline constexpr auto operator/(const uint16_t& d) const {
@@ -145,11 +183,11 @@ namespace External {
         inline constexpr auto operator*(const uint16_t& m) const {
             return Tick(value * m);    
         }
-        inline constexpr T raw() {
+        inline constexpr T raw() const {
             return value;
         }
     private:
-        etl::ranged<0u, MAX> value;
+        counter_t value{};
         inline constexpr Tick(const T v) : value{v} {}
     };
 }

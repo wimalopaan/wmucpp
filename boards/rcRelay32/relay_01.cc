@@ -41,7 +41,7 @@
 #else
 # warning "wrong board definition"
 #endif
-#define SW_VERSION 16
+#define SW_VERSION 17
 
 #ifdef ALTERNATE_PINS
 # ifdef USE_IRDA

@@ -49,6 +49,7 @@ Der tatsächliche Funktionsumfang hängt von den beim Übersetzen aktivierten Op
 | `HW_MSW12` + `HW_MSW12_G051` | Small12 mit STM32G051 | Eigene Build-Auswahl und abweichende Feature-Vorgaben.
 | `HW_NUCLEO` | Nucleo-G031K8 | Entwicklungsboard mit ST-Link; externe Laststufen erforderlich.
 | `HW_WEACT` | WeAct STM32G031F8 | Kompaktes Entwicklungsboard; externer SWD-Programmer und Laststufen erforderlich.
+| `HW_WMG0B1` | WM STM32G0B1 | Entwicklungsboard; externe Laststufen erforderlich.
 |===
 
 Eine WeAct-basierte THT-Platine einschließlich Schaltplan und Gerberdaten ist in
@@ -297,8 +298,9 @@ Das Verhalten bei Ausfall von Sender, Funkstrecke und serieller Verbindung desha
 
 === Firmware bauen und übertragen
 
-Die Makefiles bauen `msw30.elf` und `msw30.bin`.
-Erforderlich sind die ARM-C++-Toolchain und die STM32CubeG0/CMSIS-Dateien gemäß den Include-Pfaden der Makefiles.
+Das gemeinsame Makefile baut `msw30.elf` und `msw30.bin`.
+Erforderlich sind die ARM-GCC-Toolchain mit C++26-Unterstützung und die STM32CubeG0/CMSIS-Dateien gemäß den Include-Pfaden des Makefiles.
+Für Clang-Builds werden zusätzlich Clang und LLD benötigt; Standardbibliothek und Laufzeitbibliotheken stammen weiterhin aus der ARM-GCC-Toolchain.
 Das gesamte wmucpp-Repository wird benötigt; dieses Board-Verzeichnis allein genügt nicht.
 
 Aus diesem Verzeichnis genau den zur Bestückung passenden Build ausführen:
@@ -306,25 +308,31 @@ Aus diesem Verzeichnis genau den zur Bestückung passenden Build ausführen:
 [cols="1,2",options="header"]
 |===
 | Hardware | Kommando
-| Small10 / STM32G030 | `make g030`
-| Small11 / STM32G031 | `make g031`
-| Small12 / STM32G051 | `make g051`
-| Small12 / STM32G0B1 | `make g0b1`
-| WeAct / STM32G031 | `make weact`
+| Small10 / STM32G030 | `make HW=HW_MSW10`
+| Small11 / STM32G031 | `make HW=HW_MSW11`
+| Small12 / STM32G051 | `make HW=HW_MSW12 MCU=G051`
+| Small12 / STM32G0B1 | `make HW=HW_MSW12`
+| Nucleo / STM32G031 | `make HW=HW_NUCLEO`
+| WeAct / STM32G031 | `make HW=HW_WEACT`
+| WM / STM32G0B1 | `make HW=HW_WMG0B1`
 |===
 
-Die Targets setzen die Hardwareauswahl überwiegend per Compilerdefine.
-Für Nucleo ist eine gesonderte Auswahl von `HW_NUCLEO` statt `HW_MSW11` im G031-Build nötig; das normale Target `g031` wählt Small11.
-Hardwareauswahl, MCU, Linkerskript und Bestückung müssen zusammenpassen.
+Ohne Optionen wird `HW=HW_MSW12 TOOLCHAIN=gcc` gebaut.
+Mit `TOOLCHAIN=clang` wird Clang mit LLVM-LTO verwendet, beispielsweise `make HW=HW_MSW12 TOOLCHAIN=clang`.
+Die MCU wird aus der Hardware abgeleitet; nur Small12 erlaubt zusätzlich `MCU=G051`.
+Das Makefile setzt die Hardware- und MCU-Defines und wählt Startup und Linkerskript passend dazu.
+Unbekannte Optionen und unzulässige Hardware-/MCU-Kombinationen werden abgelehnt.
 Weitere Features werden am Anfang von `msw30.cc` gewählt; Small12 ergänzt dort abhängig vom MCU Standardfunktionen automatisch.
 `NO_DEFAULTS_MSW12` verhindert diese automatische Ergänzung.
-Die Targets verwenden gemeinsame Ausgabedateien und Bereinigungsschritte, daher unterschiedliche Hardware-Builds nicht parallel ausführen.
+Ausgabedateien liegen getrennt unter `build/<HW>/<MCU>/<TOOLCHAIN>/`.
+Varianten können ohne vorheriges `clean` und parallel gebaut werden; Header-Abhängigkeiten werden automatisch erfasst.
+`make clean` mit denselben Auswahloptionen entfernt nur die Dateien dieser Variante.
 
 Übertragung mit ST-Link/SWD, beispielsweise für die zuvor passend gebaute Binärdatei:
 
 [source,console]
 ----
-st-flash --reset --connect-under-reset write msw30.bin 0x08000000
+st-flash --reset --connect-under-reset write build/HW_MSW12/G0B1/gcc/msw30.bin 0x08000000
 ----
 
 Beim WeAct-Board kann die Nutzung von PA14 für Taster oder Debugausgabe mit SWD kollidieren; die Hinweise in `msw30.cc` beachten und gegebenenfalls NRST beim Programmierstart verwenden.
@@ -399,6 +407,7 @@ The actual feature set depends on the options enabled at compile time.
 | `HW_MSW12` + `HW_MSW12_G051` | Small12 fitted with STM32G051 | Separate build selection and different feature defaults.
 | `HW_NUCLEO` | Nucleo-G031K8 | Development board with ST-Link; external load drivers required.
 | `HW_WEACT` | WeAct STM32G031F8 | Compact development board; external SWD programmer and load drivers required.
+| `HW_WMG0B1` | WM STM32G0B1 | Development board; external load drivers required.
 |===
 
 A WeAct-based through-hole PCB, including its schematic and Gerber files, is described in
@@ -647,8 +656,9 @@ Therefore, test behavior when the radio, RF link or serial connection fails on t
 
 === Building and flashing the firmware
 
-The Makefiles build `msw30.elf` and `msw30.bin`.
-The ARM C++ toolchain and STM32CubeG0/CMSIS files are required according to the include paths in the Makefiles.
+The shared Makefile builds `msw30.elf` and `msw30.bin`.
+The ARM GCC toolchain with C++26 support and STM32CubeG0/CMSIS files are required according to the include paths in the Makefile.
+Clang builds additionally require Clang and LLD; standard and runtime libraries still come from the ARM GCC toolchain.
 The complete wmucpp repository is needed; this board directory alone is insufficient.
 
 From this directory, run exactly the build matching the installed hardware:
@@ -656,25 +666,31 @@ From this directory, run exactly the build matching the installed hardware:
 [cols="1,2",options="header"]
 |===
 | Hardware | Command
-| Small10 / STM32G030 | `make g030`
-| Small11 / STM32G031 | `make g031`
-| Small12 / STM32G051 | `make g051`
-| Small12 / STM32G0B1 | `make g0b1`
-| WeAct / STM32G031 | `make weact`
+| Small10 / STM32G030 | `make HW=HW_MSW10`
+| Small11 / STM32G031 | `make HW=HW_MSW11`
+| Small12 / STM32G051 | `make HW=HW_MSW12 MCU=G051`
+| Small12 / STM32G0B1 | `make HW=HW_MSW12`
+| Nucleo / STM32G031 | `make HW=HW_NUCLEO`
+| WeAct / STM32G031 | `make HW=HW_WEACT`
+| WM / STM32G0B1 | `make HW=HW_WMG0B1`
 |===
 
-The targets mostly select the hardware using compiler defines.
-For Nucleo, the G031 build needs a separate selection of `HW_NUCLEO` instead of `HW_MSW11`; the normal `g031` target selects Small11.
-Hardware selection, MCU, linker script and fitted components must match.
+Without options, the default is `HW=HW_MSW12 TOOLCHAIN=gcc`.
+Use `TOOLCHAIN=clang` for Clang with LLVM LTO, for example `make HW=HW_MSW12 TOOLCHAIN=clang`.
+The MCU is derived from the hardware; only Small12 additionally supports `MCU=G051`.
+The Makefile supplies hardware and MCU defines and selects the matching startup and linker script.
+Unknown options and unsupported hardware/MCU combinations are rejected.
 Additional features are selected at the start of `msw30.cc`; Small12 automatically adds default features there depending on the MCU.
 `NO_DEFAULTS_MSW12` disables these automatic additions.
-The targets share output files and cleanup steps, so do not run builds for different hardware variants in parallel.
+Outputs are separated under `build/<HW>/<MCU>/<TOOLCHAIN>/`.
+Variants can be built incrementally and in parallel without a preceding `clean`; header dependencies are tracked automatically.
+`make clean` with the same selection options removes only that variant's files.
 
 Flash using ST-Link/SWD, for example for the binary previously built for the correct hardware:
 
 [source,console]
 ----
-st-flash --reset --connect-under-reset write msw30.bin 0x08000000
+st-flash --reset --connect-under-reset write build/HW_MSW12/G0B1/gcc/msw30.bin 0x08000000
 ----
 
 On the WeAct board, using PA14 for a pushbutton or debug output can conflict with SWD; follow the notes in `msw30.cc` and use NRST when starting programming if necessary.

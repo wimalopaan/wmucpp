@@ -16,15 +16,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#if !defined(HW_MSW10) && !defined(HW_MSW11) && !defined(HW_MSW12) && !defined(HW_NUCLEO) && !defined(HW_WEACT)
-// select one(!) of the following hardware definitions
-// #define HW_MSW10 // MultiSwitch_10 (32K), ATTENTION: use Makefile
-// #define HW_MSW11 // MultiSwitch_11 (64k), ATTENTION: use Makefile.G031
-#define HW_MSW12 // MultiSwitch_12 (64k) (EasyEda OSHWLAB) mit G0B1: Makefile.G0B1 (enables all features)
-// #define HW_MSW12_G051 // if above board is populated with G051 instead of G0B1
-// #define HW_NUCLEO // STM Nucleo G031K8 (64K) (incl. ST-Link), ATTENTION: use Makefile.G031
-// #define HW_WEACT // WeAct G031F8 (64K), ATTENTION: use Makefile.G031
-// #define HW_WMG0B1 // WM G0B1 (64K), ATTENTION: use Makefile.G0B1
+#if (defined(HW_MSW10) + defined(HW_MSW11) + defined(HW_MSW12) + \
+     defined(HW_NUCLEO) + defined(HW_WEACT) + defined(HW_WMG0B1)) != 1
+#error "Select exactly one hardware variant through make HW=..."
+#endif
+#if defined(HW_MSW12_G051) && !defined(HW_MSW12)
+#error "HW_MSW12_G051 requires HW_MSW12"
 #endif
 
 // feature selection
@@ -225,7 +222,7 @@ int main() {
     NVIC_EnableIRQ(TIM3_IRQn);
     NVIC_EnableIRQ(USART2_IRQn);
 #endif
-#if defined(HW_NUCLEO) || defined(HW_WEACT) || defined(HW_MSW11) || defined(HW_MSW12)
+#if defined(HW_NUCLEO) || defined(HW_WEACT) || defined(HW_MSW11) || defined(HW_MSW12) || defined(HW_WMG0B1)
     NVIC_EnableIRQ(USART1_IRQn);
 #endif
     NVIC_EnableIRQ(HardFault_IRQn);
@@ -249,7 +246,7 @@ void USART2_IRQHandler(){
     crsf::Isr::onIdle([]{});
 }
 #endif
-#if defined(HW_NUCLEO) || defined(HW_WEACT) || defined(HW_MSW11) || defined(HW_MSW12)
+#if defined(HW_NUCLEO) || defined(HW_WEACT) || defined(HW_MSW11) || defined(HW_MSW12) || defined(HW_WMG0B1)
 void USART1_IRQHandler(){
     using crsf = devs::crsf;
     static_assert(crsf::number == 1);

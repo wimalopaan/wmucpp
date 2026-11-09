@@ -411,8 +411,8 @@ struct Devices<SW21, Config, MCU> {
     using csrfInDmaChannelComponent1 = Mcu::Components::DmaChannel<typename dma1::component_t, 1>;
     using csrfInDmaChannelComponent2 = Mcu::Components::DmaChannel<typename dma1::component_t, 2>;
     struct CrsfConfig;
+    struct CrsfCallbackConfig;
     using crsf = RC::Protokoll::Crsf::V4::Master<1, CrsfConfig, MCU>;
-    using crsfBuffer = crsf::messageBuffer;
 
 #ifdef SERIAL_DEBUG
     using debugtx = Mcu::Stm::Pin<gpioa, 15, MCU>;
@@ -427,6 +427,8 @@ struct Devices<SW21, Config, MCU> {
 #else
     using debug = void;
 #endif
+
+    using crsfBuffer = crsf::messageBuffer;
 
     using adcDmaChannel = Mcu::Components::DmaChannel<typename dma1::component_t, 3>;
 
@@ -724,8 +726,8 @@ struct Devices<SW20, Config, MCU> {
     // Usart 2: CRSF
     using csrfInDmaChannelComponent1 = Mcu::Components::DmaChannel<typename dma1::component_t, 1>;
     struct CrsfConfig;
+    struct CrsfCallbackConfig;
     using crsf = RC::Protokoll::Crsf::V4::Master<2, CrsfConfig, MCU>;
-    using crsfBuffer = crsf::messageBuffer;
 
 #ifdef SERIAL_DEBUG
     using debugtx = Mcu::Stm::Pin<gpiob, 6, MCU>;
@@ -740,6 +742,8 @@ struct Devices<SW20, Config, MCU> {
 #else
     using debug = void;
 #endif
+
+    using crsfBuffer = crsf::messageBuffer;
 
     using adc = void;
 
@@ -984,8 +988,8 @@ struct Devices<Nucleo, Config, MCU> {
     using csrfInDmaChannelComponent1 = Mcu::Components::DmaChannel<typename dma1::component_t, 1>;
     using csrfInDmaChannelComponent2 = Mcu::Components::DmaChannel<typename dma1::component_t, 2>;
     struct CrsfConfig;
+    struct CrsfCallbackConfig;
     using crsf = RC::Protokoll::Crsf::V4::Master<1, CrsfConfig, MCU>;
-    using crsfBuffer = crsf::messageBuffer;
 
 #ifdef SERIAL_DEBUG
     using debugtx = Mcu::Stm::Pin<gpioa, 2, MCU>;
@@ -1000,6 +1004,8 @@ struct Devices<Nucleo, Config, MCU> {
 #else
     using debug = void;
 #endif
+
+    using crsfBuffer = crsf::messageBuffer;
 
     using adc = void;
 
@@ -1267,8 +1273,8 @@ struct Devices<WeAct, Config, MCU> {
     using csrfInDmaChannelComponent1 = Mcu::Components::DmaChannel<typename dma1::component_t, 1>;
     using csrfInDmaChannelComponent2 = Mcu::Components::DmaChannel<typename dma1::component_t, 2>;
     struct CrsfConfig;
+    struct CrsfCallbackConfig;
     using crsf = RC::Protokoll::Crsf::V4::Master<1, CrsfConfig, MCU>;
-    using crsfBuffer = crsf::messageBuffer;
 	
 #ifdef SERIAL_DEBUG
     using debugtx = Mcu::Stm::Pin<gpioa, 14, MCU>;
@@ -1283,6 +1289,8 @@ struct Devices<WeAct, Config, MCU> {
 #else
     using debug = void;
 #endif
+
+    using crsfBuffer = crsf::messageBuffer;
 
     using adc = void;
 
@@ -1579,8 +1587,8 @@ struct Devices<WMG0B1, Config, MCU> {
     using csrfInDmaChannelComponent1 = Mcu::Components::DmaChannel<typename dma1::component_t, 1>;
     using csrfInDmaChannelComponent2 = Mcu::Components::DmaChannel<typename dma1::component_t, 2>;
     struct CrsfConfig;
+    struct CrsfCallbackConfig;
     using crsf = RC::Protokoll::Crsf::V4::Master<1, CrsfConfig, MCU>;
-    using crsfBuffer = crsf::messageBuffer;
 
 #ifdef SERIAL_DEBUG
     using debugtx = Mcu::Stm::Pin<gpioa, 15, MCU>;
@@ -1596,6 +1604,8 @@ struct Devices<WMG0B1, Config, MCU> {
     using debug = void;
 #endif
     
+    using crsfBuffer = crsf::messageBuffer;
+
     using adcDmaChannel = Mcu::Components::DmaChannel<typename dma1::component_t, 3>;
     
     using vin = Mcu::Stm::Pin<gpioa, 5, MCU>; // adc in5

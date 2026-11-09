@@ -64,6 +64,9 @@ namespace etl {
                 ++mValue;
             }
         }
+        constexpr value_type toInt() const {
+            return mValue;
+        }
         constexpr void toBottom() {
             mValue = Low;
         }
