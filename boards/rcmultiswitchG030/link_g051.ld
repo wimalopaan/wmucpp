@@ -19,9 +19,6 @@
 /* Entry Point */
 ENTRY(Reset_Handler)
 
-/* Highest address of the user mode stack */
-_estack = ORIGIN(RAM) + LENGTH(RAM);	/* end of "RAM" Ram type memory */
-
 /* _Min_Heap_Size = 0x200;	/* required amount of heap  */
  _Min_Heap_Size = 0x000;	/* required amount of heap  */
 
@@ -33,6 +30,9 @@ MEMORY
   RAM    (xrw)    : ORIGIN = 0x20000000,  LENGTH = 18K
   FLASH    (rx)   : ORIGIN = 0x8000000,   LENGTH = 64K
 }
+
+/* Highest address of the user mode stack */
+_estack = ORIGIN(RAM) + LENGTH(RAM);	/* end of "RAM" Ram type memory */
 
 _flash_start = ORIGIN(FLASH);
 
