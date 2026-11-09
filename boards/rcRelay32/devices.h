@@ -209,6 +209,8 @@ struct Devices<Nucleo, Config, MCU> {
 
         adc::init();
         adc::start();
+
+        watchDog::init();
     }
 };
 
@@ -353,6 +355,8 @@ struct Devices<WeAct, Config, MCU> {
 
         adc::init();
         adc::start();
+
+        watchDog::init();
     }
 };
 
