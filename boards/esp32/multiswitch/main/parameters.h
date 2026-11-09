@@ -25,7 +25,7 @@ namespace Multiswitch {
 
         Parameters(EEProm& config, std::array<Output, 8>& outputs, Switches& switches) :
             mConfig{config}, mOutputs{outputs}, mSwitches{switches} {
-            updateName();
+            updateInfo();
             add({0, Type::Folder, ""});
             add({0, Type::Info, "Version(HW/SW)", "13:42"});
             const auto global = folder(0, "Global");
@@ -59,8 +59,11 @@ namespace Multiswitch {
                 add({failsafe, Type::Sel, names[i], "Off;On", &config.failsafe_pattern[i], 0, 1});
             }
             const auto morse = folder(0, "Morse");
-            add({morse, Type::Str, "Text1", nullptr, nullptr, 0, 0, nullptr, 0,
-                 static_cast<uint8_t>(config.morse_texts[0].size()), 0, config.morse_texts[0].data()});
+            for (size_t i = 0; i < config.morse_texts.size(); ++i) {
+                add({morse, Type::Str, morseNames[i], nullptr, nullptr, 0, 0, nullptr, 0,
+                     static_cast<uint8_t>(config.morse_texts[i].size()), 0, config.morse_texts[i].data()});
+            }
+            add({morse, Type::Info, "Full Text", mMorseText.data()});
             add({morse, Type::U8, "Dit duration", nullptr, &config.morse_dit, 1, 10, nullptr, 3, 0, 3, nullptr, "*100ms"});
             add({morse, Type::U8, "Dah duration", nullptr, &config.morse_dah, 1, 10, nullptr, 6, 0, 6, nullptr, "*100ms"});
             add({morse, Type::U8, "Intra S. Gap dur.", nullptr, &config.morse_gap, 1, 10, nullptr, 3, 0, 3, nullptr, "*100ms"});
@@ -183,7 +186,7 @@ namespace Multiswitch {
             }
             if (entry.action == Action::Pattern) mSwitches.configurePattern(entry.output);
             if (entry.action == Action::Dimming) mSwitches.resetDimming();
-            updateName();
+            updateInfo();
             return Result::Changed;
         }
 
@@ -193,13 +196,14 @@ namespace Multiswitch {
                 mOutputs[i].set(false);
                 mOutputs[i].configure(mConfig.outputs[i]);
             }
-            updateName();
+            updateInfo();
         }
 
     private:
-        void updateName() {
+        void updateInfo() {
             std::snprintf(mName.data(), mName.size(), "MultiSwitch-E@%u:%u",
                           mConfig.addresses[0], mConfig.crsf_address);
+            mMorseText = morseText(mConfig);
         }
         void add(Parameter p, const Action action = Action::Store, const uint8_t output = 0) {
             mEntries.push_back({p, action, output});
@@ -217,11 +221,13 @@ namespace Multiswitch {
             "Virtual 0", "Virtual 1", "Virtual 2", "Virtual 3"};
         static constexpr std::array<const char*, 4> patternNames{
             "Pattern Virt. 5", "Pattern Virt. 6", "Pattern Virt. 7", "Pattern Virt. 8"};
+        static constexpr std::array<const char*, 4> morseNames{"Text1", "Text2", "Text3", "Text4"};
         static constexpr const char* memberOptions = "None;Out0;Out1;Out2;Out3;Out4;Out5;Out6;Out7";
         EEProm& mConfig;
         std::array<Output, 8>& mOutputs;
         Switches& mSwitches;
         etl::FixedVector<Entry, 240> mEntries;
         std::array<char, 32> mName{};
+        std::array<char, 64> mMorseText{};
     };
 }

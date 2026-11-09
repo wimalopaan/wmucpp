@@ -7,7 +7,7 @@
 #include <string_view>
 
 #include <output.h>
-#include "eeprom.h"
+#include "morse_text.h"
 
 namespace Multiswitch {
     class Output {
@@ -76,7 +76,7 @@ namespace Multiswitch {
         enum class Phase {Start, Pulse, SignGap, LetterGap, WordGap, Done};
 
         bool morse(const uint64_t now, const EEProm& config) {
-            const auto& text = config.morse_texts[0];
+            const auto text = morseText(config);
             if (mPhase == Phase::Start) {
                 mLetter = 0;
                 mSign = 0;

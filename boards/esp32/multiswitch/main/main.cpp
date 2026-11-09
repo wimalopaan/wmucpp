@@ -78,9 +78,16 @@ namespace Multiswitch {
             }
             ESP_ERROR_CHECK(open);
             size_t size = sizeof(mConfig);
-            auto result = nvs_get_blob(handle, "config-v3", &mConfig, &size);
+            auto result = nvs_get_blob(handle, "config-v4", &mConfig, &size);
             bool valid = result == ESP_OK && size == sizeof(mConfig) && mParameters.valid();
             bool migrated = false;
+            if (result == ESP_ERR_NVS_NOT_FOUND) {
+                std::array<uint8_t, sizeof(MasterSlaveConfiguration)> legacy{};
+                size = legacy.size();
+                result = nvs_get_blob(handle, "config-v3", legacy.data(), &size);
+                valid = result == ESP_OK && migrateMasterSlave({legacy.data(), size}, mConfig) && mParameters.valid();
+                migrated = valid;
+            }
             if (result == ESP_ERR_NVS_NOT_FOUND) {
                 std::array<uint8_t, sizeof(VirtualPatternConfiguration)> legacy{};
                 size = legacy.size();
@@ -109,14 +116,14 @@ namespace Multiswitch {
             ESP_ERROR_CHECK(result);
             if (migrated) {
                 mSaveAt = esp_timer_get_time() + 500'000;
-                ESP_LOGI(tag, "Configuration upgraded to master/slave layout");
+                ESP_LOGI(tag, "Configuration upgraded to four Morse text fields");
             }
         }
 
         void save() {
             nvs_handle_t handle;
             ESP_ERROR_CHECK(nvs_open("multiswitch", NVS_READWRITE, &handle));
-            ESP_ERROR_CHECK(nvs_set_blob(handle, "config-v3", &mConfig, sizeof(mConfig)));
+            ESP_ERROR_CHECK(nvs_set_blob(handle, "config-v4", &mConfig, sizeof(mConfig)));
             ESP_ERROR_CHECK(nvs_commit(handle));
             nvs_close(handle);
             mSaveAt = 0;

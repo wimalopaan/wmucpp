@@ -1,9 +1,11 @@
 = MultiSwitch auf dem WeAct ESP32-C3 Core Board
 
 ESP-IDF-Port von `../../rcmultiswitchG030` fuer das WeAct ESP32-C3FH4
-Core Board (4 MB Flash). Konfiguration (`EEProm`) und CRSF-Parameter-
-Serialisierung werden aus der Vorlage bzw. `include_stm32` wiederverwendet.
-Die STM32-Hardwareabstraktion wird nicht benoetigt.
+Core Board (4 MB Flash). Die ESP32-Konfiguration (`EEProm`) liegt getrennt
+in `main/settings.h`; das `config-v4`-NVS-Layout bleibt unveraendert.
+Pattern-Parameter und CRSF-Parameter-Serialisierung werden aus der Vorlage
+bzw. `include_stm32` wiederverwendet. Die STM32-Hardwareabstraktion wird
+nicht benoetigt.
 
 == Anschluesse
 
@@ -80,6 +82,18 @@ sondern erst nach der CRSF-Bestaetigung.
 Morse kann auch waehrend der Ausgabe ausgeschaltet werden; Leerzeichen und
 unbekannte Zeichen werden begrenzt verarbeitet.
 
+== Morse mit vier Textfeldern
+
+Unter `Morse` stehen `Text1` bis `Text4` mit jeweils maximal 15 Zeichen zur
+Verfuegung. Nichtleere Felder werden in dieser Reihenfolge mit je einem
+Leerzeichen verbunden; leere oder ausschliesslich mit Leerzeichen gefuellte
+Felder werden ausgelassen. `Full Text` zeigt den zusammengesetzten Text
+schreibgeschuetzt an (maximal 63 Zeichen).
+Alle Ausgaenge im Morse-Modus verwenden diesen gemeinsamen Text und die
+gemeinsamen Morse-Zeiten. Die Feldgrenzen erzeugen eine Wortpause, keine
+vier getrennt waehlbaren Nachrichten. Nach dem Upgrade bleibt der bisherige
+Text in `Text1`; `Text2` bis `Text4` sind leer.
+
 == Virtuals, Patterns und globale Dimmung
 
 `Global / Switch Addr` adressiert die acht physischen Ausgaenge,
@@ -152,11 +166,11 @@ am Master aus- und wieder einschalten.
 
 == Vorhandene Einstellungen
 
-Gueltige Einstellungen beider bisherigen Firmwarestaende (`config-v1`
-und `config-v2`) werden automatisch uebernommen und als `config-v3`
+Gueltige Einstellungen der bisherigen Firmwarestaende (`config-v1`,
+`config-v2` und `config-v3`) werden automatisch uebernommen und als `config-v4`
 gespeichert. Ausgangs-, Morse-, Failsafe- sowie vorhandene Virtual-/Pattern-
-Einstellungen bleiben erhalten; Master-Senden und alle Slave-Freigaben
-sind nach dem Upgrade ausgeschaltet.
+und Master/Slave-Einstellungen bleiben erhalten. Bei v1/v2 sind Master-Senden
+und alle Slave-Freigaben nach dem Upgrade ausgeschaltet.
 Beim Upgrade von v1 sind neue Gruppen leer, Patterns und globale Dimmung
 ausgeschaltet. Die neue virtuelle Adresse ist 1, bei Kollision mit der
 bisherigen Switch-Adresse 2. Nach dem Flashen das Geraetemenue am Sender
@@ -181,7 +195,7 @@ CRSF-UART. Firmware: `build/multiswitch.bin`. Fuer die erste USB-Verbindung
 ggf. BOOT gedrueckt halten und Reset betaetigen.
 
 Host-Tests fuer Framing/CRC, Kommandolaengen und -adressierung,
-PWM-Flanken, Intervall, Morse, Failsafe-Ausgaenge, Parameter/Reset,
+PWM-Flanken, Intervall, vier Morse-Textfelder, Failsafe-Ausgaenge, Parameter/Reset,
 Virtuals, alle Pattern-Modi, Verkettung, globale Dimmung, Master/Slave
 und NVS-Migration:
 

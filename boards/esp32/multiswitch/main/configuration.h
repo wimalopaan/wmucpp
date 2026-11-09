@@ -1,10 +1,11 @@
 #pragma once
 
+#include <algorithm>
 #include <cstring>
 #include <span>
 #include <type_traits>
 
-#include "eeprom.h"
+#include "settings.h"
 
 namespace Multiswitch {
     struct LegacyOutput {
@@ -69,6 +70,35 @@ namespace Multiswitch {
     static_assert(sizeof(VirtualPatternConfiguration) == 294);
     static_assert(std::is_trivially_copyable_v<VirtualPatternConfiguration>);
 
+    struct MasterSlaveConfiguration {
+        uint8_t magic = EEPROM_MAGIC;
+        uint8_t pwm1 = 10;
+        uint8_t pwm2 = 10;
+        uint8_t pwm3 = 10;
+        uint8_t pwm4 = 10;
+        std::array<uint8_t, 2> addresses{0, 1};
+        uint8_t crsf_address = 0xc8;
+        uint8_t response_slot = 0;
+        uint8_t telemetry = 1;
+        uint8_t use_virtuals = 1;
+        std::array<EEProm::Output, 8> outputs{};
+        std::array<std::array<char, 16>, 1> morse_texts{};
+        uint8_t morse_dit = 3;
+        uint8_t morse_dah = 6;
+        uint8_t morse_gap = 3;
+        uint8_t morse_igap = 3;
+        uint8_t morse_wgap = 9;
+        std::array<EEProm::Virtual, 4> virtuals{};
+        uint8_t enableGlobalDimming_virtual4 = 0;
+        std::array<External::Pattern::EEProm, 4> pattern{};
+        uint8_t slaveSend = 0;
+        uint8_t master = 0;
+        uint8_t failsafe_mode = 0;
+        std::array<uint8_t, 8> failsafe_pattern{};
+    };
+    static_assert(sizeof(MasterSlaveConfiguration) == 304);
+    static_assert(std::is_trivially_copyable_v<MasterSlaveConfiguration>);
+
     inline EEProm upgradeLegacy(const auto& legacy) {
         EEProm upgraded;
         upgraded.pwm1 = legacy.pwm1;
@@ -87,7 +117,7 @@ namespace Multiswitch {
                 .blink = old.blink, .blinkOnTime = old.blinkOnTime, .blinkOffTime = old.blinkOffTime,
                 .flashCount = old.flashCount, .slaveEnable = 0, .name = old.name};
         }
-        upgraded.morse_texts = legacy.morse_texts;
+        std::copy(legacy.morse_texts.begin(), legacy.morse_texts.end(), upgraded.morse_texts.begin());
         upgraded.morse_dit = legacy.morse_dit;
         upgraded.morse_dah = legacy.morse_dah;
         upgraded.morse_gap = legacy.morse_gap;
@@ -107,17 +137,34 @@ namespace Multiswitch {
         return true;
     }
 
-    inline bool migrateVirtualPatterns(const std::span<const uint8_t> bytes, EEProm& config) {
-        if (bytes.size() != sizeof(VirtualPatternConfiguration)) return false;
-        VirtualPatternConfiguration legacy;
-        std::memcpy(&legacy, bytes.data(), bytes.size());
-        if (legacy.magic != EEPROM_MAGIC) return false;
+    inline EEProm upgradeVirtualPatterns(const auto& legacy) {
         auto upgraded = upgradeLegacy(legacy);
         upgraded.addresses = legacy.addresses;
         upgraded.use_virtuals = legacy.use_virtuals;
         upgraded.virtuals = legacy.virtuals;
         upgraded.enableGlobalDimming_virtual4 = legacy.enableGlobalDimming_virtual4;
         upgraded.pattern = legacy.pattern;
+        return upgraded;
+    }
+
+    inline bool migrateVirtualPatterns(const std::span<const uint8_t> bytes, EEProm& config) {
+        if (bytes.size() != sizeof(VirtualPatternConfiguration)) return false;
+        VirtualPatternConfiguration legacy;
+        std::memcpy(&legacy, bytes.data(), bytes.size());
+        if (legacy.magic != EEPROM_MAGIC) return false;
+        config = upgradeVirtualPatterns(legacy);
+        return true;
+    }
+
+    inline bool migrateMasterSlave(const std::span<const uint8_t> bytes, EEProm& config) {
+        if (bytes.size() != sizeof(MasterSlaveConfiguration)) return false;
+        MasterSlaveConfiguration legacy;
+        std::memcpy(&legacy, bytes.data(), bytes.size());
+        if (legacy.magic != EEPROM_MAGIC) return false;
+        auto upgraded = upgradeVirtualPatterns(legacy);
+        upgraded.outputs = legacy.outputs;
+        upgraded.slaveSend = legacy.slaveSend;
+        upgraded.master = legacy.master;
         config = upgraded;
         return true;
     }
