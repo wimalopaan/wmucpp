@@ -17,6 +17,7 @@ nicht benoetigt.
 |CRSF TX (zum Empfaenger-RX) |21
 |Blaue Board-LED, aktiv low |8
 |BOOT-Taster, aktiv low |9
+|Status-Eingang IN0, aktiv low mit Pull-up |2
 |USB Serial/JTAG |18/19, unveraendert
 |===
 
@@ -47,8 +48,8 @@ https://github.com/WeActStudio/WeActStudio.ESP32C3CoreBoard/tree/master/Hardware
   Remote-PWM wird bei All-Off ebenfalls auf null gesetzt.
 * NVS-Persistenz, 500 ms nach der letzten Konfigurationsaenderung.
   Operate/Test und Prop werden nicht gespeichert. Factory-Reset wird gespeichert.
-* CRSF-Status-Telemetrie im Format der Vorlage, alle 500 ms. Da diese
-  Pinbelegung keine Status-Eingaenge vorsieht, ist das Statusbyte null.
+* CRSF-Status-Telemetrie im Format der Vorlage, alle 500 ms.
+  Status-Eingang IN0 auf GPIO2 wird in Bit 0 gemeldet; Bits 1..7 bleiben null.
   Nach Erkennung/Konfigurationszugriffen pausiert die Telemetrie 30 Sekunden.
 
 Die Status-LED verwendet die Zeiten der Vorlage: 100-ms-Blitze, bei mehreren
@@ -81,6 +82,22 @@ Ein Reset fuehrt keine Aktion beim blossen Lesen des Menueeintrags aus,
 sondern erst nach der CRSF-Bestaetigung.
 Morse kann auch waehrend der Ausgabe ausgeschaltet werden; Leerzeichen und
 unbekannte Zeichen werden begrenzt verarbeitet.
+
+== Status-Eingang
+
+GPIO2 ist ein aktiver Low-Eingang mit aktiviertem Pull-up:
+offen/High meldet Statusbit 0 = 0, eine Verbindung nach GND meldet
+Statusbit 0 = 1. Einen potentialfreien Kontakt oder Open-Drain-Ausgang
+verwenden, mit gemeinsamer Masse. Der Eingang ist nur fuer 3,3-V-Pegel
+geeignet; keine 5 V oder Empfaenger-Akkuspannung anschliessen.
+
+GPIO2 ist ein Strapping-Pin mit einem Pull-up auf dem WeAct-Board.
+Fuer zuverlaessiges Starten/Flashen den Eingang waehrend Reset moeglichst
+offen/High halten. Die uebrige Pinbelegung bleibt erhalten; ein zweiter
+Status-Eingang ist nicht vorhanden. Der Pegel wird beim Versand der
+Status-Telemetrie abgetastet, ohne Entprellung oder Impulsspeicherung.
+Die bestehende Telemetrie-Freigabe und die 30-s-Pause bei
+Erkennung/Konfigurationszugriffen gelten auch fuer diese Statusmeldung.
 
 == Morse mit vier Textfeldern
 
@@ -196,8 +213,8 @@ ggf. BOOT gedrueckt halten und Reset betaetigen.
 
 Host-Tests fuer Framing/CRC, Kommandolaengen und -adressierung,
 PWM-Flanken, Intervall, vier Morse-Textfelder, Failsafe-Ausgaenge, Parameter/Reset,
-Virtuals, alle Pattern-Modi, Verkettung, globale Dimmung, Master/Slave
-und NVS-Migration:
+Virtuals, alle Pattern-Modi, Verkettung, globale Dimmung, Master/Slave,
+Status-Eingang/-Telemetrie und NVS-Migration:
 
 [source,sh]
 ----

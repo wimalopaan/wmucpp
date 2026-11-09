@@ -36,6 +36,12 @@ namespace Multiswitch {
             button.pull_up_en = GPIO_PULLUP_ENABLE;
             ESP_ERROR_CHECK(gpio_config(&button));
 
+            gpio_config_t statusInput{};
+            statusInput.pin_bit_mask = uint64_t{1} << Board::statusInput;
+            statusInput.mode = GPIO_MODE_INPUT;
+            statusInput.pull_up_en = GPIO_PULLUP_ENABLE;
+            ESP_ERROR_CHECK(gpio_config(&statusInput));
+
             uart_config_t uart{};
             uart.baud_rate = Crsf::baudrate;
             uart.data_bits = UART_DATA_8_BITS;
@@ -47,8 +53,8 @@ namespace Multiswitch {
             ESP_ERROR_CHECK(uart_set_pin(port, Board::crsfTx, Board::crsfRx,
                                          UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE));
             ESP_ERROR_CHECK(uart_driver_install(port, 16'384, 2'048, 0, nullptr, 0));
-            ESP_LOGI(tag, "WeAct ESP32-C3, CRSF RX=%d TX=%d, eight software PWM outputs",
-                     Board::crsfRx, Board::crsfTx);
+            ESP_LOGI(tag, "WeAct ESP32-C3, CRSF RX=%d TX=%d, status IN0=%d, eight software PWM outputs",
+                     Board::crsfRx, Board::crsfTx, Board::statusInput);
             mNextCheck = esp_timer_get_time() + 300'000;
             while (true) {
                 const uint64_t now = esp_timer_get_time();
@@ -164,13 +170,8 @@ namespace Multiswitch {
         }
 
         void status() {
-            ByteBuffer<7> payload;
-            payload.push_back(Crsf::Address::Handset);
-            payload.push_back(mConfig.crsf_address);
-            payload.push_back(Crsf::PassThru::SubType::Switch);
-            etl::serializeBE(Crsf::PassThru::AppId::Status, payload);
-            payload.push_back(mConfig.addresses[0]);
-            payload.push_back(0); // No external status inputs on this pin mapping.
+            const auto payload = statusPayload(mConfig.crsf_address, mConfig.addresses[0],
+                gpio_get_level(gpio_num_t(Board::statusInput)) != 0);
             send(Crsf::Type::PassThru, {payload.begin(), payload.size()});
         }
 

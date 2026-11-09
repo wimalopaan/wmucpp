@@ -11,6 +11,7 @@ namespace Board {
     inline constexpr int led = 8;
     inline constexpr bool ledActiveLow = true;
     inline constexpr int button = 9;
+    inline constexpr int statusInput = 2;
     inline constexpr uint32_t hardwareVersion = 13;
     inline constexpr uint32_t softwareVersion = 42;
 }

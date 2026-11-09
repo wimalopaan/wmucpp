@@ -28,6 +28,17 @@ namespace Multiswitch {
         etl::FixedVector<uint8_t, Capacity> mData;
     };
 
+    inline ByteBuffer<7> statusPayload(const uint8_t source, const uint8_t address, const bool inputHigh) {
+        ByteBuffer<7> payload;
+        payload.push_back(Crsf::Address::Handset);
+        payload.push_back(source);
+        payload.push_back(Crsf::PassThru::SubType::Switch);
+        etl::serializeBE(Crsf::PassThru::AppId::Status, payload);
+        payload.push_back(address);
+        payload.push_back(inputHigh ? 0 : 1);
+        return payload;
+    }
+
     class Parser {
     public:
         void reset() {
