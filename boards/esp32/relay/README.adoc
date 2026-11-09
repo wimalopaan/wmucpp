@@ -1,110 +1,116 @@
-= RC-Relay32 auf dem WeAct ESP32-C3 Core Board
+= RC-Relay32 on the WeAct ESP32-C3 Core Board
 
-ESP-IDF-Port von `../../rcRelay32` fuer das WeAct ESP32-C3FH4 Core Board
-mit 4 MB Flash. Dies ist eine CRSF-Relaisstation zwischen einem
-vorgeschalteten Empfaenger und einem nachgeschalteten Sendemodul, kein
-Schaltrelais. Die Konfigurationsstruktur und CRSF-Paketpruefung/
-Parameter-Serialisierung werden aus der Vorlage bzw. `include_stm32`
-wiederverwendet; STM32-Hardwaretreiber werden nicht eingebunden.
+Language: *English* | link:README.de.adoc[Deutsch]
 
-== Anschluesse
+ESP-IDF port of `../../rcRelay32` for the WeAct ESP32-C3FH4 Core Board
+with 4 MB flash. This is a CRSF relay station between an upstream
+receiver and a downstream transmitter module, not an electromechanical
+relay controller. The configuration structure, CRSF packet validation,
+and parameter serialization are reused from the original project and
+`include_stm32`; STM32 hardware drivers are not included.
 
-Alle TX/RX-Angaben aus Sicht des ESP32-C3:
+== Connections
+
+All TX/RX labels are from the ESP32-C3's perspective:
 
 [cols="2,1,1",options="header"]
 |===
-|Funktion |GPIO |UART
-|Eingang RX, vom Empfaenger-TX |20 |0
-|Eingang TX, zum Empfaenger-RX |21 |0
-|Relay TX, zum Sendemodul-RX |4 |1
-|Relay RX, vom Sendemodul-TX |5 |1
-|Blaue Board-LED, aktiv low |8 |-
-|USB Serial/JTAG |18/19 |unveraendert
+|Function |GPIO |UART
+|Input RX, from receiver TX |20 |0
+|Input TX, to receiver RX |21 |0
+|Relay TX, to transmitter module RX |4 |1
+|Relay RX, from transmitter module TX |5 |1
+|Blue onboard LED, active low |8 |-
+|USB Serial/JTAG |18/19 |unchanged
 |===
 
-Pinbelegung: `main/board.h`. GPIO4/5 koennen dann nicht fuer externes
-JTAG verwendet werden. GPIO2/8/9 sind Strapping-Pins; BOOT an GPIO9
-bleibt frei. LED/BOOT entsprechen dem
-https://github.com/WeActStudio/WeActStudio.ESP32C3CoreBoard/tree/master/Hardware[WeAct-Schaltplan].
-UART0 kann waehrend des ROM-Boots Meldungen an GPIO21 ausgeben.
-Die laufende Anwendung verwendet ausschliesslich USB fuer Logs.
+Pin assignment: `main/board.h`. GPIO4/5 are unavailable for external
+JTAG with this assignment. GPIO2/8/9 are strapping pins; BOOT on GPIO9
+remains available. LED/BOOT assignments follow the
+https://github.com/WeActStudio/WeActStudio.ESP32C3CoreBoard/tree/master/Hardware[WeAct schematic].
+UART0 may output ROM boot messages on GPIO21.
+The running application uses USB exclusively for logging.
 
-Gemeinsame Masse und 3,3-V-Logikpegel verwenden. Keine RS232-Pegel oder
-5-V-Signale direkt anschliessen. Versorgung und eventuelle Invertierung/
-Pegelwandlung des konkreten Empfaengers/Sendemoduls separat pruefen.
+Use a common ground and 3.3 V logic levels. Do not connect RS232 levels
+or 5 V signals directly. Check the power supply and any required signal
+inversion or level shifting for your receiver/transmitter module separately.
 
-Eingang: fest 420000 Baud, 8N1, nicht invertiert, Zweidraht-Vollduplex.
-Relay: 400000, 420000, 460800, 921600 oder 1870000 Baud; Vorgabe 921600.
+Input: fixed at 420000 baud, 8N1, non-inverted, two-wire full duplex.
+Relay: 400000, 420000, 460800, 921600, or 1870000 baud; default 921600.
 
-Bei `Half-Duplex=On` arbeitet ausschliesslich GPIO4 als gemeinsame
-TX/RX-Leitung, GPIO5 wird nicht benutzt. Der ESP32-Treiber verwendet
-RS485-Halbduplexmodus zur Echo-Unterdrueckung, aber keinen RS485-
-Transceiver oder RTS-Pin. GPIO4 ist Open-Drain mit internem Pull-up.
-Ein geeigneter externer Pull-up nach 3,3 V ist insbesondere bei hohen
-Baudraten erforderlich; Flanken und Bus-Turnaround am realen Aufbau messen.
-Auch die Gegenseite muss fuer einen gemeinsamen Halbduplexbus geeignet sein.
-Beim Umschalten muss die Verkabelung zum gewaehlten Modus passen.
+With `Half-Duplex=On`, only GPIO4 is used as the shared TX/RX line;
+GPIO5 is unused. The ESP32 driver uses RS485 half-duplex mode for
+echo suppression, but does not use an RS485 transceiver or RTS pin.
+GPIO4 is open drain with an internal pull-up.
+A suitable external pull-up to 3.3 V is required, especially at high
+baud rates; measure signal edges and bus turnaround on the actual hardware.
+The other device must also support a shared half-duplex bus.
+When changing modes, the wiring must match the selected mode.
 
-== Funktion
+== Features
 
-* Nach 500 ms Startwartezeit alle 300 ms Verbindungserkennung anhand
-  CRC-gueltiger Kanalpakete; Linkstatistik ist nicht erforderlich.
-  Vor der ersten Verbindung bleibt die Ausgabe auch bei Hold gesperrt.
-* Kanalregenerierung alle 10 ms mit den zuletzt empfangenen 16 Kanaelen.
-  Keine doppelte Weiterleitung der urspruenglichen Kanal-/Linkpakete.
-* Failsafe `Forward`: Kanalstrom und Weiterleitung zum Sendemodul stoppen.
-  Failsafe `Hold`: nach vorheriger Verbindung letzte Kanaele weiter senden.
-  Die Rueckkommunikation bleibt in beiden Faellen aktiv.
-* Adressumschreibung: eigenes Geraet 0xCD, Modul 0xCE <-> 0xEE,
-  dessen Empfaenger 0xCF <-> 0xEC; alles konfigurierbar.
-  Optionaler TX-Name, maximal sieben Zeichen, Rest des vorhandenen
-  Namensfeldes wird wie in der Vorlage mit Punkten aufgefuellt.
-* Telemetrie Off/Forward/Tunnel je Typ, separater Teiler je Typ;
-  Linkstatistik zusaetzlich Transform mit derselben provisorischen
-  Feldzuordnung wie in der STM32-Version. Tunnel: PassThru 0x7F,
-  App-ID 6200, maximal 58 Byte Originalpaket.
-* ArduPilot 0x80 unveraendert ohne Adressumschreibung, eigener Off/Forward-
-  Parameter, Teiler je App-ID-Nibble (0xF0) bzw. fuer Multipakete (0xF2).
-  Statustexte (0xF1) werden nicht ausgeduennt.
-* Parameter-Reads: vier Geraete-Slots, adaptive Timeouts 100 ms lokal /
-  500 ms ueber Funk bis maximal 1500 ms, maximal drei Wiederholungen,
-  Duplikatunterdrueckung. Writes werden niemals wiederholt.
-* Ping und Parameterzugriffe unterdruecken einfache Telemetrie temporaer;
-  erweiterte Antworten bleiben moeglich. RadioID wird nicht zurueckgegeben.
-* Bei Framingfehlern am Modul wird wie in der Vorlage ein
-  400000-Baud-Speed-Kommando gesendet, ohne die lokale Baudrate zu aendern.
-* CRSF-Geraet `RC-Relay32@205`, Hardwareversion 4, Softwareversion 19.
-  Parameterreihenfolge wie in der Vorlage ohne IrDA; `Reset reason`
-  ersetzt STM32-Watchdogzaehler und zeigt den ESP-IDF-Resetgrund.
-* NVS-Speicherung 500 ms nach der letzten gueltigen Parameteraenderung.
-  Ungueltige/fehlende Konfiguration fuehrt mit Diagnose zu Standardwerten,
-  ohne den gespeicherten Inhalt automatisch zu loeschen.
+* After a 500 ms startup delay, connection detection runs every 300 ms
+  using CRC-valid channel packets; link statistics are not required.
+  Output remains disabled until the first connection, even in Hold mode.
+* Channel packets are regenerated every 10 ms using the last received
+  values of all 16 channels. Original channel/link packets are not
+  forwarded in addition to the regenerated packets.
+* Failsafe `Forward`: stop the channel stream and forwarding to the
+  transmitter module. Failsafe `Hold`: keep sending the last channel
+  values after a previous connection. Return communication remains
+  active in both cases.
+* Address rewriting: local device 0xCD, module 0xCE <-> 0xEE,
+  its receiver 0xCF <-> 0xEC; all configurable.
+  Optional TX name, up to seven characters; the rest of the existing
+  name field is filled with dots, as in the original implementation.
+* Per-type telemetry Off/Forward/Tunnel modes with independent rate
+  dividers per type. Link statistics additionally support Transform,
+  using the same provisional field mapping as the STM32 version.
+  Tunnel: PassThru 0x7F, app ID 6200, original packet up to 58 bytes.
+* ArduPilot 0x80 is passed through unchanged without address rewriting,
+  with its own Off/Forward parameter and a rate divider per app ID
+  nibble (0xF0) or for multi-packets (0xF2).
+  Status texts (0xF1) are not rate-divided.
+* Parameter reads: four device slots, adaptive timeouts starting at
+  100 ms locally / 500 ms over the radio link, up to 1500 ms,
+  at most three retries, and duplicate suppression.
+  Writes are never retried.
+* Ping and parameter accesses temporarily suppress simple telemetry;
+  extended responses remain possible. RadioID is not returned.
+* Module-side framing errors trigger a 400000-baud speed command,
+  as in the original implementation, without changing the local baud rate.
+* CRSF device `RC-Relay32@205`, hardware version 4, software version 19.
+  Parameter order matches the original without IrDA; `Reset reason`
+  replaces the STM32 watchdog counters and shows the ESP-IDF reset reason.
+* Configuration is saved to NVS 500 ms after the last valid parameter
+  change. Invalid/missing configuration falls back to defaults with a
+  diagnostic message, without automatically erasing stored data.
 
-LED: beim Start aus, danach zunaechst Dauerlicht, unverbunden schnelles
-Einzelblinken, verbunden langsames Doppelblinken.
+LED: off at startup, then initially steady on; fast single flashes
+when disconnected, slow double flashes when connected.
 
-=== Unterschiede zur STM32-Version
+=== Differences from the STM32 version
 
-Kein IrDA und keine STM32-ADC-/DMA-/Watchdog-Resetzaehler. Der ESP-IDF-
-Task-Watchdog ueberwacht die Anwendung. Die Konfiguration liegt in NVS,
-nicht im STM32-Flashformat; vorhandene STM32-Flashabbilder sind nicht
-uebertragbar. Firmware verwendet beide UARTs, WLAN/Bluetooth bleiben aus.
+No IrDA or STM32 ADC/DMA/watchdog reset counters. The ESP-IDF task
+watchdog monitors the application. Configuration is stored in NVS,
+not in the STM32 flash format; existing STM32 flash images cannot
+be transferred. The firmware uses both UARTs; Wi-Fi/Bluetooth remain off.
 
-Geraeteantworten werden direkt ueber den UART-Treiber gepuffert, nicht
-an den STM32-Kanalslot-Scheduler gebunden. Auch direkt an das
-umgeschriebene Modul gerichtete Pings werden weitergeleitet.
-Anders als in der Vorlage wird ein Wechsel von Hold zu Forward auch bei
-bereits verlorener Verbindung beim naechsten Verbindungscheck wirksam.
-Hold aktiviert keine zuvor gesperrte Ausgabe.
+Device responses are buffered directly through the UART driver rather
+than being tied to the STM32 channel-slot scheduler. Pings addressed
+directly to the rewritten module address are also forwarded.
+Unlike the original implementation, switching from Hold to Forward
+while already disconnected takes effect at the next connection check.
+Hold does not enable an output that was previously disabled.
 
-UART-Verarbeitung und Kanalregenerierung laufen in einem FreeRTOS-Task.
-Es werden keine veralteten 10-ms-Slots nachgeholt. NVS-Schreiben kann den
-Task kurz blockieren; Konfiguration deshalb nicht waehrend eines
-sicherheitskritischen Betriebs aendern. Das ist keine harte Echtzeitgarantie.
+UART processing and channel regeneration run in one FreeRTOS task.
+Missed 10 ms slots are not replayed. NVS writes may briefly block the
+task; do not change configuration during safety-critical operation.
+This does not provide hard real-time guarantees.
 
-== Bauen und Flashen
+== Building and flashing
 
-ESP-IDF mit installierter ESP32-C3-Toolchain aktivieren:
+Activate ESP-IDF with an installed ESP32-C3 toolchain:
 
 [source,sh]
 ----
@@ -114,17 +120,18 @@ idf.py build
 idf.py -p /dev/ttyACM0 flash monitor
 ----
 
-Firmware: `build/relay.bin`. Die Vorgaben aktivieren 4 MB Flash,
-USB Serial/JTAG, 160 MHz und einen 1-kHz-FreeRTOS-Tick.
-Fuer den ersten USB-Flash ggf. BOOT halten und Reset betaetigen.
+Firmware: `build/relay.bin`. Defaults enable 4 MB flash,
+USB Serial/JTAG, 160 MHz, and a 1 kHz FreeRTOS tick.
+For the first USB flash, hold BOOT and press Reset if necessary.
 
-Host-Tests mit Address-/UndefinedBehaviorSanitizer:
+Host tests with AddressSanitizer/UndefinedBehaviorSanitizer:
 
 [source,sh]
 ----
 make -C tests test
 ----
 
-Ein Hardwaretest steht aus. Vor einem Einsatz beide UARTs, alle benoetigten
-Baudraten, Halbduplex-Turnaround, NVS-Neustart, Kanalintervall und
-Verbindungsverlust/Wiederverbindung mit dem konkreten Funksystem pruefen.
+Hardware testing is still pending. Before use, check both UARTs, all
+required baud rates, half-duplex turnaround, NVS persistence across
+restarts, channel timing, and connection loss/reconnection with your
+actual radio system.
