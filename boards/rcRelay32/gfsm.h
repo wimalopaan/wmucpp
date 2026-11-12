@@ -92,7 +92,7 @@ struct GFSM {
                 mState = State::UnConnected;
             });
 			(++mDebugTick).on(debugTicks, []{
-                IO::outl<debug>("# p", crsf_in::channelPackages());
+                IO::outl<debug>("# p", crsf_in::channelPackages(), " retries: ", relay::totalRetries());
 			});
             break;
         }

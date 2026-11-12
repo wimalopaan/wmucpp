@@ -28,6 +28,7 @@ template<typename Config, typename Debug = void>
 struct CrsfCallback {
     using debug = Debug;
     using timer = Config::timer;
+    using tick_t = External::Tick<timer>;
     using watchdog = Config::watchdog;
     using tp = Config::tp;
     using storage = Config::storage;
@@ -84,7 +85,12 @@ struct CrsfCallback {
         return false;
     }
     static inline std::array<char, 16> mWdgString = {};
+    static inline std::array<char, 16> mTotalRetries = {};
 
+    static inline void makeRetryString() {
+        std::to_chars(std::begin(mTotalRetries), std::end(mTotalRetries), relay::totalRetries());        
+    }
+    
     static inline void makeWdgString()
         requires(!std::is_same_v<watchdog, void>)
     {
@@ -107,6 +113,7 @@ struct CrsfCallback {
         if constexpr(!std::is_same_v<watchdog, void>) {
             makeWdgString();
         }
+        makeRetryString();
         return mSerialNumber;
     }
     static inline uint32_t hwVersion() {
@@ -206,7 +213,8 @@ private:
         addNode(p, Param_t{0, PType::Sel, "LinkStat", "Off;Forward;Transform;Tunnel", &eeprom.link_stat_mode, 0, 3, [](const uint8_t v){relay::linkStatMode(v); return true;}});
         addNode(p, Param_t{0, PType::Sel, "Failsafe", "Forward;Hold", &eeprom.failsafe_mode, 0, 1, [](const uint8_t){return true;}});
         addNode(p, Param_t{0, PType::Sel, "Parameter Retry", "Off;On", &eeprom.parameter_retry, 0, 1, [](const uint8_t v){relay::parameterRetry(v == 1); return true;}});
-        
+        addNode(p, Param_t{0, PType::Info, "Total Retries", &mTotalRetries[0]});
+                
         addNode(p, Param_t{.parent = 0, .type = PType::U8, .name = "Telem. Off Dur.", .value_ptr = &eeprom.tempOffTelemetry, .min = 1, .max = 60, .cb = [](const uint8_t a){relay::telemetryTempOffDuration(a); return true;}, .unitString = "sec"});
         
         const uint8_t parent = addParent(p, Param_t{0, PType::Folder, "Telemetry forwarding"});
@@ -231,8 +239,8 @@ private:
         addForward<0x22>(p, parent, "ESP Now");
         addNode(p, Param_t{parent, PType::Sel, "ArduPilot", "Off;Forward", &eeprom.ardupilot_mode, 0, 1, [](const uint8_t v){relay::arduPilotMode(v); return true;}});
 
-        addNode(p, Param_t{0, PType::Sel, "Half-Duplex", "Off;On", &eeprom.half_duplex, 0, 1, [](const uint8_t v){relay::setHalfDuplex(v == 1); return true;}});
-        addNode(p, Param_t{0, PType::Sel, "Baudrate", "400k;420k;460K;921K;1,8M", &eeprom.baudrate, 0, 4, [](const uint8_t v){
+        addNode(p, Param_t{0, PType::Sel, "Half-Duplex (Relay)", "Off;On", &eeprom.half_duplex, 0, 1, [](const uint8_t v){relay::setHalfDuplex(v == 1); return true;}});
+        addNode(p, Param_t{0, PType::Sel, "Baudrate (Relay)", "400k;420k;460K;921K;1,8M", &eeprom.baudrate, 0, 4, [](const uint8_t v){
                                if (v >= RC::Protokoll::Crsf::V4::baudratesHandset.size()) {
                                    IO::outl<debug>("# invalid baudrate index: ", v);
                                    return false;
@@ -240,6 +248,32 @@ private:
                                relay::baud(RC::Protokoll::Crsf::V4::baudratesHandset[v]);
                                return true;
                            }});
+        addNode(p, Param_t{0, PType::Sel, "Paketrate (Relay)", "50Hz;100Hz;200Hz;333Hz;Auto", 
+                           &eeprom.paketrate, 0, 5, [](const uint8_t v){
+                               switch(v) {
+                                   case 0:
+                                   relay::enableCrsfShot(false);
+                                   relay::messageBuffer::interMessageTicks(tick_t{20ms}); 
+                                   break;
+                                   case 1:
+                                   relay::enableCrsfShot(false);
+                                   relay::messageBuffer::interMessageTicks(tick_t{10ms}); 
+                                   break;
+                                   case 2:
+                                   relay::enableCrsfShot(false);
+                                   relay::messageBuffer::interMessageTicks(tick_t{5ms}); 
+                                   break;
+                                   case 3:
+                                   relay::enableCrsfShot(false);
+                                   relay::messageBuffer::interMessageTicks(tick_t{3ms}); 
+                                   break;
+                                   case 4:
+                                   relay::enableCrsfShot(true);
+                                   relay::messageBuffer::interMessageTicks(tick_t{10ms}); 
+                                   break;
+                               }
+                                return true;}});
+        
 #ifdef USE_IRDA
         addNode(p, Param_t{0, PType::Sel, "IrDA", "Off;On", &eeprom.irda, 0, 1, [](const uint8_t v){
                                 if (v == 0) {

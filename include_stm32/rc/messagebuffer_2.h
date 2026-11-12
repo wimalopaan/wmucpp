@@ -34,35 +34,47 @@
 #include "etl/fixedvector.h"
 #include "etl/event.h"
 #include "debug_pin.h"
-
 #include "tick.h"
+
+#include "rc_2.h"
 
 namespace Util {
     using namespace std::literals::chrono_literals;
 
-    template<typename Out, typename ValueType, typename Timer, typename tp, auto Size = 64, auto FifoSize = 32>
+    template<typename Out, typename ValueType, typename Timer, typename tp, 
+             auto Size = 64, auto FifoSize = 32, auto LowPrioOverWriteType = 0x00>
     struct MessageBuffer {
         using systemTimer = Timer;
         using value_type = ValueType;
         struct Entry {
             using value_type = ValueType;
             static inline constexpr uint8_t size = Size;
-            void operator=(const std::span<const volatile value_type>& s) {
+            constexpr void operator=(const std::span<const volatile value_type>& s) {
                 length = std::min((uint8_t)s.size(), size);
                 for(uint8_t i = 0; i < length; ++i) {
                     message[i] = s[i];
                 }
             }
-            uint8_t length;
-            std::array<value_type, size> message;
+            uint8_t length{};
+            std::array<value_type, size> message{};
         };
-        static inline void enqueue(const auto& c) {
-            mFifo.emplace_back(c);
+        static inline constexpr void enqueue(const auto& c) {
+            if constexpr(LowPrioOverWriteType == 0) {
+                mFifo.emplace_back(c);                
+            }
+            else {
+                if (c[RC::Protokoll::Crsf::V4::PacketIndex::type] == LowPrioOverWriteType) {
+                    lpow = c;
+                }
+                else {
+                    mFifo.emplace_back(c);
+                }
+            }
         }
         template<typename M>
         class Transaction {
             friend M;
-            explicit Transaction(Entry& d, const uint8_t type) : mEntry{d} {
+            explicit constexpr Transaction(Entry& d, const uint8_t type) : mEntry{d} {
                 mEntry.message[0] = 0xc8;
                 mEntry.message[2] = type;
                 mEntry.length = 3;
@@ -80,10 +92,10 @@ namespace Util {
             Entry& mEntry;
             public:
             using value_type = uint8_t;
-            inline void push_back(const uint8_t v) {
+            inline constexpr void push_back(const uint8_t v) {
                 mEntry.message[mEntry.length++] = v;
             }
-            inline void push_back(const std::byte v) {
+            inline constexpr void push_back(const std::byte v) {
                 push_back((uint8_t)v);
             }
             template<typename El, auto L>
@@ -116,14 +128,18 @@ namespace Util {
                 f(w);
             });
         }
-
-        static inline constexpr External::Tick<systemTimer> interMessageTicks{1ms};
-
+        
+        static inline External::Tick<systemTimer> mInterMessageTicks{1ms};
+        static inline constexpr External::Tick<systemTimer> mResetTicks{100ms};
+        
         enum class State : uint8_t {Idle, Wait, Send};
         enum class Event : uint8_t {None, TransmitComplete};
 
         enum class ResponseEvent : uint8_t {None, Send};
 
+        static inline void interMessageTicks(const auto t) {
+            mInterMessageTicks = t;
+        }
         static inline void freeRun(const bool on) {
             mFreeRun = on;
         }
@@ -136,10 +152,18 @@ namespace Util {
         static inline void event(const Event e) {
             mEvent = e;
         }
+        static inline bool hasValidLpow() {
+            if constexpr(LowPrioOverWriteType > 0) {
+                if ((lpow.length > 0) && (lpow.message[RC::Protokoll::Crsf::V4::PacketIndex::type] == LowPrioOverWriteType)){
+                    return true;
+                }
+            }
+            return false;
+        }
         static inline void periodic() {
             switch (mState) {
             case State::Idle:
-                if (!mFifo.empty()) {
+                if (!mFifo.empty() || hasValidLpow()) {
                     if (mFreeRun) {
                         send();
                         mState = State::Send;
@@ -168,9 +192,13 @@ namespace Util {
             case State::Idle:
                 break;
             case State::Send:
+                mStateTick.on(mResetTicks, []{
+                    mState = State::Idle;
+                    mResponseEvent = ResponseEvent::None;
+                });                
                 break;
             case State::Wait:
-                mStateTick.on(interMessageTicks, []{
+                mStateTick.on(mInterMessageTicks, []{
                     mState = State::Idle;
                     mResponseEvent = ResponseEvent::None;
                 });
@@ -178,24 +206,36 @@ namespace Util {
             }
         }
         private:
+        static inline void sendMessage(const auto& m){
+            Out::fillSendBuffer([&](auto& data){
+                static_assert(m.message.size() <= Out::tx_buffer_size);
+                for(uint8_t i = 0; i < m.length; ++i) {
+                    data[i] = m.message[i];
+                }
+                return m.length;
+            });            
+        }
         static inline void send() {
-            if (mFifo.size() > 0) {
-                Out::fillSendBuffer([&](auto& data){
-                    const auto& m = mFifo.front();
-                    static_assert(m.message.size() == data.size());
-                    for(uint8_t i = 0; i < m.length; ++i) {
-                        data[i] = m.message[i];
-                    }
-                    mFifo.pop_front();
-                    return m.length;
-                });
+            if (!mFifo.empty()) {
+                sendMessage(mFifo.front());
+                mFifo.pop_front();
+            }
+            else {
+                if constexpr(LowPrioOverWriteType > 0) {
+                    [[maybe_unused]] Debug::Scoped<tp> _;                
+                    sendMessage(lpow);
+                }
             }
         }
         static inline bool mFreeRun = true;
         static inline etl::Event<Event> mEvent;
         static inline etl::Event<ResponseEvent> mResponseEvent;
-        static inline External::Tick<systemTimer> mStateTick{1ms};
+        static inline External::Tick<systemTimer> mStateTick{};
         static inline State mState = State::Idle;
         static inline etl::FiFo<Entry, FifoSize> mFifo;
+
+        struct dummy {};
+        using lpow_t = std::conditional_t<(LowPrioOverWriteType == 0x00), dummy, Entry>;
+        static inline lpow_t lpow{};
     };
 }

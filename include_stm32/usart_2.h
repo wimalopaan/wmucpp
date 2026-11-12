@@ -285,6 +285,8 @@ namespace Mcu::Stm {
             using rx_buffer_t = std::conditional_t<(Config::mode != Uarts::Mode::TxOnly), std::array<storage_t, detail::getSize_v<detail::getRx_t<Config>>>, struct Dummy>;
             using tx_buffer_t = std::conditional_t<(Config::mode != Uarts::Mode::RxOnly), std::array<storage_t, detail::getSize_v<detail::getTx_t<Config>>>, struct Dummy>;
 
+            static inline constexpr size_t tx_buffer_size = detail::getSize_v<detail::getTx_t<Config>>;
+            
             static inline constexpr bool useSingleTxBuffer = detail::getSingleBuffer_v<detail::getTx_t<Config>>;
             using tx_buffer2_t = std::conditional_t<useSingleTxBuffer, struct Dummy, tx_buffer_t>;
 
@@ -578,6 +580,13 @@ namespace Mcu::Stm {
                     startSend(n);
                 }
             }
+            static inline auto fillSendBuffer(const auto f)
+                    requires((Config::mode != Uarts::Mode::RxOnly) && (!useSingleTxBuffer)) {
+                const uint16_t n = f(mActiveWriteBuffer);
+                if (n > 0) {
+                    startSend(n);
+                }
+            }
             static inline auto outputBuffer() requires(Config::mode != Uarts::Mode::RxOnly) {
                 return mActiveWriteBuffer;
             }
@@ -690,8 +699,8 @@ namespace Mcu::Stm {
                             }
                         }
                         else {
-                            Debug::Scoped<tp> _;
                             if (mcuUart->ISR & USART_ISR_FE) {
+                                Debug::Scoped<tp> _;
                                 mFrameErrors = mFrameErrors + 1;
                             }
                             mcuUart->ICR = -1; // clear all flags

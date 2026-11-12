@@ -40,6 +40,18 @@ namespace RC::Protokoll::Crsf {
             template<typename T>
             using getRouter_t = getRouter<T>::type;
 
+            template<typename T>
+            struct getLPOW {
+                static inline constexpr uint8_t value{0x00};
+            };
+            template<typename T>
+            requires(requires(T x){T::lowPrioOverwriteType;})
+            struct getLPOW<T>{
+                static inline constexpr uint8_t value = T::lowPrioOverwriteType;
+            };
+            template<typename T>
+            static inline constexpr uint8_t getLPOW_v = getLPOW<T>::value;
+            
         }
         template<uint8_t N, typename Config, typename MCU = DefaultMcu>
         struct PacketRelayRewrite {
@@ -67,6 +79,7 @@ namespace RC::Protokoll::Crsf {
 			using bcastIfaces = Config::bcastInterfaces;
 			
             static inline constexpr uint8_t fifoSize = Config::fifoSize;
+            static inline constexpr uint8_t lpow = Reflection::getLPOW_v<Config>;
 
             static inline constexpr bool halfDuplex = std::is_same_v<rxpin, txpin>;
 
@@ -108,6 +121,7 @@ namespace RC::Protokoll::Crsf {
                     struct Tx {
                         using DmaChComponent = Config::dmaChWrite;
                         static inline constexpr bool singleBuffer = true;
+                        // static inline constexpr bool singleBuffer = false;
                         static inline constexpr bool enable = true;
                         static inline constexpr size_t size = 64;
                     };
@@ -115,17 +129,19 @@ namespace RC::Protokoll::Crsf {
                         static inline constexpr bool idle = true;
                         static inline constexpr bool txComplete = true;
                     };
-                    using tp = Config::tp2;
+                    using tp = Config::tp;
                 };
             };
 
             using uartConfig = std::conditional_t<halfDuplex, typename UartConfig::HalfDuplex, typename UartConfig::FullDuplex>;
             using uart = Mcu::Stm::V4::Uart<N, uartConfig, MCU>;
 
-            using messageBuffer = ::Util::MessageBuffer<uart, uint8_t, systemTimer, tp, RC::Protokoll::Crsf::V4::maxMessageSize, fifoSize>;
+            using messageBuffer = ::Util::MessageBuffer<uart, uint8_t, systemTimer, tp, 
+                                                        RC::Protokoll::Crsf::V4::maxMessageSize, 
+                                                        fifoSize, lpow>;
 
             static inline void init() {
-                IO::outl<debug>("# Relay ", N, " init");
+                IO::outl<debug>("# Relay ", N, " init lpow: ", lpow);
                 Mcu::Arm::Atomic::access([]{
                     uart::init();
                     mActive = true;
@@ -259,7 +275,6 @@ namespace RC::Protokoll::Crsf {
             static inline void updateRate(const auto r) {
                 updateTicks = r;
             }
-
 			static inline void rewriteName(const bool on) {
 				mDoRewriteName = on;
 			}
@@ -274,6 +289,9 @@ namespace RC::Protokoll::Crsf {
                     mPending = {};
                     mParameterRetryEnabled = enabled;
                 }
+            }
+            static inline uint32_t totalRetries() {
+                return mTotalRetryCount;
             }
             static inline void forwardTelemetryMode(const uint8_t type, const uint8_t mode) {
                 if (type < mTelemetryForwardMode.size()) {
@@ -291,6 +309,9 @@ namespace RC::Protokoll::Crsf {
             }
             static inline void telemetryTempOffDuration(const uint8_t d) {
                 autoOnTicks = tick_t::fromRaw(d * 1000u);                
+            }
+            static inline void enableCrsfShot(const bool on) {
+                mHandleCrsfShot = on;
             }
             static inline void periodic() {
                 using namespace RC::Protokoll::Crsf::V4;
@@ -331,7 +352,9 @@ namespace RC::Protokoll::Crsf {
                         IO::outl<debug>("# telemetry enable");
                     });
                     mStateTick.on(updateTicks, []{
-                        update();
+                        if constexpr(!std::is_same_v<src, void>) {
+                            update();
+                        }
                     });
                     if (mParameterRetryEnabled) {
                         retryRequests();
@@ -365,7 +388,7 @@ namespace RC::Protokoll::Crsf {
                             f();
                             // IO::outl<debug>("# onIdle: ", size);
                             if (validityCheck(data, size)) {
-                                [[maybe_unused]] Debug::Scoped<tp> tp;
+                                // [[maybe_unused]] Debug::Scoped<tp> tp;
                                 mRxEvent = RxEvent::ReceiveComplete;
                                 return true;
                             }
@@ -384,7 +407,7 @@ namespace RC::Protokoll::Crsf {
                 if (mActive && mEnabled) {
                     //IO::outl<debug>("# fw to TX");
                     if (isExtendedPacket(data, length)) {
-                        IO::outl<debug>("# ext. fw to TX");
+                        // IO::outl<debug>("# ext. fw to TX");
                         if constexpr(std::is_same_v<router, void>) {
                             rewriteOutgoing(data, length);
                         }
@@ -454,6 +477,19 @@ namespace RC::Protokoll::Crsf {
                 }
                 messageBuffer::enqueue(std::span{data, length});
             }
+            static inline void handleCrsfShot(const auto& data){
+                const uint32_t interval_ms = 
+                        (data[PacketIndex::payload + 0] << 24) + 
+                        (data[PacketIndex::payload + 1] << 16) +
+                        (data[PacketIndex::payload + 2] << 8) +
+                        (data[PacketIndex::payload + 3] << 0) / 10'000; // 100ns resolution
+                if ((interval_ms >= 1) && (interval_ms <= 100)) {
+                    messageBuffer::interMessageTicks(External::Tick<systemTimer>(interval_ms * 1ms));
+                }
+                else {
+                    IO::outl<debug>("# handleCrsfShot: ", interval_ms);
+                }
+            }
             static inline void handleIncoming() {
                 if constexpr(!std::is_same_v<dest, void>) {
                     uart::readBuffer([](const auto& buffer){
@@ -489,6 +525,10 @@ namespace RC::Protokoll::Crsf {
                                         }
                                     }
                                 }
+                                else { // type == RadioID
+                                    // IO::outl<debug>("# crsfShot");
+                                    handleCrsfShot(data);
+                                }
                             }
                             else { // type < Ping
                                 // IO::outl<debug>("# telem");
@@ -499,11 +539,9 @@ namespace RC::Protokoll::Crsf {
                                         IO::outl<debug>("# wrong type");
                                         return;
                                     }
-
                                     if (mTelemetryTemporaryOff) {
                                         return;
                                     }
-
                                     if (type == (uint8_t)Type::Link) {
                                         if (mLinkStatMode > 0) {
                                             if (shouldSendtelemetry(type)) {
@@ -522,7 +560,7 @@ namespace RC::Protokoll::Crsf {
                                                     const uint8_t dn_rssi  = data[PacketIndex::type + 1 + 7];
                                                     const uint8_t dn_link_qly  = data[PacketIndex::type + 1 + 8];
                                                     const uint8_t dn_snr  = data[PacketIndex::type + 1 + 9];
-                                                    IO::outl<debug>("# link rx tx: ", data.size());
+                                                    // IO::outl<debug>("# link rx tx: ", data.size());
                                                     dest::create_back((uint8_t)Type::LinkStatsRx, [&](auto& ta){
                                                         ta.push_back(dn_rssi);
                                                         ta.push_back(dn_link_qly);
@@ -560,7 +598,7 @@ namespace RC::Protokoll::Crsf {
                                                     }
                                                 }
                                                 else if (mode == 1) {
-                                                    IO::outl<debug>("# telemtry, size: ", data.size());
+                                                    // IO::outl<debug>("# telemtry, size: ", data.size());
                                                     dest::enqueue(data);
                                                 }
                                             }
@@ -669,6 +707,7 @@ namespace RC::Protokoll::Crsf {
                         p.active = false;
                         continue;
                     }
+                    ++mTotalRetryCount;
                     ++p.retries;
                     p.sentAt = mRetryTick;
                     IO::outl<debug>("# retry param read: ", p.dev, " i: ", p.index, " n: ", p.retries);
@@ -844,7 +883,9 @@ namespace RC::Protokoll::Crsf {
             static inline bool validityCheck(const volatile uint8_t* const data, const uint16_t size) {
                 return Packet::hasValidHeader(std::span{data, size});
             }
-            static inline void update() { // channels to dest
+            static inline void update() 
+                requires(!std::is_same_v<src, void>)
+            { // channels to dest
                 if (mSource && mEnabled) {
                     messageBuffer::create_back((uint8_t)Type::Channels, [](auto& ta){
                         RC::Protokoll::Crsf::V4::pack(src::values(), ta);
@@ -881,6 +922,8 @@ namespace RC::Protokoll::Crsf {
             static inline uint8_t mOtherRate = 1;
             static inline uint8_t mOtherCounter = 0;
 
+            static inline uint32_t mTotalRetryCount = 0;
+            static inline bool mHandleCrsfShot = false;
             static inline bool mParameterRetryEnabled = false;
             static inline retry_tick_t mRetryTick;
             static inline std::array<PendingRequest, 4> mPending{};

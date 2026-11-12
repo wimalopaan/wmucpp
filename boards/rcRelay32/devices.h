@@ -153,6 +153,7 @@ struct Devices<Nucleo, Config, MCU> {
         using tp = void;
         using callback = crsf_cb;
         static inline constexpr uint8_t fifoSize = 16;
+        static inline constexpr uint8_t lowPrioOverwriteType = 0x16; // RC-Channels packages
     };
     struct CrsfCallbackConfig {
         using src = Devices::crsf;
@@ -300,7 +301,8 @@ struct Devices<WeAct, Config, MCU> {
         using debug = Devices::debug;
         using tp = void;
         using callback = crsf_cb;
-        static inline constexpr uint8_t fifoSize = 32;
+        static inline constexpr uint8_t fifoSize = 16;
+        static inline constexpr uint8_t lowPrioOverwriteType = 0x16; // RC-Channels packages
     };
     struct CrsfCallbackConfig {
         using src = Devices::crsf;
@@ -436,7 +438,7 @@ struct Devices<Wmg0b1, Config, MCU> {
     };
 #endif
     struct RelayConfig {
-        using src = crsf_in;
+        using src = void;
         using dest = crsf::messageBuffer;
         using bcastInterfaces = Meta::List<>;
         using rxpin = relayrx;
@@ -457,6 +459,7 @@ struct Devices<Wmg0b1, Config, MCU> {
         using tp2 = void;
 #endif
         static inline constexpr uint8_t fifoSize = 64;
+        static inline constexpr uint8_t lowPrioOverwriteType = 0x16; // RC-Channels packages
     };
     struct CrsfConfig {
         using rxpin = inputrx;
@@ -519,10 +522,13 @@ struct Devices<Wmg0b1, Config, MCU> {
 
         relay::init();
         relay::baud(RC::Protokoll::Crsf::V4::baudrateHandset);
-        relay::activateSource(true);
-        relay::activateLinkStats(false);
-        relay::activateChannels(false);
+        
+        relay::activateSource(false); // no source in relay
+        relay::activateLinkStats(false); // don't forward link stats to second-stage
+        relay::activateChannels(true); // incoming RC-Channels (0x16) forward to messagebuffer 
 
+        crsf::messageBuffer::interMessageTicks(10ms); // as a starting guess
+        
         adc::init();
         adc::start();
 

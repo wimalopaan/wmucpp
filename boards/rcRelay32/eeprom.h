@@ -60,6 +60,7 @@ struct EEProm {
 
     uint8_t ardupilot_mode = 1; // ArduPilot passthrough (0x80): 0=Off, 1=Forward
     uint8_t parameter_retry = 1;
+    uint8_t paketrate = 0;
 
     constexpr bool valid() const {
         return (magic == EEPROM_MAGIC) &&
@@ -74,6 +75,7 @@ struct EEProm {
             (tempOffTelemetry >= 1) && (tempOffTelemetry <= 60) &&
             (ardupilot_mode <= 1) &&
             (parameter_retry <= 1) &&
+            (paketrate <= 4) &&
             std::all_of(telemetryMode.begin(), telemetryMode.end(), [](const uint8_t mode) {
                 return mode <= 2;
             });

@@ -21,9 +21,8 @@
 #endif
 
 #ifdef USE_WMG0B1
-#define SERIAL_DEBUG // only for WMG0B1
-
-#define ALTERNATE_PINS // WmG0B1 only
+# define SERIAL_DEBUG // only for WMG0B1
+# define ALTERNATE_PINS // WmG0B1 only
 #endif
 // #define USE_IRDA
 
@@ -41,7 +40,7 @@
 #else
 # warning "wrong board definition"
 #endif
-#define SW_VERSION 19
+#define SW_VERSION 20
 
 #ifdef ALTERNATE_PINS
 # ifdef USE_IRDA

@@ -162,6 +162,9 @@ namespace RC {
 
                     inline static constexpr std::byte Last = ArduPilot;
                 }
+                namespace RadioSubType {
+                    inline static constexpr std::byte CrsfShot{0x10};
+                }
                 namespace CommandType {
                     // inline static constexpr std::byte bind{0x01}; // bind
                     inline static constexpr std::byte rx{0x10}; // receiver command

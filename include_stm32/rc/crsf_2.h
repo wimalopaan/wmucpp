@@ -402,7 +402,8 @@ namespace RC {
                     using uart = Mcu::Stm::V4::Uart<N, uartConfig, MCU>;
 
                     public:
-                    using messageBuffer = ::Util::MessageBuffer<uart, value_t, systemTimer, tp, RC::Protokoll::Crsf::V4::maxMessageSize, fifoSize>;
+                    using messageBuffer = ::Util::MessageBuffer<uart, value_t, systemTimer, tp, 
+                                            RC::Protokoll::Crsf::V4::maxMessageSize, fifoSize>;
                     using input  = RC::Protokoll::Crsf::V4::Input<Master>;
 
                     static inline constexpr uint16_t chunkBufferSize = 256;
