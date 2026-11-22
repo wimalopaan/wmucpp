@@ -257,7 +257,7 @@ private:
     static inline constexpr void addPattern(auto& p, const uint8_t parent, const char* const name) {
 		using patgen = Meta::nth_element<index, plist>;
 		const uint8_t parent2 = addParent(p, Param_t{parent, PType::Folder, name});
-		addNode(p, Param_t{parent2, PType::Sel, "Pattern", "Off;Cont-LR;Cont-RL;Cont-LRL;Single-LR;Single-RL;Single-LRL", &storage::eeprom.pattern[index].type, 0, 7, [](const uint8_t v){patgen::setMode(v); return true;}});
+		addNode(p, Param_t{parent2, PType::Sel, "Pattern", "Off;Cont-LR;Cont-RL;Cont-LRL;Single-LR;Single-RL;Single-LRL", &storage::eeprom.pattern[index].type, 0, 6, [](const uint8_t v){patgen::setMode(v); return true;}});
 		addNode(p, Param_t{parent2, PType::U8,  "On", nullptr, &storage::eeprom.pattern[index].onTime, 1, 255, [](const uint8_t v){patgen::ontime(10*v); return true;}, 100, 0, 1, nullptr, "[*10ms]"});
 		addNode(p, Param_t{parent2, PType::U8,  "Off", nullptr, &storage::eeprom.pattern[index].offTime, 1, 255, [](const uint8_t v){patgen::offtime(10*v); return true;}, 10, 0, 1, nullptr, "[*10ms]"});
 	

@@ -154,7 +154,7 @@
 # undef USE_PATTERNS
 #endif
 
-#define SW_VERSION 42
+#define SW_VERSION 43
 
 #include <cstdint>
 #include <array>
