@@ -18,6 +18,9 @@
 
 #pragma once
 
+#include <cstdio>
+#include <type_traits>
+
 #include "mcu/eeprom.h"
 #include "mcu/uuid.h"
 #include "meta.h"
@@ -57,10 +60,10 @@ struct CrsfCallback {
 	using ws2812b_2 = Config::ws2812b_2;
 
     using waveshare_1 = Config::srv1_waveshare;
-	using waveshare_2 = Config::srv1_waveshare;
+	using waveshare_2 = Config::srv2_waveshare;
 
     using ws_stated_1 = Config::srv1_waveshare_stated;
-	using ws_stated_2 = Config::srv1_waveshare_stated;
+	using ws_stated_2 = Config::srv2_waveshare_stated;
     
     using messageBuffer = Config::messageBuffer;
 
@@ -371,41 +374,41 @@ struct CrsfCallback {
     template<typename S, auto L>
     static inline void formatServoString(const uint8_t i, std::array<char, L>& dst){
         using srv = S;
-        std::to_chars_result r;
-        r.ptr = etl::char_cpy("Id: ", &dst[0]);
-        r = std::to_chars(r.ptr, std::end(dst), srv::servoIds()[i]);
-        r.ptr = etl::char_cpy(": Hw: ", r.ptr);
-        r = std::to_chars(r.ptr, std::end(dst), srv::hwVersion(i).first);
-        *r.ptr++ = '.';
-        r = std::to_chars(r.ptr, std::end(dst), srv::hwVersion(i).second);
-        r.ptr = etl::char_cpy(": Fw: ", r.ptr);
-        r = std::to_chars(r.ptr, std::end(dst), srv::fwVersion(i).first);
-        *r.ptr++ = '.';
-        r = std::to_chars(r.ptr, std::end(dst), srv::fwVersion(i).second);
-        *r.ptr = '\0';
+        const auto hw = srv::hwVersion(i);
+        const auto fw = srv::fwVersion(i);
+        const int n = std::snprintf(dst.data(), dst.size(), "Id: %u: Hw: %u.%u: Fw: %u.%u",
+                                    unsigned(srv::servoIds()[i]), unsigned(hw.first), unsigned(hw.second),
+                                    unsigned(fw.first), unsigned(fw.second));
+        if ((n < 0) || (static_cast<size_t>(n) >= dst.size())) {
+            IO::outl<debug>("# Servo info formatting failed: ", i);
+        }
     }
     template<auto S>
     static inline void makeServoStrings() {
+        static_assert(S < mServos.size());
         using srv = std::conditional_t<(S == 0), waveshare_1, waveshare_2>;
         IO::outl<debug>("# makeServoStrings: ", srv::servoIds().size());
         for(auto& s: mServos[S]) {
             std::strcpy(&s[0], "---");
         }
-        for(uint8_t i = 0; i < srv::servoIds().size(); ++i) {
+        if (srv::servoIds().size() > mServos[S].size()) {
+            IO::outl<debug>("# Servo display limited to ", mServos[S].size(), " of ", srv::servoIds().size());
+        }
+        for(uint8_t i = 0; (i < srv::servoIds().size()) && (i < mServos[S].size()); ++i) {
             IO::outl<debug>("# id: ", srv::servoIds()[i], " HW: ", srv::hwVersion(i).first, ":", srv::hwVersion(i).second);
             formatServoString<srv>(i, mServos[S][i]);
         }
     }    
 #endif
 private:
-    static inline std::array<const char*, 5> mWinchStepTexts {
+    static inline constexpr std::array<const char*, 5> mWinchStepTexts {
         "Idle",
         "Set control to neutral",
         "Move low (or high)",
         "Move high (or low to finish)",
         "To finish move control to low again (or cancel)"
     };
-    static inline std::array<const char*, 4> mWinchTexts {
+    static inline constexpr std::array<const char*, 4> mWinchTexts {
         "Set Servo Id",
         "Be sure winch is free to run ...",
         mWinchStepTexts[0],
@@ -441,7 +444,7 @@ private:
         return res;
     }
 
-    static inline std::array<const char*, 4> mSetIdTexts {
+    static inline constexpr std::array<const char*, 4> mSetIdTexts {
         "Set Servo Id",
         "Be sure to connect only one servo ...",
         "Set ...",
@@ -476,7 +479,7 @@ private:
         IO::outl<debug>("# setId v: ", v, " r: ", (uint8_t)res);
         return res;
     }
-    static inline std::array<const char*, 4> mPingTexts {
+    static inline constexpr std::array<const char*, 4> mPingTexts {
         "Ping Servo Bus",
         "Start ...",
         "Pinging ...",
@@ -511,7 +514,7 @@ private:
         IO::outl<debug>("# ping v: ", v, " r: ", (uint8_t)res);
         return res;
     }
-    using srv_strings_t = std::array<std::array<std::array<char, 24>, 8>, 2>;
+    using srv_strings_t = std::array<std::array<std::array<char, 34>, 8>, 2>;
     static inline auto mServos = []{
         srv_strings_t ss;
         for(auto& s : ss) {
@@ -540,19 +543,19 @@ private:
         return s;
     }();
     template<typename T>
-    static inline uint8_t addParent(auto& c, const RC::Protokoll::Crsf::V4::Parameter<T>& p) {
+    static inline constexpr uint8_t addParent(auto& c, const RC::Protokoll::Crsf::V4::Parameter<T>& p) {
         c.push_back(p);
         return c.size() - 1;
     }
     template<typename T>
-    static inline void addNode(auto& c, const RC::Protokoll::Crsf::V4::Parameter<T>& p) {
+    static inline constexpr void addNode(auto& c, const RC::Protokoll::Crsf::V4::Parameter<T>& p) {
         c.push_back(p);
     }
-    static inline const char* const setServoZeroPosText = "Zeroing";
+    static inline constexpr const char* const setServoZeroPosText = "Zeroing";
     static inline bool setZeroPosition(const uint16_t) {
         return true;
     }
-    static inline std::array<const char*, 6> mCompassCalibTexts {
+    static inline constexpr std::array<const char*, 6> mCompassCalibTexts {
         "Calibrate",
         "Start ...",
         "Calib: move all axes ...",
@@ -601,7 +604,7 @@ private:
     static inline uint8_t mESCape322Folder{};
     static inline uint8_t mESCape322End{};
 
-    static inline std::array<const char*, 6> mServoAddressTexts {
+    static inline constexpr std::array<const char*, 6> mServoAddressTexts {
         "Set Address",
         "Start ...",
         "... End"
@@ -610,11 +613,12 @@ private:
         return false;
     }
 
-    static inline std::array<const char*, 6> mServoCalibTexts {
+    static inline constexpr std::array<const char*, 6> mServoCalibTexts {
         "Servo Calibrartion",
         "Start ...",
         "Calibrating ...",
-        "... End"
+        "... End",
+        "Calibration failed"
     };
     template<auto N>
     static inline bool servoCalibCb(const uint8_t v) {
@@ -636,8 +640,8 @@ private:
             fbs::stopCalibrate();
             break;
         case RC::Protokoll::Crsf::V4::Lua::CmdStep::Query:
-            params[mServoCalibCommand[N]].options = mServoCalibTexts[2];
             res = fbs::isCalibrating();
+            params[mServoCalibCommand[N]].options = mServoCalibTexts[fbs::calibrationFailed() ? 4 : (res ? 2 : 3)];
             break;
         default:
             break;
@@ -693,10 +697,20 @@ private:
             hide(i, b);
         }
     }
-    using params_t = etl::FixedVector<Param_t, 255>;
+    struct ParameterCounter {
+        constexpr void push_back(const Param_t&) {
+            ++mSize;
+        }
+        constexpr uint16_t size() const {
+            return mSize;
+        }
+    private:
+        uint16_t mSize{};
+    };
     
     template<uint8_t index>
     static inline constexpr void addFbServo(auto& p, const uint8_t parent, const char* const name) {
+        constexpr bool countOnly = std::is_same_v<std::remove_cvref_t<decltype(p)>, ParameterCounter>;
         using fbs = Meta::nth_element<index, fbservos>;
         const uint8_t parent2 = addParent(p, Param_t{parent, PType::Folder, name});
         addNode(p, Param_t{parent2, PType::Sel,  "CalibOnStart", "Off;On",  &eeprom.fbservos[index].calibOnStart, 0, 1, [](const store_t v){fbs::calibOnStart(v == 1); return true;}});
@@ -718,11 +732,13 @@ private:
                                return servoCalibCb<index>(v);
                            }
                 });
-        mServoCalibCommand[index] = p.size() - 1;
+        if constexpr (!countOnly) {
+            mServoCalibCommand[index] = p.size() - 1;
+        }
     }    
     
-    static inline params_t params = []{
-        params_t p;
+    static inline constexpr void fillParameters(auto& p) {
+        constexpr bool countOnly = std::is_same_v<std::remove_cvref_t<decltype(p)>, ParameterCounter>;
         addNode(p, Param_t{0, PType::Folder, ""});
         addNode(p, Param_t{0, PType::Info, "Version(HW/SW)", &mVersionString[0]});
         addNode(p, Param_t{0, PType::Info, "Watchdog", &mWdgString[0]});
@@ -793,7 +809,9 @@ private:
                                return winchCb<0>(v);
                            }
                 });
-        mWinchCommand = p.size() - 1;
+        if constexpr (!countOnly) {
+            mWinchCommand = p.size() - 1;
+        }
 #else
         addNode(p, Param_t{.parent = parent, .type = PType::U8, .name = "Sch1 ESC Deadband", .value_ptr = &eeprom.deadbands[0], .min = 1, .max = 20, .cb = [](const store_t){return true;}, .unitString = "%"});
         addNode(p, Param_t{.parent = parent, .type = PType::I8, .name = "Sch1 ESC PWM Mid", .value_ptr = &eeprom.esc_mid[0], .min = (store_t)-100, .max = 100, .cb = [](const store_t){return true;}, .unitString ="us"});
@@ -815,24 +833,42 @@ private:
         
 #ifdef ESCAPE32_ASCII
         parent = addParent(p, Param_t{0, PType(PType::Folder | PType::Hidden), "ESCape32 1"});
-        mESCape321Folder = parent;
+        if constexpr (!countOnly) {
+            mESCape321Folder = parent;
+        }
         addNode(p, Param_t{parent, PType::Command, "Beep", nullptr, nullptr, 200 /*timeout*/, 0, [](const store_t){esc32ascii_1::beep(); return false;}});
         addNode(p, Param_t{parent, PType::Command, "Save", nullptr, nullptr, 200 /*timeout*/, 0, [](const store_t){esc32ascii_1::save(); return false;}});
         [&]<size_t... II>(std::integer_sequence<size_t, II...>){
-            (addNode(p, Param_t{parent, PType::U16, esc32ascii_1::params()[II].name, nullptr, &esc32ascii_1::params()[II].value, esc32ascii_1::params()[II].min, esc32ascii_1::params()[II].max, [](const store_t v){esc32ascii_1::setParam(II, v); return false;}}), ...);
+            if constexpr (countOnly) {
+                ((void(II), addNode(p, Param_t{})), ...);
+            }
+            else {
+                (addNode(p, Param_t{parent, PType::U16, esc32ascii_1::params()[II].name, nullptr, &esc32ascii_1::params()[II].value, esc32ascii_1::params()[II].min, esc32ascii_1::params()[II].max, [](const store_t v){esc32ascii_1::setParam(II, v); return false;}}), ...);
+            }
         }(std::make_index_sequence<esc32ascii_1::params().size()>{});
-        mESCape321End = p.size() - 1;
+        if constexpr (!countOnly) {
+            mESCape321End = p.size() - 1;
+        }
 
         parent = addParent(p, Param_t{0, PType(PType::Folder | PType::Hidden), "ESCape32 2"});
-        mESCape322Folder = parent;
+        if constexpr (!countOnly) {
+            mESCape322Folder = parent;
+        }
         addNode(p, Param_t{parent, PType::Command, "Beep", nullptr, nullptr, 200 /*timeout*/, 0, [](const store_t){esc32ascii_1::beep(); return false;}});
         addNode(p, Param_t{parent, PType::Command, "Save", nullptr, nullptr, 200 /*timeout*/, 0, [](const store_t){esc32ascii_1::save(); return false;}});
 
         [&]<size_t... II>(std::integer_sequence<size_t, II...>){
-            (addNode(p, Param_t{parent, PType::U16, esc32ascii_2::params()[II].name, nullptr, &esc32ascii_2::params()[II].value, esc32ascii_2::params()[II].min, esc32ascii_2::params()[II].max, [](const store_t v){esc32ascii_2::setParam(II, v); return false;}}), ...);
+            if constexpr (countOnly) {
+                ((void(II), addNode(p, Param_t{})), ...);
+            }
+            else {
+                (addNode(p, Param_t{parent, PType::U16, esc32ascii_2::params()[II].name, nullptr, &esc32ascii_2::params()[II].value, esc32ascii_2::params()[II].min, esc32ascii_2::params()[II].max, [](const store_t v){esc32ascii_2::setParam(II, v); return false;}}), ...);
+            }
         }(std::make_index_sequence<esc32ascii_2::params().size()>{});
 
-        mESCape322End = p.size() - 1;
+        if constexpr (!countOnly) {
+            mESCape322End = p.size() - 1;
+        }
 #endif
 
 #ifdef SERVO_CALIBRATION
@@ -852,7 +888,9 @@ private:
         addNode(p, Param_t{parent, PType::Sel, "Inject (SBus)", "Yes;No", &eeprom.inject, 0, 1, [](const store_t){return true;}});
 #ifdef SERVO_ADDRESS_SET
         addNode(p, Param_t{parent, PType::Command, "Set Servo ID", mServoAddressTexts[0], nullptr, 200 /*timeout*/, 0, [](const store_t v){return setServoAdrCb(v);}});
-        mServoAddressCommand = p.size() - 1;
+        if constexpr (!countOnly) {
+            mServoAddressCommand = p.size() - 1;
+        }
         addNode(p, Param_t{parent, PType::U8,  "Servo ID to set", nullptr, nullptr, 1, 16, [](const store_t){return false;}});
 #endif
         addNode(p, Param_t{parent, PType::U8,  "Switch Address", nullptr, &eeprom.switchAddress, 0, 255, [](const store_t){return true;}});
@@ -866,7 +904,9 @@ private:
                                return pingCb<0>(v);
                            }
                 });
-        mPingCommand = p.size() - 1;
+        if constexpr (!countOnly) {
+            mPingCommand = p.size() - 1;
+        }
 
         addNode(p, Param_t{parent, PType::U8,  "Servo ID to be set", nullptr, &mIdToBeSet, 1, 250, [](const store_t){return false;}});
         addNode(p, Param_t{parent, PType::Command, "Set Servo ID", mSetIdTexts[0], nullptr, 
@@ -876,7 +916,9 @@ private:
                                return setIdCb<0>(v);
                            }
                 });
-        mSetIdCommand = p.size() - 1;
+        if constexpr (!countOnly) {
+            mSetIdCommand = p.size() - 1;
+        }
         
         parent = addParent(p, Param_t{0, PType::Folder, "S.Port"});
         addNode(p, Param_t{parent, PType::U8,  "Physical-ID", nullptr, &eeprom.sport_physicalId_switch, 0, 0x1b, [](const store_t a){sport_aux::setPhysID0(a); return true;}});
@@ -892,7 +934,9 @@ private:
 
         parent = addParent(p, Param_t{0, PType::Folder, "Compass"});
         addNode(p, Param_t{parent, PType::Command, "Calibrate", mCompassCalibTexts[0], nullptr, 200 /*timeout*/, 0, [](const store_t v){return compassCalibCb(v);}, 200});
-        mCompassCalibCommand = p.size() - 1;
+        if constexpr (!countOnly) {
+            mCompassCalibCommand = p.size() - 1;
+        }
         addNode(p, Param_t{parent, PType::Info, "Cal. x-axis", &mCalTexts[0][0]});
         addNode(p, Param_t{parent, PType::Info, "Cal. y-axis", &mCalTexts[1][0]});
         addNode(p, Param_t{parent, PType::Info, "Cal. z-axis", &mCalTexts[2][0]});
@@ -931,6 +975,18 @@ private:
         addNode(p, Param_t{parent, PType::Info, "Servo 7:", &mServos[1][7][0]});
 #endif
         
+    }
+    static inline constexpr auto parameterCount = []{
+        ParameterCounter p;
+        fillParameters(p);
+        return p.size();
+    }();
+    static_assert(parameterCount <= 255, "CRSF parameter table exceeds capacity");
+
+    using params_t = etl::FixedVector<Param_t, parameterCount>;
+    static inline params_t params = []{
+        params_t p;
+        fillParameters(p);
         return p;
     }();
     static inline const uint32_t uuid = Mcu::Stm::Uuid::get();

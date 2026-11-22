@@ -105,6 +105,7 @@ struct GFSM {
                                 RunConnected, RunUnconnected, DirectMode, CheckBaudrate};
 
     static inline void event(const Event e) {
+        mConnectionEvent = e;
         mEvent = e;
     }
 
@@ -137,9 +138,22 @@ struct GFSM {
         telem_bt::ratePeriodic();
 
         checkPackages();
+        if (!mMainChannelsFresh) {
+            (++mFailsafeTick).on(updateTicks, []{
+                channelCallback::update();
+            });
+        }
+        else {
+            mFailsafeTick.reset();
+        }
         
         ++mStateTick;
         const auto oldState = mState;
+        if (((mState == State::RunConnected) || (mState == State::RunUnconnected) ||
+             (mState == State::DirectMode) || (mState == State::CheckBaudrate)) &&
+            feedbackServosCalibrating()) {
+            mState = State::FbServosCalibrating;
+        }
         switch(mState) {
         case State::Undefined:
             mState = State::Init;
@@ -155,7 +169,7 @@ struct GFSM {
         case State::CheckBaudrate:
             mEvent.on(Event::ReceiverConnected, []{
                 mState = State::RunConnected;
-            }).thenOn(Event::ReceiverConnected, []{
+            }).thenOn(Event::DirectConnected, []{
                 mState = State::DirectMode;
             }).clear();
             mStateTick.on(baudCheckTicks, []{
@@ -187,9 +201,7 @@ struct GFSM {
                 mState = State::DirectMode;
             }).clear();
 
-            global::event.on(global::Event::FeedbackServoCalibrationStart, []{
-                mState = State::FbServosCalibrating;
-            }).thenOn(global::Event::CompassCalibStart, []{
+            global::event.on(global::Event::CompassCalibStart, []{
                 led1::event(led1::Event::Medium);
                 mState = State::CompassCalib;
             }).clear();
@@ -267,9 +279,21 @@ struct GFSM {
             });
             break;
         case State::FbServosCalibrating:
-            global::event.on(global::Event::FeedbackServoCalibrationStart, []{
-                mState = State::RunConnected; 
-            }).clear();
+            global::event.clear();
+            mEvent.clear();
+            if (!feedbackServosCalibrating()) {
+                switch(mConnectionEvent) {
+                case Event::ReceiverConnected:
+                    mState = State::RunConnected;
+                    break;
+                case Event::DirectConnected:
+                    mState = State::DirectMode;
+                    break;
+                case Event::ConnectionLost:
+                    mState = State::RunUnconnected;
+                    break;
+                }
+            }
             break;
         case State::CompassCalib:
             global::event.on(global::Event::CompassCalibEnd, []{
@@ -361,11 +385,22 @@ struct GFSM {
         }
     }
     private:
+    static inline bool feedbackServosCalibrating() {
+        return []<typename... Servos>(Meta::List<Servos...>) {
+            return (Servos::isCalibrating() || ...);
+        }(fbservos{});
+    }
     static inline void checkPackages() {
         (++mPackagesCheckTick).on(packagesCheckTicks, []{
             const uint16_t ch_p = crsf_in_pa::template channelPackages<true>();
             const uint16_t l_p = crsf_in_pa::template linkPackages<true>();
             const uint16_t sb = sbus_aux::packageCount();
+            const bool mainChannelsFresh = (ch_p > 0);
+            if (mMainChannelsFresh && !mainChannelsFresh) {
+                IO::outl<debug>("# CRSF channels lost: failsafe");
+            }
+            mMainChannelsFresh = mainChannelsFresh;
+            channelCallback::failsafe(!mMainChannelsFresh);
             // IO::outl<debug>("ch_p:", ch_p, " l_p:", l_p, " sb:", sb);
             if ((ch_p > 0) || (sb > 0)) {
                 if  ((l_p == 0) && (sb == 0)) {
@@ -385,7 +420,10 @@ struct GFSM {
     }
     static inline const uint32_t uuid = Mcu::Stm::Uuid::get();
     static inline etl::SlotEvent<Event> mEvent;
+    static inline Event mConnectionEvent{Event::ConnectionLost};
+    static inline bool mMainChannelsFresh = false;
     static inline External::Tick<systemTimer> mPackagesCheckTick;
+    static inline External::Tick<systemTimer> mFailsafeTick;
     static inline External::Tick<systemTimer> mGpsCheckTick;
     static inline External::Tick<systemTimer> mDirectTick;
     static inline External::Tick<systemTimer> mUpdateTick;

@@ -19,19 +19,34 @@
 #pragma once
 
 #include <algorithm>
+#include <cmath>
+#include <cstdint>
 
 template<typename T = int32_t, T KIScale = 10>
 struct PID {
+    static_assert(KIScale != 0);
     using value_type = T;
 
     explicit PID(const T max, const T min, const T kp, const T ki, const T kd) :
         mMax{max}, mMin{min}, mKp{kp}, mKi{ki}, mKd{kd}, mW{kp + ki + kd}, mIMax{mMax * mW}, mIMin{mMin * mW} {}
 
     float process(const T error) {
+        // Zero gains disable the controller.
+        if (mW == 0) {
+            mIntegral = 0;
+            mLastError = error;
+            return 0;
+        }
         const T p = mKp * error;
 
-        mIntegral = std::clamp(mIntegral + error, mIMin, mIMax);
-        const T i = (mKi * mIntegral) / KIScale;
+        T i = 0;
+        if (mKi != 0) {
+            mIntegral = std::clamp(mIntegral + error, mIMin, mIMax);
+            i = (mKi * mIntegral) / KIScale;
+        }
+        else {
+            mIntegral = 0;
+        }
 
         const T deriv = error - mLastError;
         const T d = mKd * deriv;
@@ -39,9 +54,11 @@ struct PID {
         const T preOut = (p + i + d) / mW;
         const T out = std::clamp(preOut, mMin, mMax);
         
-        T antiWindup = (out - preOut) / mKi;
-        if (std::signbit(antiWindup) != std::signbit(mIntegral)) {
-            mIntegral += antiWindup;
+        if (mKi != 0) {
+            const T antiWindup = (out - preOut) / mKi;
+            if (std::signbit(antiWindup) != std::signbit(mIntegral)) {
+                mIntegral += antiWindup;
+            }
         }
         mLastError = error;
         return out;

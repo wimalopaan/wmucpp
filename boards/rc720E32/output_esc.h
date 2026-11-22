@@ -25,6 +25,7 @@ template<typename Devs>
 struct EscOutputs {
     using devs = Devs;
     using debug = devs::debug;
+    using storage = devs::storage;
     using esc1_pwm = devs::esc1_pwm;
     using esc2_pwm = devs::esc2_pwm;
     using esc32_1 = devs::esc32_1;
@@ -133,6 +134,16 @@ struct EscOutputs {
     static inline void setChannel(const uint8_t n, const uint8_t ch, const uint16_t v) {
         if ((n < escs.size()) && escs[n]) {
             escs[n]->setChannel(ch, v);
+        }
+    }
+    static inline void stop() {
+        for(uint8_t n = 0; n < escs.size(); ++n) {
+            // ESCape32 uses the computed SBUS midpoint (991); PWM and VESC use 992.
+            const uint16_t neutral = (storage::eeprom.out_mode_esc[n] == 1) ? RC::Protokoll::SBus::V2::mid : 992;
+            set(n, neutral);
+            for(uint8_t ch = 0; ch < 16; ++ch) {
+                setChannel(n, ch, 992);
+            }
         }
     }
     static inline void periodic() {

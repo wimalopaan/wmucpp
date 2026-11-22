@@ -48,7 +48,7 @@ namespace External::WaveShare {
          * 0x42 1       moving
          * 0x45 2       current current
          * -----------
-         *      13
+         *      15
          *
          * query info      
          * 0x00 1       fw major
@@ -106,7 +106,7 @@ namespace External::WaveShare {
                 struct Tx {
                     static inline constexpr bool singleBuffer = true;
                     static inline constexpr bool enable = true;
-                    static inline constexpr size_t size = 16;
+                    static inline constexpr size_t size = 8 + MaxServos * 3;
                 };
                 struct Isr {
                     static inline constexpr bool idle = true;
@@ -429,20 +429,26 @@ namespace External::WaveShare {
                     });
                     break;
                 case State::Run:
-                    mEvent.on(Event::StartPing, []{
+                    if (mEvent.is(Event::StartPing)) {
                         mState = State::StartPing;
-                    }).thenOn(Event::SetId, []{
-                        (mState = State::Unlock) += State::SetId; 
-                    }).thenOn(Event::SetPosition, []{
-                        mState = State::SetPosition;
-                    }).thenOn(Event::SetSpeed, []{
+                    }
+                    else if (mEvent.is(Event::SetId)) {
+                        (mState = State::Unlock) += State::SetId;
+                    }
+                    else if (mEvent.is(Event::SetSpeed)) {
                         mState = State::SetSpeed;
-                    }).thenOn(Event::SetTorque, []{
+                    }
+                    else if (mEvent.is(Event::SetTorque)) {
                         mState = State::SetTorque;
-                    });
-                    mStateTick.on(telemTicks, []{
-                        mState = State::ReadStatus;
-                    });
+                    }
+                    else if (mEvent.is(Event::SetPosition)) {
+                        mState = State::SetPosition;
+                    }
+                    else {
+                        mStateTick.on(telemTicks, []{
+                            mState = State::ReadStatus;
+                        });
+                    }
                     break;
                 case State::SetPosition:
                     mStateTick.on(telemTicks, []{
@@ -624,7 +630,7 @@ namespace External::WaveShare {
                 writeAllIds(0x30, payload); 
             }
             static inline void syncReadStatus() {
-                const uint8_t length = 13; // return len
+                const uint8_t length = 15; // 0x38 through 0x46
                 mLastServoCommand = ServoCommand::SyncReadStatus;
                 queryAllIds(0x38, length); // address 0x38
             }
@@ -677,6 +683,7 @@ namespace External::WaveShare {
             //     mLastPos = po;
             // }
             static inline void sendPing(const uint8_t id) {
+                static_assert(6 <= UartConfig::Tx::size);
                 mLastServoCommand = ServoCommand::Ping;
                 uart::fillSendBuffer([&](auto& data){
                     uint8_t csum = 0;
@@ -693,6 +700,7 @@ namespace External::WaveShare {
             template<auto L>
             static inline void send(const uint8_t id, const uint8_t address, const std::array<uint8_t, L>& payload,
                                     const uint8_t cmd = CmdWrite) {
+                static_assert(7 + L <= UartConfig::Tx::size);
                 uart::fillSendBuffer([&](auto& data){
                     uint8_t csum = 0;
                     uint8_t i = 0;
@@ -710,6 +718,7 @@ namespace External::WaveShare {
                 });
             }
             static inline void queryAllIds(const uint8_t address, const uint8_t len) {
+                static_assert(8 + MaxServos <= UartConfig::Tx::size);
                 uart::fillSendBuffer([&](auto& data){
                     uint8_t csum = 0;
                     uint8_t i = 0;
@@ -729,6 +738,7 @@ namespace External::WaveShare {
             }
             template<auto L>
             static inline void writeAllIds(const uint8_t address, const std::array<uint8_t, L>& pl) {
+                static_assert(8 + MaxServos * (L + 1) <= UartConfig::Tx::size);
                 uart::fillSendBuffer([&](auto& data){
                     uint8_t csum = 0;
                     uint8_t i = 0;
@@ -751,6 +761,7 @@ namespace External::WaveShare {
             }
             template<auto L>
             static inline void writeAllIds(const uint8_t address, const std::array<std::array<uint8_t, L>, MaxServos>& pl) {
+                static_assert(8 + MaxServos * (L + 1) <= UartConfig::Tx::size);
                 uart::fillSendBuffer([&](auto& data){
                     uint8_t csum = 0;
                     uint8_t i = 0;
@@ -772,6 +783,7 @@ namespace External::WaveShare {
                 });
             }
             static inline void resetServos() {
+                static_assert(6 <= UartConfig::Tx::size);
                 uart::fillSendBuffer([](auto& data){
                     uint8_t csum = 0;
                     uint8_t i = 0;
@@ -785,6 +797,9 @@ namespace External::WaveShare {
                 });
             }
             static inline bool validityCheck(const volatile uint8_t* const data, const uint16_t size) {
+                if (size < 6) {
+                    return false;
+                }
                 if (data[0] != 0xff) {
                     return false;
                 }
@@ -792,7 +807,10 @@ namespace External::WaveShare {
                     return false;
                 }
                 const uint8_t len = data[3];
-                const uint8_t totalLength = len + 4;
+                if (len < 2) {
+                    return false;
+                }
+                const uint16_t totalLength = uint16_t{len} + 4;
                 if (totalLength > size) {
                     return false;
                 }
@@ -836,7 +854,7 @@ namespace External::WaveShare {
                                 }
                             }
                             else if (mLastServoCommand == ServoCommand::SyncReadStatus) {
-                                if (dataLength == 13) {
+                                if (dataLength == 15) {
                                     uint8_t offset = 5;
                                     offset += decodePosition(index, &data[offset]);
                                     offset += decodeSpeed(index, &data[offset]);
@@ -850,9 +868,15 @@ namespace External::WaveShare {
                                     ++offset;
                                     offset += decodeCurrent(index, &data[offset]);
                                 }
+                                else {
+                                    mReadErrorCount += 1;
+                                }
                             }
                         }
                     }
+                }
+                else {
+                    mReadErrorCount += 1;
                 }
             }
             static inline int8_t indexOf(const uint8_t id) {

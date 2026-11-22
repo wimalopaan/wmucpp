@@ -274,6 +274,10 @@ struct Devices<SW01, Config, MCU> {
         static inline void onCalibStop() {
             global::event = global::Event::FeedbackServoCalibrationStop;
         }
+        static inline void onCalibError() {
+            IO::outl<debug>("# Servo ", N, " calibration failed");
+            global::event = global::Event::FeedbackServoCalibrationStop;
+        }
         static inline void deadMin(const uint16_t v) {
             storage::eeprom.fbservos[N].deadMin = v;
         }
@@ -289,7 +293,7 @@ struct Devices<SW01, Config, MCU> {
     };
     using fbcb0 = FbCalibCallback<0>;
     
-    using srv1_fb = FeedbackAdapter<0, adc, fb1_pin, debug>; // IN6: index=1
+    using srv1_fb = FeedbackAdapter<1, adc, fb1_pin, debug>; // IN6: index=1
     using srv1_feetech = Feetech<0, polar1, srv1_fb, srv1_pwm, fbcb0, systemTimer, void>;
     
     struct PwmInOutConfig1;
@@ -366,7 +370,7 @@ struct Devices<SW01, Config, MCU> {
     // Fb2:  PA5 : ADC-IN5
     // using tp3 = Mcu::Stm::Pin<gpioa, 5, MCU>;
     using fb2_pin = Mcu::Stm::Pin<gpioa, 5, MCU>;
-    using srv2_fb = FeedbackAdapter<1, adc, fb2_pin>; // IN5 : Index = 0
+    using srv2_fb = FeedbackAdapter<0, adc, fb2_pin>; // IN5 : Index = 0
     using fbcb1 = FbCalibCallback<1>;
     using srv2_feetech = Feetech<1, polar2, srv2_fb, srv2_pwm, fbcb1, systemTimer, void>;
 

@@ -136,12 +136,23 @@ struct Feetech {
         event(Event::StopCalib);
     }
     static inline bool isCalibrating() {
-        return mActive && !((mState == State::Run) || (mState == State::Start));
+        return mActive && !((mState == State::Run) || (mState == State::Start) || (mState == State::Error));
+    }
+    static inline bool calibrationFailed() {
+        return mActive && (mState == State::Error);
     }
     static inline void ratePeriodic() {
+        if (!mActive) {
+            return;
+        }
         ++mDebugTick;
         const auto oldState = mState;
         ++mStateTick;
+        const bool calibrationStopped = mEvent.is(Event::StopCalib) && isCalibrating();
+        if (calibrationStopped) {
+            restoreCalibration();
+            mState = State::Run;
+        }
         switch(mState) {
         case State::Start:
             if (!mCalibOnStart) {
@@ -160,8 +171,6 @@ struct Feetech {
             break;
         case State::Noise:
         {
-            static uint16_t mNoiseMax{0};
-            static uint16_t mNoiseMin{std::numeric_limits<uint16_t>::max()};
             const uint16_t v = Fb::read();
             mNoiseMax = std::max(mNoiseMax, v);
             mNoiseMin = std::min(mNoiseMin, v);
@@ -216,9 +225,14 @@ struct Feetech {
             });
             break;
         case State::DeadSetP:
-            mStateTick.on(deadSettleTicks, []{
-                mState = State::DeadTestP;
-            });
+            if (mDeadP >= (Out::pwm::sbusMid + 200)) {
+                mState = State::Error;
+            }
+            else {
+                mStateTick.on(deadSettleTicks, []{
+                    mState = State::DeadTestP;
+                });
+            }
             break;
         case State::DeadTestP:
         {
@@ -244,9 +258,14 @@ struct Feetech {
             });
             break;
         case State::DeadSetN:
-            mStateTick.on(deadSettleTicks, []{
-                mState = State::DeadTestN;
-            });
+            if (mDeadN <= (Out::pwm::sbusMid - 200)) {
+                mState = State::Error;
+            }
+            else {
+                mStateTick.on(deadSettleTicks, []{
+                    mState = State::DeadTestN;
+                });
+            }
             break;
         case State::DeadTestN:
         {
@@ -297,9 +316,13 @@ struct Feetech {
             break;
         case State::Run:
         {
-            mEvent.on(Event::Calibrate, []{
+            if (calibrationStopped) {
+                break;
+            }
+            if (mEvent.is(Event::Calibrate)) {
                 mState = State::WaitNoise;
-            });
+                break;
+            }
             int32_t o = (mPid.process(error()) * mGain) / 10;
             int32_t oo = 0;
             if (mUseDead) {
@@ -325,6 +348,9 @@ struct Feetech {
         }
             break;
         case State::Error:
+            mEvent.on(Event::Calibrate, []{
+                mState = State::WaitNoise;
+            });
             break;
         }
         if (oldState != mState) {
@@ -333,6 +359,9 @@ struct Feetech {
             case State::Start:
                 break;
             case State::WaitNoise:
+                mSavedCalibration = {mDeadN, mDeadP, mDeadMid, mFbMin, mFbMax, mFbRange};
+                mNoiseMax = 0;
+                mNoiseMin = std::numeric_limits<uint16_t>::max();
                 Out::set(mDeadMid);
                 IO::outl<Debug>("# Srv:WaitNoise");
                 CalibCB::onCalibStart();
@@ -375,9 +404,6 @@ struct Feetech {
                 if (mDeadP < (Out::pwm::sbusMid + 200)) {
                     Out::set(mDeadP);
                 }
-                else {
-                    mState = State::Error;
-                }
                 break;
             case State::DeadTestP:
                 IO::outl<Debug>("# Srv:DeadTestP");
@@ -398,9 +424,6 @@ struct Feetech {
                 IO::outl<Debug>("# Srv:DeadSetN fb: ", mLastFb, " pwm: ", mDeadN);
                 if (mDeadN > (Out::pwm::sbusMid - 200)) {
                     Out::set(mDeadN);
-                }
-                else {
-                    mState = State::Error;
                 }
                 break;
             case State::DeadTestN:
@@ -423,23 +446,36 @@ struct Feetech {
             case State::RangeEnd:
                 mFbRange = mFbMax - mFbMin;
                 IO::outl<Debug>("# Srv:RangeEnd fbmax: ", mFbMax, " fbmin: ", mFbMin, " fbrange: ", mFbRange);
-                CalibCB::deadMin(mDeadN);
-                CalibCB::deadMax(mDeadP);
-                CalibCB::fbMin(mFbMin);
-                CalibCB::fbMax(mFbMax);
                 break;
             case State::Run:
+                if ((oldState == State::RangeEnd) && !calibrationStopped) {
+                    CalibCB::deadMin(mDeadN);
+                    CalibCB::deadMax(mDeadP);
+                    CalibCB::fbMin(mFbMin);
+                    CalibCB::fbMax(mFbMax);
+                }
                 Out::set(mDeadMid);
                 IO::outl<Debug>("# Srv:Run");
                 CalibCB::onCalibStop();
                 break;
             case State::Error:
+                restoreCalibration();
+                Out::set(mDeadMid);
                 IO::outl<Debug>("# Srv:Error");
+                CalibCB::onCalibError();
                 break;
             }
         }
     }
     private:
+    static inline void restoreCalibration() {
+        mDeadN = mSavedCalibration.deadN;
+        mDeadP = mSavedCalibration.deadP;
+        mDeadMid = mSavedCalibration.deadMid;
+        mFbMin = mSavedCalibration.fbMin;
+        mFbMax = mSavedCalibration.fbMax;
+        mFbRange = mSavedCalibration.fbRange;
+    }
     static inline uint16_t normalized() {
         const uint16_t a = Fb::read();
         if (mDynamic) {
@@ -487,6 +523,8 @@ struct Feetech {
     static inline uint16_t mGain = 20;
     static inline PID<int32_t, 1000> mPid{1000, -1000, 1000, 0, 210};
     static inline uint16_t mNoiseAmplitude{2};
+    static inline uint16_t mNoiseMax{0};
+    static inline uint16_t mNoiseMin{std::numeric_limits<uint16_t>::max()};
     static inline uint16_t mLastPwm{992};
     static inline uint16_t mLastFb{0};
     static inline uint16_t mLastPhi{0};
@@ -499,6 +537,10 @@ struct Feetech {
     static inline uint16_t mFbMax{std::numeric_limits<uint16_t>::max()};
     static inline uint16_t mFbMin{0};
     static inline bool mFbInc = false;
+    struct CalibrationValues {
+        uint16_t deadN, deadP, deadMid, fbMin, fbMax, fbRange;
+    };
+    static inline CalibrationValues mSavedCalibration{};
     static inline etl::Event<Event> mEvent;
     static inline State mState{State::Start};
     static inline External::Tick<systemTimer> mStateTick;

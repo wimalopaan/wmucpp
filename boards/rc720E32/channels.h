@@ -41,7 +41,17 @@ struct ChannelCallback {
     static_assert(std::is_same_v<pa1, pa2>);
     using pa = pa1;
 
+    static inline void failsafe(const bool on) {
+        mFailsafe = on;
+        if (on) {
+            escs::stop();
+        }
+    }
     static inline void update() {
+        if (mFailsafe) {
+            escs::stop();
+            return;
+        }
         if (eeprom.mode == 1) { // Passthru-Mode
             escs::set(0, pa::value(eeprom.channels[0].first));
             escs::set(1, pa::value(eeprom.channels[1].first));
@@ -118,6 +128,7 @@ struct ChannelCallback {
         }
     }
     private:
+    static inline bool mFailsafe = true;
     static inline uint16_t phiToSbusValue(const uint16_t phi) {
         if (phi < 4096) {
             return (phi * RC::Protokoll::SBus::V2::amp) / 4095 + RC::Protokoll::SBus::V2::min;
